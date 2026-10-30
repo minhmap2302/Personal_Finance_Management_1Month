@@ -2,10 +2,6 @@ package org.example.backend.security.config;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.util.List;
-
 import lombok.RequiredArgsConstructor;
 import org.example.backend.security.jwt.JwtAuthenticationFilter;
 import org.example.backend.security.principal.CustomUserDetailsService;
@@ -26,13 +22,13 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.security.web.AuthenticationEntryPoint;
+
+import java.io.IOException;
+import java.time.LocalDateTime;
 
 @Configuration
 @EnableWebSecurity
@@ -46,10 +42,8 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .cors(cors -> {})
                 .csrf(AbstractHttpConfigurer::disable)
-                .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(new AuthenticationEntryPoint() {
                             @Override
@@ -85,50 +79,21 @@ public class SecurityConfig {
                         })
                 )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/api/auth/**",
-                                "/api/v1/auth/**",
-                                "/v3/api-docs/**",
-                                "/swagger-ui/**",
-                                "/swagger-ui.html",
-                                "/error"
-                        ).permitAll()
+                        // --- Endpoint công khai (không cần đăng nhập) ---
+                        .requestMatchers("/api/v1/auth/**").permitAll()
+                        // Swagger / OpenAPI
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                        // Spring Boot error page
+                        .requestMatchers("/error").permitAll()
+                        // --- Khu vực quản trị chỉ dành cho ADMIN ---
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                        // --- Tất cả request còn lại phải xác thực ---
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())
-                .addFilterBefore(
-                        jwtAuthenticationFilter,
-                        UsernamePasswordAuthenticationFilter.class
-                );
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
-    }
-
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-
-        configuration.setAllowedOrigins(
-                List.of("http://localhost:5173")
-        );
-
-        configuration.setAllowedMethods(
-                List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
-        );
-
-        configuration.setAllowedHeaders(
-                List.of("Authorization", "Content-Type", "Accept", "Origin")
-        );
-
-        configuration.setAllowCredentials(true);
-
-        UrlBasedCorsConfigurationSource source =
-                new UrlBasedCorsConfigurationSource();
-
-        source.registerCorsConfiguration("/**", configuration);
-
-        return source;
     }
 
     @Bean
@@ -138,9 +103,7 @@ public class SecurityConfig {
 
     @Bean
     public AuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider authProvider =
-                new DaoAuthenticationProvider(userDetailsService());
-
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider(userDetailsService());
         authProvider.setPasswordEncoder(passwordEncoder());
         return authProvider;
     }
@@ -151,9 +114,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(
-            AuthenticationConfiguration config
-    ) throws Exception {
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
 }

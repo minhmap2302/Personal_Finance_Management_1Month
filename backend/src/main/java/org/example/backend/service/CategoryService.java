@@ -5,17 +5,13 @@ import org.example.backend.model.dto.request.UpdateCategoryRequest;
 import org.example.backend.model.dto.response.CategoryResponse;
 import org.example.backend.model.entity.User;
 import org.example.backend.model.enums.CategoryType;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+
+import java.util.List;
 
 public interface CategoryService {
 
-    /**
-     * Danh sách danh mục, có tìm theo tên, lọc theo loại và phân trang.
-     * Admin chỉ thấy danh mục hệ thống. Người dùng thường thấy danh mục hệ thống và danh mục của gia đình mình.
-     */
-    Page<CategoryResponse> getCategories(User currentUser, Long familyId, String keyword, CategoryType type,
-                                         boolean includeArchived, Pageable pageable);
+    List<CategoryResponse> getCategories(User currentUser, Long familyId, String keyword, CategoryType type,
+                                        boolean includeArchived, int page, int size);
 
     CategoryResponse createSystemCategory(User currentUser, CreateCategoryRequest request);
 
