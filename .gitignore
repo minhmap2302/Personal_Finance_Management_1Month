@@ -1,0 +1,35 @@
+# Secrets
+.env
+.env.*
+!.env.example
+
+# IDE
+.idea/
+.vscode/
+
+# Backend (Gradle)
+backend/build/
+backend/.gradle/
+*.class
+
+# Frontend (Node.js)
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Backup dữ liệu
+backups/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
