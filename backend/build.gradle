@@ -43,7 +43,7 @@ dependencies {
 }
 
 tasks.named('compileTestJava') {
-    exclude '**/Category*.java'
+
 }
 
 tasks.named('test') {
