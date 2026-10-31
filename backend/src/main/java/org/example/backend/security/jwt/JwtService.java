@@ -5,6 +5,7 @@ import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.example.backend.model.entity.User;
 import org.example.backend.repository.InvalidatedTokenRepository;
@@ -34,6 +35,7 @@ public class JwtService {
     private String secretKey;
 
     /** Mặc định 15 phút. */
+    @Getter
     @Value("${application.security.jwt.expiration-ms:900000}")
     private long jwtExpirationMs;
 
@@ -56,10 +58,6 @@ public class JwtService {
         } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException("Thuật toán SHA-256 không khả dụng trên hệ thống", e);
         }
-    }
-
-    public long getJwtExpirationMs() {
-        return jwtExpirationMs;
     }
 
     public String generateToken(User user) {
