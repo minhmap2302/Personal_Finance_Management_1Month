@@ -25,6 +25,7 @@ import org.example.backend.repository.CategoryRepository;
 import org.example.backend.repository.FamilyMemberRepository;
 import org.example.backend.repository.FamilyRepository;
 import org.example.backend.service.BudgetService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -54,10 +55,12 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class BudgetServiceImpl implements BudgetService {
 
+    @Value("${app.timezone}")
+    private String timezone;
+
     /** Độ dài tối đa của một ngân sách tổng (số ngày). */
     private static final int MAX_BUDGET_DAYS = 366;
 
-    private static final ZoneId ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
     private static final BigDecimal HUNDRED = BigDecimal.valueOf(100);
 
     private final BudgetRepository budgetRepository;
@@ -89,7 +92,7 @@ public class BudgetServiceImpl implements BudgetService {
     @Override
     public BudgetDetailResponse getCurrentBudget(Long userId, Long familyId, LocalDate date) {
         requireMember(userId, familyId);
-        LocalDate target = date != null ? date : LocalDate.now(ZONE);
+        LocalDate target = date != null ? date : LocalDate.now(ZoneId.of(timezone));
         Budget total = budgetRepository.findTotalCoveringDate(familyId, target)
                 .orElseThrow(() -> new ResourceNotFoundException("Không có ngân sách tổng nào bao phủ ngày này"));
         return toDetail(total);
