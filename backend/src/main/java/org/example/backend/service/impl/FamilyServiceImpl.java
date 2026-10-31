@@ -105,13 +105,15 @@ public class FamilyServiceImpl implements FamilyService {
     @Override
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public void deleteFamily(Long userId, Long familyId) {
-        accessChecker.requireRoleWithLock(userId, familyId, FamilyRole.OWNER,
-                "Chỉ chủ gia đình mới được xóa gia đình");
+        FamilyMember member = accessChecker.requireRoleWithLock(
+                userId, familyId, FamilyRole.OWNER,
+                "Chỉ chủ gia đình mới được xóa gia đình"
+        );
 
-        // TODO: khi có phần lưu ảnh hóa đơn, xóa thư mục ảnh của gia đình sau khi giao dịch commit.
         transactionRepository.deleteAllByFamilyId(familyId);
         budgetRepository.deleteSubBudgetsOfFamily(familyId);
         budgetRepository.deleteAllBudgetsOfFamily(familyId);
+        familyMemberRepository.delete(member);
         familyRepository.deleteById(familyId);
     }
 

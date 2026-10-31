@@ -18,6 +18,7 @@ import org.example.backend.repository.RefreshTokenRepository;
 import org.example.backend.repository.UserRepository;
 import org.example.backend.security.jwt.JwtService;
 import org.example.backend.service.AuthService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -34,7 +35,9 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
 
-    private static final long REFRESH_TOKEN_VALIDITY_DAYS = 7;
+    /** Mặc định 7 ngày. */
+    @Value("${application.security.jwt.refresh-expiration-days:7}")
+    private long refreshTokenExpirationDay;
 
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
@@ -92,7 +95,7 @@ public class AuthServiceImpl implements AuthService {
         RefreshToken refreshToken = RefreshToken.builder()
                 .user(user)
                 .token(hashedRefreshToken)
-                .expiryDate(Instant.now().plus(REFRESH_TOKEN_VALIDITY_DAYS, ChronoUnit.DAYS))
+                .expiryDate(Instant.now().plus(refreshTokenExpirationDay, ChronoUnit.DAYS))
                 .revoked(false)
                 .build();
 
@@ -109,13 +112,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     @Transactional
-    public void logout(String authHeader) {
-        logout(authHeader, null, null);
-    }
-
-    @Override
-    @Transactional
-    public void logout(String authHeader, String rawRefreshToken, User currentUser) {
+    public void logout(String authHeader, String rawRefreshToken) {
         // 1. Thu hồi Access Token (lưu vào bảng invalidated_tokens)
         if (StringUtils.hasText(authHeader) && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7).trim();
@@ -136,18 +133,13 @@ public class AuthServiceImpl implements AuthService {
             }
         }
 
-        // 2. Thu hồi Refresh Token nếu client gửi lên
+        // 2. Thu hồi Refresh Token client gửi lên
         if (StringUtils.hasText(rawRefreshToken)) {
             String hashedToken = JwtService.hashToken(rawRefreshToken);
             refreshTokenRepository.findByToken(hashedToken).ifPresent(rt -> {
                 rt.setRevoked(true);
                 refreshTokenRepository.save(rt);
             });
-        }
-
-        // 3. Nếu có thông tin người dùng hiện tại, thu hồi các refresh token còn lại
-        if (currentUser != null && currentUser.getId() != null) {
-            userRepository.findById(currentUser.getId()).ifPresent(refreshTokenRepository::revokeAllByUser);
         }
     }
 
@@ -198,7 +190,7 @@ public class AuthServiceImpl implements AuthService {
         RefreshToken newRefreshToken = RefreshToken.builder()
                 .user(user)
                 .token(newHashedToken)
-                .expiryDate(Instant.now().plus(REFRESH_TOKEN_VALIDITY_DAYS, ChronoUnit.DAYS))
+                .expiryDate(Instant.now().plus(refreshTokenExpirationDay, ChronoUnit.DAYS))
                 .revoked(false)
                 .build();
 
