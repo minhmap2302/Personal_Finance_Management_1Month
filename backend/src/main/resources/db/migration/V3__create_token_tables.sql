@@ -6,7 +6,7 @@
 -- collation mặc định không phân biệt hoa thường sẽ coi hai token khác nhau là trùng.
 -- =====================================================================
 
-CREATE TABLE IF NOT EXISTS refresh_tokens (
+CREATE TABLE refresh_tokens (
     id           BIGINT        NOT NULL AUTO_INCREMENT,
     user_id      BIGINT        NOT NULL,
     token        VARCHAR(512)  CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
@@ -20,11 +20,10 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
 ) ENGINE = InnoDB;
 
 CREATE INDEX idx_refresh_token_user ON refresh_tokens (user_id);
-CREATE INDEX idx_refresh_token_token ON refresh_tokens (token);
 -- Phục vụ việc dọn các refresh token đã hết hạn.
 CREATE INDEX idx_refresh_token_expiry ON refresh_tokens (expiry_date);
 
-CREATE TABLE IF NOT EXISTS invalidated_tokens (
+CREATE TABLE invalidated_tokens (
     id           VARCHAR(255)  CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
     expiry_time  DATETIME(6)   NOT NULL,
     PRIMARY KEY (id)

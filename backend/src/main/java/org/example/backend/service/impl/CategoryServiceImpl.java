@@ -20,11 +20,12 @@ import org.example.backend.repository.CategoryRepository;
 import org.example.backend.repository.TransactionRepository;
 import org.example.backend.service.CategoryService;
 import org.example.backend.service.FamilyAccessChecker;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 
 @Service
@@ -38,28 +39,23 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<CategoryResponse> getCategories(User currentUser, Long familyId, String keyword, CategoryType type,
-                                               boolean includeArchived, int page, int size) {
-        if (page < 0 || size <= 0) {
-            throw new BadRequestException("Trang hoặc kích thước trang không hợp lệ");
+    public Page<CategoryResponse> getCategories(User currentUser, Long familyId, String keyword, CategoryType type,
+                                                boolean includeArchived, Pageable pageable) {
+        String normalizedKeyword = keyword == null ? "" : keyword.trim().toLowerCase(Locale.ROOT);
+
+        // Admin chỉ thấy danh mục hệ thống (visibleFamilyId = null), không bao giờ thấy danh mục tùy chỉnh của gia đình.
+        Long visibleFamilyId = null;
+        if (currentUser.getRole() != SystemRole.ADMIN) {
+            if (familyId == null) {
+                throw new BadRequestException("Thiếu familyId khi truy cập danh mục gia đình");
+            }
+            familyAccessChecker.requireMember(currentUser.getId(), familyId);
+            visibleFamilyId = familyId;
         }
 
-        if (currentUser.getRole() == SystemRole.ADMIN) {
-            List<Category> categories = categoryRepository.findByFamilyIsNullOrderByNameAsc();
-            return filterAndPage(categories, keyword, type, includeArchived, page, size);
-        }
-
-        if (familyId == null) {
-            throw new BadRequestException("Thiếu familyId khi truy cập danh mục gia đình");
-        }
-
-        familyAccessChecker.requireMember(currentUser.getId(), familyId);
-
-        List<Category> categories = new ArrayList<>();
-        categories.addAll(categoryRepository.findByFamilyIsNullOrderByNameAsc());
-        categories.addAll(categoryRepository.findByFamilyIdOrderByNameAsc(familyId));
-
-        return filterAndPage(categories, keyword, type, includeArchived, page, size);
+        return categoryRepository
+                .search(visibleFamilyId, normalizedKeyword, type, includeArchived, pageable)
+                .map(CategoryResponse::fromEntity);
     }
 
     @Override
@@ -113,19 +109,18 @@ public class CategoryServiceImpl implements CategoryService {
 
         if (category.getFamily() == null) {
             requireAdmin(currentUser);
-            if (request.getType() != null && category.getActive() != null && !category.getActive()) {
-                // no-op, keep type immutable if already used; validation below will catch if type changed
-            }
             String newName = request.getName() != null ? normalizeName(request.getName()) : category.getName();
             CategoryType newType = request.getType() != null ? request.getType() : category.getType();
-            if (!Objects.equals(category.getName(), newName) || !Objects.equals(category.getType(), newType)) {
+
+            boolean typeChanged = !Objects.equals(category.getType(), newType);
+            if (typeChanged) {
+                ensureTypeChangeAllowed(categoryId);
+            }
+            if (typeChanged || !Objects.equals(category.getName(), newName)) {
                 validateNameAndType(newName, newType, null, categoryId);
             }
             category.setName(newName);
             category.setType(newType);
-            if (request.getActive() != null) {
-                category.setActive(request.getActive());
-            }
             return CategoryResponse.fromEntity(categoryRepository.save(category));
         }
 
@@ -136,20 +131,18 @@ public class CategoryServiceImpl implements CategoryService {
         familyAccessChecker.requireRole(currentUser.getId(), familyId, FamilyRole.MANAGER,
                 "Chỉ OWNER hoặc MANAGER mới được sửa danh mục gia đình");
 
-        if (!category.getFamily().getId().equals(familyId)) {
-            throw new ForbiddenException("Danh mục không thuộc gia đình này");
-        }
+        requireBelongsToFamily(category, familyId);
 
         String newName = request.getName() != null ? normalizeName(request.getName()) : category.getName();
-        if (request.getType() != null && !Objects.equals(category.getType(), request.getType())) {
-            throw new BadRequestException("Không được đổi loại danh mục sau khi đã được sử dụng");
+        CategoryType newType = request.getType() != null ? request.getType() : category.getType();
+
+        if (!Objects.equals(category.getType(), newType)) {
+            ensureTypeChangeAllowed(categoryId);
         }
 
-        validateNameAndType(newName, category.getType(), familyId, categoryId);
+        validateNameAndType(newName, newType, familyId, categoryId);
         category.setName(newName);
-        if (request.getActive() != null) {
-            category.setActive(request.getActive());
-        }
+        category.setType(newType);
         return CategoryResponse.fromEntity(categoryRepository.save(category));
     }
 
@@ -179,9 +172,7 @@ public class CategoryServiceImpl implements CategoryService {
         familyAccessChecker.requireRole(currentUser.getId(), familyId, FamilyRole.MANAGER,
                 "Chỉ OWNER hoặc MANAGER mới được khôi phục danh mục gia đình");
 
-        if (!category.getFamily().getId().equals(familyId)) {
-            throw new ForbiddenException("Danh mục không thuộc gia đình này");
-        }
+        requireBelongsToFamily(category, familyId);
 
         if (Boolean.TRUE.equals(category.getActive())) {
             throw new BadRequestException("Danh mục này đang hoạt động");
@@ -219,9 +210,7 @@ public class CategoryServiceImpl implements CategoryService {
         familyAccessChecker.requireRole(currentUser.getId(), familyId, FamilyRole.MANAGER,
                 "Chỉ OWNER hoặc MANAGER mới được xóa danh mục gia đình");
 
-        if (!category.getFamily().getId().equals(familyId)) {
-            throw new ForbiddenException("Danh mục không thuộc gia đình này");
-        }
+        requireBelongsToFamily(category, familyId);
 
         if (isCategoryUsedByTransactionsOrBudgets(categoryId)) {
             category.setActive(false);
@@ -232,29 +221,26 @@ public class CategoryServiceImpl implements CategoryService {
         categoryRepository.delete(category);
     }
 
-    private List<CategoryResponse> filterAndPage(List<Category> source, String keyword, CategoryType type,
-                                               boolean includeArchived, int page, int size) {
-        List<Category> filtered = source.stream()
-                .filter(c -> includeArchived || Boolean.TRUE.equals(c.getActive()))
-                .filter(c -> keyword == null || keyword.isBlank() ||
-                        c.getName().toLowerCase().contains(keyword.toLowerCase().trim()))
-                .filter(c -> type == null || c.getType() == type)
-                .toList();
-
-        int fromIndex = page * size;
-        if (fromIndex >= filtered.size()) {
-            return List.of();
-        }
-
-        int toIndex = Math.min(fromIndex + size, filtered.size());
-        return filtered.subList(fromIndex, toIndex).stream()
-                .map(CategoryResponse::fromEntity)
-                .toList();
-    }
-
     private void requireAdmin(User currentUser) {
         if (currentUser == null || currentUser.getRole() != SystemRole.ADMIN) {
             throw new ForbiddenException("Bạn không có quyền quản lý danh mục hệ thống");
+        }
+    }
+
+    /**
+     * Danh mục của gia đình khác được coi như không tồn tại (404), không trả 403,
+     * để người dùng không dò ra được id danh mục của gia đình khác.
+     */
+    private void requireBelongsToFamily(Category category, Long familyId) {
+        if (category.getFamily() == null || !category.getFamily().getId().equals(familyId)) {
+            throw new ResourceNotFoundException("Không tìm thấy danh mục");
+        }
+    }
+
+    /** Loại thu/chi chỉ được đổi khi danh mục chưa được giao dịch hoặc ngân sách nào sử dụng. */
+    private void ensureTypeChangeAllowed(Long categoryId) {
+        if (isCategoryUsedByTransactionsOrBudgets(categoryId)) {
+            throw new BadRequestException("Không được đổi loại danh mục sau khi đã được sử dụng");
         }
     }
 

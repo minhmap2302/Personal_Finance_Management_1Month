@@ -17,6 +17,4 @@ public class UpdateCategoryRequest {
     private String name;
 
     private CategoryType type;
-
-    private Boolean active;
 }
