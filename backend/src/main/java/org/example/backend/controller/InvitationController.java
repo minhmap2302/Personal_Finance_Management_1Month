@@ -9,6 +9,9 @@ import org.example.backend.model.dto.response.UserSearchResponse;
 import org.example.backend.model.entity.User;
 import org.example.backend.model.enums.InvitationStatus;
 import org.example.backend.service.InvitationService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -36,13 +39,15 @@ public class InvitationController {
 
     // ------------------------- Phía gia đình (chủ gia đình, quản lý) -------------------------
 
-    /** Tìm người dùng theo tên đăng nhập để mời (ít nhất 2 ký tự, tối đa 10 kết quả). */
+    /** Tìm người dùng theo tên đăng nhập để mời (ít nhất 2 ký tự), có phân trang, mỗi trang tối đa 20 kết quả. */
     @GetMapping("/families/{familyId}/invitations/search-users")
-    public ResponseEntity<ApiResponse<List<UserSearchResponse>>> searchUsers(
+    public ResponseEntity<ApiResponse<Page<UserSearchResponse>>> searchUsers(
             @AuthenticationPrincipal User currentUser,
             @PathVariable Long familyId,
-            @RequestParam String username) {
-        List<UserSearchResponse> data = invitationService.searchUsers(currentUser.getId(), familyId, username);
+            @RequestParam String username,
+            @PageableDefault(size = 10) Pageable pageable) {
+        Page<UserSearchResponse> data =
+                invitationService.searchUsers(currentUser.getId(), familyId, username, pageable);
         return ResponseEntity.ok(ApiResponse.success("Tìm kiếm người dùng thành công", data));
     }
 
@@ -65,6 +70,15 @@ public class InvitationController {
             @RequestParam(defaultValue = "PENDING") InvitationStatus status) {
         List<InvitationResponse> data = invitationService.getMyInvitations(currentUser.getId(), status);
         return ResponseEntity.ok(ApiResponse.success("Lấy danh sách lời mời thành công", data));
+    }
+
+    /** Chi tiết một lời mời gửi cho tôi. */
+    @GetMapping("/invitations/{invitationId}")
+    public ResponseEntity<ApiResponse<InvitationResponse>> getMyInvitation(
+            @AuthenticationPrincipal User currentUser,
+            @PathVariable Long invitationId) {
+        InvitationResponse data = invitationService.getMyInvitation(currentUser.getId(), invitationId);
+        return ResponseEntity.ok(ApiResponse.success("Lấy thông tin lời mời thành công", data));
     }
 
     /** Số lời mời đang chờ, dùng cho chấm đỏ thông báo. */
