@@ -85,3 +85,80 @@ body{font-size:14px;line-height:1.55;letter-spacing:-.01em}
 .family-required-secondary:hover{background:#f4faf6}
 .family-required-foot{display:flex;align-items:center;justify-content:center;gap:7px;margin-top:24px;padding-top:17px;border-top:1px solid #edf2ef;color:#91a097;font-size:10px;line-height:1.6}
 @media(max-width:640px){.family-picker-trigger{min-width:54px;width:54px;padding:6px;justify-content:center}.family-picker-copy,.family-picker-chevron{display:none}.family-picker-trigger .family-avatar{width:38px;height:38px}.family-required-foot{align-items:flex-start;text-align:left}.family-required-actions>*{flex:1 1 100%}}
+
+
+/* Cursor-driven micro-interactions: spotlight, subtle 3D tilt and magnetic CTAs */
+:root { --cursor-x: -1000px; --cursor-y: -1000px; }
+.cursor-spotlight { position: fixed; inset: 0; z-index: 40; pointer-events: none; opacity: .7; background: radial-gradient(360px circle at var(--cursor-x) var(--cursor-y), rgba(16,185,129,.075), transparent 68%); transition: opacity .2s ease; }
+.cursor-tilt-active { z-index: 1; transition: rotate .16s ease-out, box-shadow .2s ease; box-shadow: 0 18px 42px rgba(15,75,48,.10); will-change: rotate; }
+.cursor-magnetic-active { transition: translate .12s ease-out, box-shadow .18s ease; will-change: translate; }
+@media (pointer: coarse), (prefers-reduced-motion: reduce) { .cursor-spotlight { display:none; } .cursor-tilt-active,.cursor-magnetic-active { rotate:none !important; translate:none !important; transition:none !important; will-change:auto; } }
+
+
+/* Custom animated cursor (desktop mouse / trackpad only) */
+@media (pointer: fine) and (prefers-reduced-motion: no-preference) {
+
+    .custom-cursor {
+        position: fixed;
+        inset: 0;
+        z-index: 99999;
+        pointer-events: none;
+    }
+
+    .custom-cursor__dot,
+    .custom-cursor__ring {
+        position: fixed;
+        top: 0;
+        left: 0;
+        display: block;
+        border-radius: 9999px;
+        opacity: 0;
+        pointer-events: none;
+        will-change: transform, width, height, opacity;
+    }
+
+    .custom-cursor__dot {
+        width: 7px;
+        height: 7px;
+        background: #07966b;
+        box-shadow: 0 0 12px rgba(7, 150, 107, .45);
+        transition: opacity .15s ease;
+    }
+
+    .custom-cursor__ring {
+        width: 34px;
+        height: 34px;
+        border: 1.5px solid rgba(7, 150, 107, .75);
+        background: rgba(16, 185, 129, .055);
+        transition:
+                width .2s ease,
+                height .2s ease,
+                border-color .2s ease,
+                background .2s ease,
+                opacity .15s ease;
+    }
+
+    .custom-cursor__dot.is-visible,
+    .custom-cursor__ring.is-visible {
+        opacity: 1;
+    }
+
+    .custom-cursor__ring.is-hovering {
+        width: 52px;
+        height: 52px;
+        border-color: rgba(5, 150, 105, .95);
+        background: rgba(16, 185, 129, .12);
+    }
+
+    .custom-cursor__ring.is-clicking {
+        width: 25px;
+        height: 25px;
+        background: rgba(16, 185, 129, .22);
+    }
+}
+
+@media (pointer: coarse), (prefers-reduced-motion: reduce) {
+    .custom-cursor {
+        display: none !important;
+    }
+}
