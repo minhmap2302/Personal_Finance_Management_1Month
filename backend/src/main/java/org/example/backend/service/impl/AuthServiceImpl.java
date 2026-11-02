@@ -113,6 +113,12 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public void logout(String authHeader, String rawRefreshToken) {
+        logout(authHeader, rawRefreshToken, null);
+    }
+
+    @Override
+    @Transactional
+    public void logout(String authHeader, String rawRefreshToken, User currentUser) {
         // 1. Thu hồi Access Token (lưu vào bảng invalidated_tokens)
         if (StringUtils.hasText(authHeader) && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7).trim();
@@ -140,6 +146,13 @@ public class AuthServiceImpl implements AuthService {
                 rt.setRevoked(true);
                 refreshTokenRepository.save(rt);
             });
+        }
+
+        // 3. Nếu có người dùng hiện tại, thu hồi toàn bộ session của họ như cơ chế an ninh.
+        if (currentUser != null && currentUser.getId() != null) {
+            User userForRevoke = userRepository.findById(currentUser.getId())
+                    .orElse(currentUser);
+            refreshTokenRepository.revokeAllByUser(userForRevoke);
         }
     }
 
