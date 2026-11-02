@@ -13,7 +13,11 @@ public interface AuthService {
 
     AuthResponse login(LoginRequest request);
 
-    void logout(String authHeader, String rawRefreshToken);
+    default void logout(String authHeader, String rawRefreshToken) {
+        logout(authHeader, rawRefreshToken, null);
+    }
+
+    void logout(String authHeader, String rawRefreshToken, User currentUser);
 
     AuthResponse refreshToken(RefreshTokenRequest request);
 }
