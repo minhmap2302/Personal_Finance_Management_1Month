@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.example.backend.model.enums.BudgetStatus;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -41,6 +42,9 @@ public class BudgetDetailResponse {
     private BigDecimal usedPercent;
 
     private boolean overBudget;
+
+    /** Mức cảnh báo theo số tiền đã dùng: NORMAL, WARNING (từ 80%), EXCEEDED (vượt 100%). */
+    private BudgetStatus status;
 
     /** Tổng số tiền đã phân bổ cho các ngân sách con. */
     private BigDecimal allocated;

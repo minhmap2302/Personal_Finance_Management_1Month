@@ -10,6 +10,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * Gia đình (bảng families).
@@ -30,6 +31,9 @@ public class Family {
 
     @Column(name = "name", nullable = false, length = 100)
     private String name;
+
+    @OneToMany(mappedBy = "family", cascade = CascadeType.REMOVE)
+    private List<FamilyMember> members;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

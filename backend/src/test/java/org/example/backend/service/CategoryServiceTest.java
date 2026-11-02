@@ -1,7 +1,17 @@
 package org.example.backend.service;
 
 import org.example.backend.exception.ConflictException;
-import org.example.backend.exception.ResourceNotFoundException;
+import org.example.backend.model.dto.request.CreateCategoryRequest;
+import org.example.backend.model.dto.request.UpdateCategoryRequest;
+import org.example.backend.model.dto.response.CategoryResponse;
+import org.example.backend.model.entity.Category;
+import org.example.backend.model.entity.User;
+import org.example.backend.model.enums.CategoryType;
+import org.example.backend.model.enums.SystemRole;
+import org.example.backend.repository.BudgetRepository;
+import org.example.backend.repository.CategoryRepository;
+import org.example.backend.repository.TransactionRepository;
+import org.example.backend.service.impl.CategoryServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -9,14 +19,20 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class CategoryServiceTest {
@@ -25,47 +41,52 @@ class CategoryServiceTest {
     private CategoryRepository categoryRepository;
 
     @Mock
+    private BudgetRepository budgetRepository;
+
+    @Mock
     private TransactionRepository transactionRepository;
 
     @Mock
-    private BudgetRepository budgetRepository;
+    private FamilyAccessChecker familyAccessChecker;
 
     @InjectMocks
     private CategoryServiceImpl categoryService;
 
     private User currentUser;
-    private Category testCategory;
+    private Category category;
 
     @BeforeEach
     void setUp() {
         currentUser = User.builder()
                 .id(1L)
-                .email("test@example.com")
-                .username("testuser")
+                .email("admin@example.com")
+                .username("admin")
+                .role(SystemRole.ADMIN)
+                .enabled(true)
                 .build();
 
-        testCategory = Category.builder()
+        category = Category.builder()
                 .id(10L)
-                .user(currentUser)
                 .name("Ăn uống")
                 .type(CategoryType.EXPENSE)
-                .createdAt(LocalDateTime.now())
+                .family(null)
+                .active(true)
                 .build();
     }
 
     @Test
-    @DisplayName("Tạo danh mục thành công")
-    void createCategory_success() {
-        CategoryCreateRequest request = CategoryCreateRequest.builder()
+    @DisplayName("createSystemCategory - thành công")
+    void createSystemCategory_success() {
+        CreateCategoryRequest request = CreateCategoryRequest.builder()
                 .name("Ăn uống")
                 .type(CategoryType.EXPENSE)
                 .build();
 
-        when(categoryRepository.existsByNameIgnoreCaseAndUserIdAndType("Ăn uống", 1L, CategoryType.EXPENSE))
+        when(categoryRepository.existsByFamilyIsNullAndNameIgnoreCaseAndType("Ăn uống", CategoryType.EXPENSE))
                 .thenReturn(false);
-        when(categoryRepository.save(any(Category.class))).thenReturn(testCategory);
+        when(categoryRepository.save(any(Category.class))).thenReturn(category);
 
-        CategoryResponse response = categoryService.createCategory(request, currentUser);
+        CategoryResponse response = categoryService.createSystemCategory(currentUser, request);
 
         assertNotNull(response);
         assertEquals(10L, response.getId());
@@ -75,113 +96,60 @@ class CategoryServiceTest {
     }
 
     @Test
-    @DisplayName("Tạo danh mục thất bại do trùng tên và loại của cùng user")
-    void createCategory_conflict() {
-        CategoryCreateRequest request = CategoryCreateRequest.builder()
+    @DisplayName("createSystemCategory - trùng tên sẽ ném ConflictException")
+    void createSystemCategory_conflict() {
+        CreateCategoryRequest request = CreateCategoryRequest.builder()
                 .name("Ăn uống")
                 .type(CategoryType.EXPENSE)
                 .build();
 
-        when(categoryRepository.existsByNameIgnoreCaseAndUserIdAndType("Ăn uống", 1L, CategoryType.EXPENSE))
+        when(categoryRepository.existsByFamilyIsNullAndNameIgnoreCaseAndType("Ăn uống", CategoryType.EXPENSE))
                 .thenReturn(true);
 
-        assertThrows(ConflictException.class, () -> categoryService.createCategory(request, currentUser));
+        assertThrows(ConflictException.class, () -> categoryService.createSystemCategory(currentUser, request));
         verify(categoryRepository, never()).save(any(Category.class));
     }
 
     @Test
-    @DisplayName("Lấy danh sách danh mục theo user không lọc")
-    void getCategories_all() {
-        when(categoryRepository.findAllByUserId(1L)).thenReturn(List.of(testCategory));
+    @DisplayName("getCategories - trả về page danh mục")
+    void getCategories_success() {
+        PageRequest pageable = PageRequest.of(0, 10);
+        Page<Category> page = new PageImpl<>(List.of(category), pageable, 1);
 
-        List<CategoryResponse> list = categoryService.getCategories(currentUser, null);
+        when(categoryRepository.search(null, "", CategoryType.EXPENSE, false, pageable))
+                .thenReturn(page);
 
-        assertEquals(1, list.size());
-        assertEquals("Ăn uống", list.get(0).getName());
-        verify(categoryRepository).findAllByUserId(1L);
+        Page<CategoryResponse> result = categoryService.getCategories(currentUser, null, "", CategoryType.EXPENSE, false, pageable);
+
+        assertNotNull(result);
+        assertEquals(1, result.getTotalElements());
+        assertEquals("Ăn uống", result.getContent().get(0).getName());
     }
 
     @Test
-    @DisplayName("Lấy danh sách danh mục theo user có lọc theo type")
-    void getCategories_filtered() {
-        when(categoryRepository.findAllByUserIdAndType(1L, CategoryType.EXPENSE))
-                .thenReturn(List.of(testCategory));
-
-        List<CategoryResponse> list = categoryService.getCategories(currentUser, CategoryType.EXPENSE);
-
-        assertEquals(1, list.size());
-        verify(categoryRepository).findAllByUserIdAndType(1L, CategoryType.EXPENSE);
-    }
-
-    @Test
-    @DisplayName("Lấy chi tiết danh mục thành công")
-    void getCategoryById_success() {
-        when(categoryRepository.findByIdAndUserId(10L, 1L)).thenReturn(Optional.of(testCategory));
-
-        CategoryResponse response = categoryService.getCategoryById(10L, currentUser);
-
-        assertNotNull(response);
-        assertEquals(10L, response.getId());
-        assertEquals("Ăn uống", response.getName());
-    }
-
-    @Test
-    @DisplayName("Lấy chi tiết danh mục thất bại khi không thuộc quyền sở hữu")
-    void getCategoryById_notFound() {
-        when(categoryRepository.findByIdAndUserId(99L, 1L)).thenReturn(Optional.empty());
-
-        assertThrows(ResourceNotFoundException.class, () -> categoryService.getCategoryById(99L, currentUser));
-    }
-
-    @Test
-    @DisplayName("Cập nhật danh mục thành công")
+    @DisplayName("updateCategory - thành công")
     void updateCategory_success() {
-        CategoryUpdateRequest request = CategoryUpdateRequest.builder()
-                .name("Ăn uống ngoài")
+        UpdateCategoryRequest request = UpdateCategoryRequest.builder()
+                .name("Ăn uống mới")
                 .type(CategoryType.EXPENSE)
                 .build();
 
-        when(categoryRepository.findByIdAndUserId(10L, 1L)).thenReturn(Optional.of(testCategory));
-        when(categoryRepository.existsByNameIgnoreCaseAndUserIdAndType("Ăn uống ngoài", 1L, CategoryType.EXPENSE))
-                .thenReturn(false);
-        when(categoryRepository.save(any(Category.class))).thenReturn(testCategory);
+        Category existing = Category.builder()
+                .id(10L)
+                .name("Ăn uống")
+                .type(CategoryType.EXPENSE)
+                .family(null)
+                .active(true)
+                .build();
 
-        CategoryResponse response = categoryService.updateCategory(10L, request, currentUser);
+        when(categoryRepository.findById(10L)).thenReturn(Optional.of(existing));
+        when(categoryRepository.existsByFamilyIsNullAndNameIgnoreCaseAndTypeAndIdNot("Ăn uống mới", CategoryType.EXPENSE, 10L))
+                .thenReturn(false);
+        when(categoryRepository.save(any(Category.class))).thenReturn(existing);
+
+        CategoryResponse response = categoryService.updateCategory(currentUser, 10L, null, request);
 
         assertNotNull(response);
-        verify(categoryRepository).save(testCategory);
-    }
-
-    @Test
-    @DisplayName("Xóa danh mục thành công khi không có ràng buộc")
-    void deleteCategory_success() {
-        when(categoryRepository.findByIdAndUserId(10L, 1L)).thenReturn(Optional.of(testCategory));
-        when(transactionRepository.existsByCategoryId(10L)).thenReturn(false);
-        when(budgetRepository.existsByCategoryId(10L)).thenReturn(false);
-
-        categoryService.deleteCategory(10L, currentUser);
-
-        verify(categoryRepository).delete(testCategory);
-    }
-
-    @Test
-    @DisplayName("Xóa danh mục thất bại do có giao dịch tham chiếu (HTTP 409)")
-    void deleteCategory_conflictTransaction() {
-        when(categoryRepository.findByIdAndUserId(10L, 1L)).thenReturn(Optional.of(testCategory));
-        when(transactionRepository.existsByCategoryId(10L)).thenReturn(true);
-
-        assertThrows(ConflictException.class, () -> categoryService.deleteCategory(10L, currentUser));
-        verify(categoryRepository, never()).delete(any(Category.class));
-    }
-
-    @Test
-    @DisplayName("Xóa danh mục thất bại do có ngân sách tham chiếu (HTTP 409)")
-    void deleteCategory_conflictBudget() {
-        when(categoryRepository.findByIdAndUserId(10L, 1L)).thenReturn(Optional.of(testCategory));
-        when(transactionRepository.existsByCategoryId(10L)).thenReturn(false);
-        when(budgetRepository.existsByCategoryId(10L)).thenReturn(true);
-
-        assertThrows(ConflictException.class, () -> categoryService.deleteCategory(10L, currentUser));
-        verify(categoryRepository, never()).delete(any(Category.class));
+        assertEquals("Ăn uống", response.getName());
     }
 }

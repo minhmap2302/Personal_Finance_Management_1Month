@@ -8,6 +8,7 @@ import org.example.backend.model.dto.request.RegisterRequest;
 import org.example.backend.model.dto.response.ApiResponse;
 import org.example.backend.model.dto.response.AuthResponse;
 import org.example.backend.model.dto.response.UserResponse;
+import org.example.backend.model.entity.RefreshToken;
 import org.example.backend.model.entity.User;
 import org.example.backend.service.AuthService;
 import org.springframework.http.HttpStatus;
@@ -39,19 +40,10 @@ public class AuthController {
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<Void>> logout(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestBody(required = false) RefreshTokenRequest request,
-            @AuthenticationPrincipal User currentUser) {
-        String refreshToken = (request != null) ? request.getRefreshToken() : null;
-        String tokenHeader = authHeader;
-        if (!StringUtils.hasText(tokenHeader) && request != null && StringUtils.hasText(request.getAccessToken())) {
-            tokenHeader = "Bearer " + request.getAccessToken().trim();
-        }
+            @Valid @RequestBody RefreshTokenRequest request) {
 
-        if (refreshToken != null || currentUser != null) {
-            authService.logout(tokenHeader, refreshToken, currentUser);
-        } else {
-            authService.logout(tokenHeader);
-        }
+        authService.logout(authHeader, request.getRefreshToken());
+
         return ResponseEntity.ok(ApiResponse.success("Đăng xuất thành công"));
     }
 

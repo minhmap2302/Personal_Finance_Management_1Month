@@ -4,6 +4,8 @@ import org.example.backend.model.dto.request.SendInvitationRequest;
 import org.example.backend.model.dto.response.InvitationResponse;
 import org.example.backend.model.dto.response.UserSearchResponse;
 import org.example.backend.model.enums.InvitationStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -12,14 +14,20 @@ import java.util.List;
  */
 public interface InvitationService {
 
-    /** Chủ gia đình và quản lý tìm người dùng theo tên đăng nhập để mời. */
-    List<UserSearchResponse> searchUsers(Long userId, Long familyId, String keyword);
+    /**
+     * Chủ gia đình và quản lý tìm người dùng theo tên đăng nhập để mời, có phân trang.
+     * Luôn sắp theo tên đăng nhập, kích thước trang bị giới hạn.
+     */
+    Page<UserSearchResponse> searchUsers(Long userId, Long familyId, String keyword, Pageable pageable);
 
     /** Chủ gia đình và quản lý gửi lời mời. */
     InvitationResponse sendInvitation(Long userId, Long familyId, SendInvitationRequest request);
 
     /** Lời mời gửi cho chính người dùng, theo trạng thái, mới nhất trước. */
     List<InvitationResponse> getMyInvitations(Long userId, InvitationStatus status);
+
+    /** Chi tiết một lời mời gửi cho chính người dùng. */
+    InvitationResponse getMyInvitation(Long userId, Long invitationId);
 
     /** Số lời mời đang chờ, dùng cho chấm đỏ thông báo. */
     long countPendingInvitations(Long userId);

@@ -18,7 +18,9 @@ import org.example.backend.repository.InvitationRepository;
 import org.example.backend.repository.UserRepository;
 import org.example.backend.service.FamilyAccessChecker;
 import org.example.backend.service.InvitationService;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -40,8 +42,8 @@ public class InvitationServiceImpl implements InvitationService {
     /** Số ký tự tối thiểu khi tìm người dùng, tránh liệt kê hàng loạt tài khoản. */
     private static final int MIN_SEARCH_LENGTH = 2;
 
-    /** Số kết quả tối đa khi tìm người dùng. */
-    private static final int MAX_SEARCH_RESULTS = 10;
+    /** Số kết quả tối đa mỗi trang khi tìm người dùng. */
+    private static final int MAX_PAGE_SIZE = 20;
 
     private final InvitationRepository invitationRepository;
     private final FamilyMemberRepository familyMemberRepository;
@@ -50,7 +52,7 @@ public class InvitationServiceImpl implements InvitationService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<UserSearchResponse> searchUsers(Long userId, Long familyId, String keyword) {
+    public Page<UserSearchResponse> searchUsers(Long userId, Long familyId, String keyword, Pageable pageable) {
         accessChecker.requireRole(userId, familyId, FamilyRole.MANAGER,
                 "Chỉ chủ gia đình và quản lý mới được tìm người để mời");
 
@@ -59,25 +61,26 @@ public class InvitationServiceImpl implements InvitationService {
             throw new BadRequestException("Hãy nhập ít nhất " + MIN_SEARCH_LENGTH + " ký tự để tìm kiếm");
         }
 
+        // Luôn sắp theo tên đăng nhập và giới hạn kích thước trang, để không ai liệt kê hàng loạt tài khoản.
+        Pageable safePageable = PageRequest.of(pageable.getPageNumber(),
+                Math.min(pageable.getPageSize(), MAX_PAGE_SIZE), Sort.by("username"));
+
         // Bỏ qua tài khoản admin hệ thống (không được vào gia đình), tài khoản bị khóa và người đã là thành viên.
-        List<User> users = invitationRepository.searchInvitableUsers(
-                normalized, SystemRole.ADMIN, familyId,
-                PageRequest.of(0, MAX_SEARCH_RESULTS, Sort.by("username")));
+        Page<User> users = invitationRepository.searchInvitableUsers(
+                normalized, SystemRole.ADMIN, familyId, safePageable);
         if (users.isEmpty()) {
-            return List.of();
+            return Page.empty(safePageable);
         }
 
         Set<Long> alreadyInvited = Set.copyOf(invitationRepository.findInvitedUserIds(
-                familyId, InvitationStatus.PENDING, users.stream().map(User::getId).toList()));
+                familyId, InvitationStatus.PENDING, users.getContent().stream().map(User::getId).toList()));
 
-        return users.stream()
-                .map(u -> UserSearchResponse.builder()
-                        .userId(u.getId())
-                        .username(u.getUsername())
-                        .fullName(u.getFullName())
-                        .alreadyInvited(alreadyInvited.contains(u.getId()))
-                        .build())
-                .collect(Collectors.toList());
+        return users.map(u -> UserSearchResponse.builder()
+                .userId(u.getId())
+                .username(u.getUsername())
+                .fullName(u.getFullName())
+                .alreadyInvited(alreadyInvited.contains(u.getId()))
+                .build());
     }
 
     @Override
@@ -87,8 +90,11 @@ public class InvitationServiceImpl implements InvitationService {
                 "Chỉ chủ gia đình và quản lý mới được gửi lời mời");
 
         User invited = userRepository.findById(request.getUserId())
-                .filter(User::isEnabled)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng"));
+
+        if (!invited.isEnabled()) {
+            throw new BadRequestException("Tài khoản này đã bị khóa");
+        }
 
         if (invited.getRole() == SystemRole.ADMIN) {
             throw new BadRequestException("Không thể mời tài khoản quản trị hệ thống vào gia đình");
@@ -116,6 +122,15 @@ public class InvitationServiceImpl implements InvitationService {
         return invitationRepository.findByInvitedUserIdAndStatusOrderByCreatedAtDesc(userId, status).stream()
                 .map(this::toResponse)
                 .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public InvitationResponse getMyInvitation(Long userId, Long invitationId) {
+        // Lời mời của người khác được coi như không tồn tại.
+        return invitationRepository.findByIdAndInvitedUserId(invitationId, userId)
+                .map(this::toResponse)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy lời mời"));
     }
 
     @Override
