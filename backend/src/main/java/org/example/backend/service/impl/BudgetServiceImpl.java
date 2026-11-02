@@ -16,6 +16,7 @@ import org.example.backend.model.entity.Budget;
 import org.example.backend.model.entity.Category;
 import org.example.backend.model.entity.Family;
 import org.example.backend.model.entity.FamilyMember;
+import org.example.backend.model.enums.BudgetStatus;
 import org.example.backend.model.enums.CategoryType;
 import org.example.backend.model.enums.FamilyRole;
 import org.example.backend.model.enums.SavingGoalStatus;
@@ -25,6 +26,7 @@ import org.example.backend.repository.CategoryRepository;
 import org.example.backend.repository.FamilyMemberRepository;
 import org.example.backend.repository.FamilyRepository;
 import org.example.backend.service.BudgetService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -54,11 +56,15 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class BudgetServiceImpl implements BudgetService {
 
+    @Value("${app.timezone}")
+    private String timezone;
+
     /** Độ dài tối đa của một ngân sách tổng (số ngày). */
     private static final int MAX_BUDGET_DAYS = 366;
-
-    private static final ZoneId ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
     private static final BigDecimal HUNDRED = BigDecimal.valueOf(100);
+
+    /** Từ ngưỡng này (phần trăm giới hạn đã dùng) ngân sách chuyển sang mức cảnh báo. */
+    private static final BigDecimal WARNING_PERCENT = BigDecimal.valueOf(80);
 
     private final BudgetRepository budgetRepository;
     private final FamilyRepository familyRepository;
@@ -89,7 +95,7 @@ public class BudgetServiceImpl implements BudgetService {
     @Override
     public BudgetDetailResponse getCurrentBudget(Long userId, Long familyId, LocalDate date) {
         requireMember(userId, familyId);
-        LocalDate target = date != null ? date : LocalDate.now(ZONE);
+        LocalDate target = date != null ? date : LocalDate.now(ZoneId.of(timezone));
         Budget total = budgetRepository.findTotalCoveringDate(familyId, target)
                 .orElseThrow(() -> new ResourceNotFoundException("Không có ngân sách tổng nào bao phủ ngày này"));
         return toDetail(total);
@@ -325,6 +331,7 @@ public class BudgetServiceImpl implements BudgetService {
                 .used(used)
                 .usedPercent(percent(used, total.getAmount()))
                 .overBudget(used.compareTo(total.getAmount()) > 0)
+                .status(statusOf(used, total.getAmount()))
                 .build();
     }
 
@@ -363,6 +370,7 @@ public class BudgetServiceImpl implements BudgetService {
                 .remaining(total.getAmount().subtract(used))
                 .usedPercent(percent(used, total.getAmount()))
                 .overBudget(used.compareTo(total.getAmount()) > 0)
+                .status(statusOf(used, total.getAmount()))
                 .allocated(allocated)
                 .unallocated(total.getAmount().subtract(allocated))
                 .subBudgets(subResponses)
@@ -379,6 +387,7 @@ public class BudgetServiceImpl implements BudgetService {
                 .remaining(sub.getAmount().subtract(spent))
                 .usedPercent(percent(spent, sub.getAmount()))
                 .overBudget(spent.compareTo(sub.getAmount()) > 0)
+                .status(statusOf(spent, sub.getAmount()))
                 .build();
     }
 
@@ -409,6 +418,21 @@ public class BudgetServiceImpl implements BudgetService {
     /** used * 100 / amount, làm tròn 2 chữ số. amount luôn lớn hơn 0 (có CHECK ở database). */
     private BigDecimal percent(BigDecimal used, BigDecimal amount) {
         return used.multiply(HUNDRED).divide(amount, 2, RoundingMode.HALF_UP);
+    }
+
+    /**
+     * Mức cảnh báo theo số tiền đã dùng so với giới hạn của chính ngân sách đó:
+     * ngân sách tổng dùng (chi tiêu + đóng góp tiết kiệm), ngân sách con chỉ dùng chi tiêu của danh mục.
+     * So sánh used * 100 với amount * 80 để không phụ thuộc vào việc làm tròn phần trăm.
+     */
+    private BudgetStatus statusOf(BigDecimal used, BigDecimal amount) {
+        if (used.compareTo(amount) > 0) {
+            return BudgetStatus.EXCEEDED;
+        }
+        if (used.multiply(HUNDRED).compareTo(amount.multiply(WARNING_PERCENT)) >= 0) {
+            return BudgetStatus.WARNING;
+        }
+        return BudgetStatus.NORMAL;
     }
 
     private BigDecimal zeroIfNull(BigDecimal value) {

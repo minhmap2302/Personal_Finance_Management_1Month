@@ -20,10 +20,13 @@ public class FamilyAccessChecker {
     private final FamilyMemberRepository familyMemberRepository;
     private final FamilyRepository familyRepository;
 
-    /** Người dùng phải là thành viên của gia đình. */
+    /**
+     * Người dùng phải là thành viên của gia đình. Người không phải thành viên nhận 404 như gia đình không tồn tại
+     * (không phải 403), để không ai dò ra được gia đình nào có thật. Thiếu vai trò (requireRole) mới là 403.
+     */
     public FamilyMember requireMember(Long userId, Long familyId) {
         return familyMemberRepository.findByUserIdAndFamilyId(userId, familyId)
-                .orElseThrow(() -> new ForbiddenException("Bạn không thuộc gia đình này"));
+                .orElseThrow(() -> new ResourceNotFoundException("Gia đình không tồn tại"));
     }
 
     /** Người dùng phải là thành viên và có vai trò từ minimum trở lên. */
@@ -42,10 +45,10 @@ public class FamilyAccessChecker {
      */
     public FamilyMember requireRoleWithLock(Long userId, Long familyId, FamilyRole minimum, String message) {
         if (!familyMemberRepository.existsByUserIdAndFamilyId(userId, familyId)) {
-            throw new ForbiddenException("Bạn không thuộc gia đình này");
+            throw new ResourceNotFoundException("Gia đình không tồn tại");
         }
         familyRepository.findByIdForUpdate(familyId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy gia đình"));
+                .orElseThrow(() -> new ResourceNotFoundException("Gia đình không tồn tại"));
         return requireRole(userId, familyId, minimum, message);
     }
 }

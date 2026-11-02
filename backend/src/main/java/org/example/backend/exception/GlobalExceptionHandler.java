@@ -12,6 +12,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
@@ -24,39 +25,87 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler({BadCredentialsException.class, UsernameNotFoundException.class, DisabledException.class})
+    @ExceptionHandler({BadCredentialsException.class, UsernameNotFoundException.class})
     public ResponseEntity<ErrorResponse> handleBadCredentials(Exception ex, HttpServletRequest request) {
-        return buildError(HttpStatus.UNAUTHORIZED, "Tên đăng nhập hoặc mật khẩu không chính xác", request.getRequestURI());
+        return buildError(
+                HttpStatus.UNAUTHORIZED,
+                getMessageOrDefault(ex, "Tên đăng nhập hoặc mật khẩu không chính xác"),
+                request.getRequestURI()
+        );
+    }
+
+    @ExceptionHandler(DisabledException.class)
+    public ResponseEntity<ErrorResponse> handleDisabled(DisabledException ex, HttpServletRequest request) {
+        return buildError(
+                HttpStatus.UNAUTHORIZED,
+                getMessageOrDefault(ex, "Tài khoản của bạn đã bị khóa"),
+                request.getRequestURI()
+        );
     }
 
     @ExceptionHandler(UnauthorizedException.class)
     public ResponseEntity<ErrorResponse> handleUnauthorized(UnauthorizedException ex, HttpServletRequest request) {
-        return buildError(HttpStatus.UNAUTHORIZED, ex.getMessage(), request.getRequestURI());
+        return buildError(
+                HttpStatus.UNAUTHORIZED,
+                getMessageOrDefault(ex, "Bạn chưa đăng nhập"),
+                request.getRequestURI()
+        );
     }
 
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException ex, HttpServletRequest request) {
-        return buildError(HttpStatus.FORBIDDEN, "Bạn không có quyền truy cập tài nguyên này", request.getRequestURI());
+        return buildError(
+                HttpStatus.FORBIDDEN,
+                getMessageOrDefault(ex, "Bạn không có quyền truy cập tài nguyên này"),
+                request.getRequestURI()
+        );
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleResourceNotFound(ResourceNotFoundException ex, HttpServletRequest request) {
-        return buildError(HttpStatus.NOT_FOUND, ex.getMessage(), request.getRequestURI());
+        return buildError(
+                HttpStatus.NOT_FOUND,
+                getMessageOrDefault(ex, "Không tìm thấy tài nguyên"),
+                request.getRequestURI()
+        );
     }
 
     @ExceptionHandler(ConflictException.class)
     public ResponseEntity<ErrorResponse> handleConflict(ConflictException ex, HttpServletRequest request) {
-        return buildError(HttpStatus.CONFLICT, ex.getMessage(), request.getRequestURI());
+        return buildError(
+                HttpStatus.CONFLICT,
+                getMessageOrDefault(ex, "Dữ liệu bị xung đột"),
+                request.getRequestURI()
+        );
     }
 
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<ErrorResponse> handleBadRequest(BadRequestException ex, HttpServletRequest request) {
-        return buildError(HttpStatus.BAD_REQUEST, ex.getMessage(), request.getRequestURI());
+        return buildError(
+                HttpStatus.BAD_REQUEST,
+                getMessageOrDefault(ex, "Yêu cầu không hợp lệ"),
+                request.getRequestURI()
+        );
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ErrorResponse> handleMissingRequestParam(
+            MissingServletRequestParameterException ex,
+            HttpServletRequest request) {
+        return buildError(
+                HttpStatus.BAD_REQUEST,
+                "Thiếu tham số bắt buộc: " + ex.getParameterName(),
+                request.getRequestURI()
+        );
     }
 
     @ExceptionHandler(ForbiddenException.class)
     public ResponseEntity<ErrorResponse> handleForbidden(ForbiddenException ex, HttpServletRequest request) {
-        return buildError(HttpStatus.FORBIDDEN, ex.getMessage(), request.getRequestURI());
+        return buildError(
+                HttpStatus.FORBIDDEN,
+                getMessageOrDefault(ex, "Bạn không có quyền thực hiện thao tác này"),
+                request.getRequestURI()
+        );
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -77,18 +126,43 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException ex, HttpServletRequest request) {
-        String message = String.format("Giá trị '%s' không hợp lệ cho trường '%s'", ex.getValue(), ex.getName());
+        String message = String.format(
+                "Giá trị '%s' không hợp lệ cho trường '%s'",
+                ex.getValue(),
+                ex.getName()
+        );
+
         return buildError(HttpStatus.BAD_REQUEST, message, request.getRequestURI());
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<ErrorResponse> handleUnreadableMessage(HttpMessageNotReadableException ex, HttpServletRequest request) {
-        return buildError(HttpStatus.BAD_REQUEST, "Dữ liệu gửi lên không hợp lệ", request.getRequestURI());
+    public ResponseEntity<ErrorResponse> handleUnreadableMessage(
+            HttpMessageNotReadableException ex,
+            HttpServletRequest request
+    ) {
+        return buildError(
+                HttpStatus.BAD_REQUEST,
+                "Dữ liệu gửi lên không hợp lệ",
+                request.getRequestURI()
+        );
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneric(Exception ex, HttpServletRequest request) {
-        return buildError(HttpStatus.INTERNAL_SERVER_ERROR, "Lỗi hệ thống, vui lòng thử lại sau", request.getRequestURI());
+        return buildError(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "Lỗi hệ thống, vui lòng thử lại sau",
+                request.getRequestURI()
+        );
+    }
+
+
+    // utility methods
+
+    private String getMessageOrDefault(Exception ex, String defaultMessage) {
+        return ex.getMessage() != null && !ex.getMessage().isBlank()
+                ? ex.getMessage()
+                : defaultMessage;
     }
 
     private Map<String, String> getFieldErrorMap(List<FieldError> errors) {
@@ -110,11 +184,20 @@ public class GlobalExceptionHandler {
                 .collect(Collectors.joining(", "));
     }
 
-    private ResponseEntity<ErrorResponse> buildError(HttpStatus status, String message, String path) {
+    private ResponseEntity<ErrorResponse> buildError(
+            HttpStatus status,
+            String message,
+            String path
+    ) {
         return buildError(status, message, path, null);
     }
 
-    private ResponseEntity<ErrorResponse> buildError(HttpStatus status, String message, String path, Map<String, String> fieldErrors) {
+    private ResponseEntity<ErrorResponse> buildError(
+            HttpStatus status,
+            String message,
+            String path,
+            Map<String, String> fieldErrors
+    ) {
         ErrorResponse error = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .message(message)

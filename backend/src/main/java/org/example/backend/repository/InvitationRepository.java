@@ -1,6 +1,8 @@
 package org.example.backend.repository;
 
 import org.example.backend.model.entity.Invitation;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Range;
 import org.springframework.data.jpa.repository.JpaRepository;
 import jakarta.persistence.LockModeType;
 import org.example.backend.model.entity.User;
@@ -48,8 +50,12 @@ public interface InvitationRepository extends JpaRepository<Invitation, Long> {
             + "where u.enabled = true and u.role <> :excludedRole "
             + "and lower(u.username) like concat('%', :keyword, '%') "
             + "and u.id not in (select m.user.id from FamilyMember m where m.family.id = :familyId)")
-    List<User> searchInvitableUsers(@Param("keyword") String keyword,
+    Page<User> searchInvitableUsers(@Param("keyword") String keyword,
                                     @Param("excludedRole") SystemRole excludedRole,
                                     @Param("familyId") Long familyId,
                                     Pageable pageable);
+
+    /** Một lời mời gửi cho đúng người dùng này, kèm gia đình và những người liên quan. */
+    @EntityGraph(attributePaths = {"family", "invitedUser", "invitedBy"})
+    Optional<Invitation> findByIdAndInvitedUserId(Long id, Long invitedUserId);
 }

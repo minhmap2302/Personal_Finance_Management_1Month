@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.example.backend.model.enums.BudgetStatus;
 
 import java.math.BigDecimal;
 
@@ -32,4 +33,7 @@ public class SubBudgetResponse {
     private BigDecimal usedPercent;
 
     private boolean overBudget;
+
+    /** Mức cảnh báo theo số tiền đã dùng: NORMAL, WARNING (từ 80%), EXCEEDED (vượt 100%). */
+    private BudgetStatus status;
 }
