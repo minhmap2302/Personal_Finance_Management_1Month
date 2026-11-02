@@ -399,15 +399,6 @@ export default function Family() {
                         <ImpactRow icon={Users} title="Thông tin không gian chung" description="Danh sách thành viên, lời mời và liên kết thành viên với gia đình." />
                       </div>
                     </div>
-
-                    <div>
-                      <p className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-500">Dữ liệu vẫn được giữ lại</p>
-                      <div className="space-y-3 rounded-xl border border-emerald-200 bg-emerald-50/50 p-3">
-                        <ImpactRow retained icon={UserRound} title="Tài khoản cá nhân" description="Tài khoản đăng nhập của bạn và các thành viên không bị xóa." />
-                        <ImpactRow retained icon={Database} title="Danh mục hệ thống" description="Các danh mục dùng chung, không thuộc riêng gia đình, vẫn được giữ." />
-                        <ImpactRow retained icon={ImageIcon} title="Ảnh hóa đơn trên Cloudinary" description="Ảnh đã tải lên Cloudinary không bị xóa bởi thao tác giải tán gia đình." />
-                      </div>
-                    </div>
                   </div>
               ) : (
                   <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm leading-6 text-amber-800">
