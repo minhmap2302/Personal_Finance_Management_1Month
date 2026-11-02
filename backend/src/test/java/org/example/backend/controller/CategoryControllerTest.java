@@ -17,6 +17,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.MethodParameter;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -30,7 +34,6 @@ import java.util.List;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -116,7 +119,7 @@ public class CategoryControllerTest {
     @Test
     @DisplayName("POST /api/v1/categories/system - Không đăng nhập trả về 401")
     void createSystemCategory_unauthorized() throws Exception {
-        mockMvc = buildMockMvcWithUser(null);
+        MockMvc unauthorizedMvc = buildMockMvcWithUser(null);
 
         String json = """
                 {
@@ -125,7 +128,7 @@ public class CategoryControllerTest {
                 }
                 """;
 
-        mockMvc.perform(post("/api/v1/categories/system")
+        unauthorizedMvc.perform(post("/api/v1/categories/system")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isUnauthorized())
@@ -175,14 +178,18 @@ public class CategoryControllerTest {
                 .system(true)
                 .build();
 
-        when(categoryService.getCategories(eq(mockUser), any(), any(), eq(CategoryType.INCOME), eq(false), eq(0), eq(10)))
-                .thenReturn(List.of(response));
+        Page<CategoryResponse> page = new PageImpl<>(List.of(response), PageRequest.of(0, 10), 1);
+        when(categoryService.getCategories(eq(mockUser), eq(10L), eq(""), eq(CategoryType.INCOME), eq(false), any(Pageable.class)))
+                .thenReturn(page);
 
         mockMvc.perform(get("/api/v1/categories")
-                        .param("type", "INCOME"))
+                        .param("familyId", "10")
+                        .param("type", "INCOME")
+                        .param("keyword", "")
+                        .param("includeArchived", "false"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data[0].name").value("Tiền lương"));
+                .andExpect(jsonPath("$.data.content[0].name").value("Tiền lương"));
     }
 
     @Test
@@ -253,7 +260,7 @@ public class CategoryControllerTest {
     @Test
     @DisplayName("PUT /api/v1/categories/{categoryId} - Không đăng nhập trả về 401")
     void updateCategory_unauthorized() throws Exception {
-        mockMvc = buildMockMvcWithUser(null);
+        MockMvc unauthorizedMvc = buildMockMvcWithUser(null);
 
         String json = """
                 {
@@ -262,7 +269,7 @@ public class CategoryControllerTest {
                 }
                 """;
 
-        mockMvc.perform(put("/api/v1/categories/1")
+        unauthorizedMvc.perform(put("/api/v1/categories/1")
                         .param("familyId", "5")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
@@ -273,9 +280,9 @@ public class CategoryControllerTest {
     @Test
     @DisplayName("DELETE /api/v1/categories/{categoryId} - Không đăng nhập trả về 401")
     void deleteCategory_unauthorized() throws Exception {
-        mockMvc = buildMockMvcWithUser(null);
+        MockMvc unauthorizedMvc = buildMockMvcWithUser(null);
 
-        mockMvc.perform(delete("/api/v1/categories/1")
+        unauthorizedMvc.perform(delete("/api/v1/categories/1")
                         .param("familyId", "5"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.status").value(401));
@@ -284,9 +291,9 @@ public class CategoryControllerTest {
     @Test
     @DisplayName("GET /api/v1/categories - Truy cập không có người dùng trả về 401")
     void getCategories_unauthorized() throws Exception {
-        mockMvc = buildMockMvcWithUser(null);
+        MockMvc unauthorizedMvc = buildMockMvcWithUser(null);
 
-        mockMvc.perform(get("/api/v1/categories"))
+        unauthorizedMvc.perform(get("/api/v1/categories"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.status").value(401));
     }
@@ -294,10 +301,11 @@ public class CategoryControllerTest {
     @Test
     @DisplayName("GET /api/v1/categories - Danh mục không tồn tại khi service ném exception")
     void getCategories_notFound() throws Exception {
-        when(categoryService.getCategories(eq(mockUser), any(), any(), eq(CategoryType.EXPENSE), eq(false), eq(0), eq(10)))
+        when(categoryService.getCategories(eq(mockUser), eq(10L), eq(""), eq(CategoryType.EXPENSE), eq(false), any(Pageable.class)))
                 .thenThrow(new ResourceNotFoundException("Không tìm thấy danh mục"));
 
         mockMvc.perform(get("/api/v1/categories")
+                        .param("familyId", "10")
                         .param("type", "EXPENSE"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("Không tìm thấy danh mục"));
