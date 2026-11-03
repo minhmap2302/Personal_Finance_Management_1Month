@@ -16,6 +16,7 @@ export const transactionApi = {
     const form = new FormData(); form.append('file', file);
     return unwrap(api.post(`${familyPath(familyId)}/transactions/${id}/receipt`, form, { headers: { 'Content-Type': 'multipart/form-data' } }));
   },
+  removeReceipt: (familyId, id) => unwrap(api.delete(`${familyPath(familyId)}/transactions/${id}/receipt`)),
 };
 
 export const budgetApi = {
