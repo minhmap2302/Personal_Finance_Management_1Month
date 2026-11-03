@@ -238,12 +238,11 @@ class AuthServiceTest {
         when(refreshTokenRepository.findByToken(hashedToken)).thenReturn(Optional.of(refreshTokenEntity));
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
 
-        authService.logout(authHeader, rawRefreshToken, testUser);
+        authService.logout(authHeader, rawRefreshToken);
 
         verify(invalidatedTokenRepository).save(any(InvalidatedToken.class));
         assertTrue(refreshTokenEntity.isRevoked());
         verify(refreshTokenRepository).save(refreshTokenEntity);
-        verify(refreshTokenRepository).revokeAllByUser(testUser);
     }
 
     @Test
