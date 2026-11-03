@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
@@ -8,11 +7,19 @@ import AppRoutes from './routes/AppRoutes';
 import CursorTrail from './components/CursorTrail';
 import './styles.css';
 
+function RemoveBootScreen() {
+    useEffect(() => {
+        document.getElementById('boot-screen')?.remove();
+    }, []);
+    return null;
+}
+
 createRoot(document.getElementById('root')).render(
     <React.StrictMode>
         <BrowserRouter>
             <AuthProvider>
                 <ToastProvider>
+                    <RemoveBootScreen />
                     <CursorTrail />
                     <AppRoutes />
                 </ToastProvider>

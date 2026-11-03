@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useLayoutEffect, useMemo, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Bell, Check, ChevronDown, CircleHelp, FolderKanban, Home, LayoutDashboard, LogOut, Menu, ReceiptText, Search, ShieldCheck, Users, UserCircle, WalletCards, X, Sprout, Plus, Sparkles } from 'lucide-react';
