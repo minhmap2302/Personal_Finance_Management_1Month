@@ -110,7 +110,12 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
 
         configuration.setAllowedOrigins(
-                List.of("http://localhost:5173")
+                List.of(
+                        "http://localhost:5173",   // Vite dev server (local)
+                        "http://localhost:3000",   // Docker frontend
+                        "http://localhost:80",     // Docker frontend alt
+                        "http://localhost"         // production
+                )
         );
 
         configuration.setAllowedMethods(
