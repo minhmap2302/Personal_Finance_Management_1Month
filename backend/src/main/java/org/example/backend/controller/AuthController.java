@@ -40,11 +40,9 @@ public class AuthController {
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<Void>> logout(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @AuthenticationPrincipal User currentUser,
-            @RequestBody(required = false) RefreshTokenRequest request) {
+            @Valid @RequestBody RefreshTokenRequest request) {
 
-        String rawRefreshToken = request != null ? request.getRefreshToken() : null;
-        authService.logout(authHeader, rawRefreshToken, currentUser);
+        authService.logout(authHeader, request.getRefreshToken());
 
         return ResponseEntity.ok(ApiResponse.success("Đăng xuất thành công"));
     }
