@@ -4,6 +4,4 @@
 # IDE
 .idea/
 
-# Backup dữ liệu (task sau)
 backups/
-/docs/devops.md
