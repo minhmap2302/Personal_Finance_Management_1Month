@@ -20,10 +20,4 @@ public interface CategoryService {
     CategoryResponse createSystemCategory(User currentUser, CreateCategoryRequest request);
 
     CategoryResponse createFamilyCategory(User currentUser, Long familyId, CreateCategoryRequest request);
-
-    CategoryResponse updateCategory(User currentUser, Long categoryId, Long familyId, UpdateCategoryRequest request);
-
-    CategoryResponse restoreCategory(User currentUser, Long categoryId, Long familyId);
-
-    void deleteCategory(User currentUser, Long categoryId, Long familyId);
 }
