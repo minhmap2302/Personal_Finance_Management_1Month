@@ -104,40 +104,4 @@ public class BudgetController {
         budgetService.deleteTotalBudget(currentUser.getId(), familyId, budgetId);
         return ResponseEntity.ok(ApiResponse.success("Xóa ngân sách tổng thành công"));
     }
-
-    // ------------------------- Ngân sách con -------------------------
-
-    @PostMapping("/{budgetId}/sub-budgets")
-    public ResponseEntity<ApiResponse<SubBudgetResponse>> createSubBudget(
-            @AuthenticationPrincipal User currentUser,
-            @PathVariable Long familyId,
-            @PathVariable Long budgetId,
-            @Valid @RequestBody CreateSubBudgetRequest request) {
-        SubBudgetResponse data =
-                budgetService.createSubBudget(currentUser.getId(), familyId, budgetId, request);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success("Tạo ngân sách con thành công", data));
-    }
-
-    @PutMapping("/{budgetId}/sub-budgets/{subBudgetId}")
-    public ResponseEntity<ApiResponse<SubBudgetResponse>> updateSubBudget(
-            @AuthenticationPrincipal User currentUser,
-            @PathVariable Long familyId,
-            @PathVariable Long budgetId,
-            @PathVariable Long subBudgetId,
-            @Valid @RequestBody UpdateSubBudgetRequest request) {
-        SubBudgetResponse data =
-                budgetService.updateSubBudget(currentUser.getId(), familyId, budgetId, subBudgetId, request);
-        return ResponseEntity.ok(ApiResponse.success("Cập nhật ngân sách con thành công", data));
-    }
-
-    @DeleteMapping("/{budgetId}/sub-budgets/{subBudgetId}")
-    public ResponseEntity<ApiResponse<Void>> deleteSubBudget(
-            @AuthenticationPrincipal User currentUser,
-            @PathVariable Long familyId,
-            @PathVariable Long budgetId,
-            @PathVariable Long subBudgetId) {
-        budgetService.deleteSubBudget(currentUser.getId(), familyId, budgetId, subBudgetId);
-        return ResponseEntity.ok(ApiResponse.success("Xóa ngân sách con thành công"));
-    }
 }
