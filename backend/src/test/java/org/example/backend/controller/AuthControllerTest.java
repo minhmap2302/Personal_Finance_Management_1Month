@@ -175,12 +175,16 @@ class AuthControllerTest {
     @Test
     @DisplayName("POST /api/v1/auth/logout - Đăng xuất thành công trả về 200 OK")
     void logout_success() throws Exception {
-        // Standalone MockMvc không resolve @AuthenticationPrincipal → Spring MVC tạo User rỗng
-        // → controller gọi overload 3 tham số
-        doNothing().when(authService).logout(any(), any(), any());
+        doNothing().when(authService).logout(anyString(), anyString());
 
         mockMvc.perform(post("/api/v1/auth/logout")
-                        .header("Authorization", "Bearer sample.jwt.token"))
+                        .header("Authorization", "Bearer sample.jwt.token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {
+                                "refreshToken": "sample.refresh.token"
+                            }
+                            """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Đăng xuất thành công"));
