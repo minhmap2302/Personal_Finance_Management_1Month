@@ -170,6 +170,71 @@ public class BudgetServiceImpl implements BudgetService {
     }
 
     // =====================================================================
+    // Ngân sách con (chủ gia đình và quản lý)
+    // =====================================================================
+
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    @Override
+    public SubBudgetResponse createSubBudget(Long userId, Long familyId, Long totalBudgetId,
+                                             CreateSubBudgetRequest request) {
+        requireManager(userId, familyId);
+        lockFamily(familyId);
+
+        Budget total = findTotal(familyId, totalBudgetId);
+        Category category = findUsableExpenseCategory(familyId, request.getCategoryId());
+
+        if (budgetRepository.existsByParentBudgetIdAndCategoryId(total.getId(), category.getId())) {
+            throw new ConflictException("Danh mục này đã có ngân sách con trong ngân sách tổng");
+        }
+
+        BigDecimal allocated = zeroIfNull(budgetRepository.sumSubBudgetAmounts(total.getId()));
+        checkWithinTotal(total, allocated.add(request.getAmount()), allocated);
+
+        Budget sub = Budget.builder()
+                .family(total.getFamily())
+                .category(category)
+                .parentBudget(total)
+                .startDate(total.getStartDate())
+                .endDate(total.getEndDate())
+                .amount(request.getAmount())
+                .build();
+        budgetRepository.save(sub);
+
+        return toSubResponse(sub, spentForCategory(total, category.getId()));
+    }
+
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    @Override
+    public SubBudgetResponse updateSubBudget(Long userId, Long familyId, Long totalBudgetId, Long subBudgetId,
+                                             UpdateSubBudgetRequest request) {
+        requireManager(userId, familyId);
+        lockFamily(familyId);
+
+        Budget total = findTotal(familyId, totalBudgetId);
+        Budget sub = findSub(total, subBudgetId);
+
+        // Tổng các ngân sách con khác (không tính ngân sách đang sửa).
+        BigDecimal allocatedWithoutThis = zeroIfNull(budgetRepository.sumSubBudgetAmounts(total.getId()))
+                .subtract(sub.getAmount());
+        checkWithinTotal(total, allocatedWithoutThis.add(request.getAmount()), allocatedWithoutThis);
+
+        sub.setAmount(request.getAmount());
+
+        return toSubResponse(sub, spentForCategory(total, sub.getCategory().getId()));
+    }
+
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    @Override
+    public void deleteSubBudget(Long userId, Long familyId, Long totalBudgetId, Long subBudgetId) {
+        requireManager(userId, familyId);
+        lockFamily(familyId);
+
+        Budget total = findTotal(familyId, totalBudgetId);
+        Budget sub = findSub(total, subBudgetId);
+        budgetRepository.delete(sub);
+    }
+
+    // =====================================================================
     // Quyền truy cập
     // =====================================================================
 
@@ -373,4 +438,6 @@ public class BudgetServiceImpl implements BudgetService {
     private BigDecimal zeroIfNull(BigDecimal value) {
         return value != null ? value : BigDecimal.ZERO;
     }
+
+
 }
