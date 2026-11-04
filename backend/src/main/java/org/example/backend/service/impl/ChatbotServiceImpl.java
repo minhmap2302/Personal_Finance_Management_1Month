@@ -170,7 +170,6 @@ public class ChatbotServiceImpl implements ChatbotService {
         if (chatClient == null) {
             return "Chatbot AI chưa được kích hoạt vì Spring AI/OpenAI chưa được cấu hình đúng.";
         }
-
         try {
             String conversationId = "family-" + familyId + "-user-" + userId;
             return chatClient.prompt()
