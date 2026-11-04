@@ -56,32 +56,4 @@ public class CategoryController {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Tạo danh mục gia đình thành công", data));
     }
-
-    @PutMapping("/{categoryId}")
-    public ResponseEntity<ApiResponse<CategoryResponse>> updateCategory(
-            @AuthenticationPrincipal User currentUser,
-            @PathVariable Long categoryId,
-            @RequestParam(required = false) Long familyId,
-            @Valid @RequestBody UpdateCategoryRequest request) {
-        CategoryResponse data = categoryService.updateCategory(currentUser, categoryId, familyId, request);
-        return ResponseEntity.ok(ApiResponse.success("Cập nhật danh mục thành công", data));
-    }
-
-    @DeleteMapping("/{categoryId}")
-    public ResponseEntity<ApiResponse<Void>> deleteCategory(
-            @AuthenticationPrincipal User currentUser,
-            @PathVariable Long categoryId,
-            @RequestParam(required = false) Long familyId) {
-        categoryService.deleteCategory(currentUser, categoryId, familyId);
-        return ResponseEntity.ok(ApiResponse.success("Xóa danh mục thành công"));
-    }
-
-    @PatchMapping("/{categoryId}/restore")
-    public ResponseEntity<ApiResponse<CategoryResponse>> restoreCategory(
-            @AuthenticationPrincipal User currentUser,
-            @PathVariable Long categoryId,
-            @RequestParam(required = false) Long familyId) {
-        CategoryResponse data = categoryService.restoreCategory(currentUser, categoryId, familyId);
-        return ResponseEntity.ok(ApiResponse.success("Khôi phục danh mục thành công", data));
-    }
 }

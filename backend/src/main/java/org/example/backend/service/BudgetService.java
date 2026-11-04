@@ -31,12 +31,4 @@ public interface BudgetService {
 
     /** Xóa ngân sách tổng sẽ xóa luôn các ngân sách con. */
     void deleteTotalBudget(Long userId, Long familyId, Long budgetId);
-
-    SubBudgetResponse createSubBudget(Long userId, Long familyId, Long totalBudgetId,
-                                      CreateSubBudgetRequest request);
-
-    SubBudgetResponse updateSubBudget(Long userId, Long familyId, Long totalBudgetId, Long subBudgetId,
-                                      UpdateSubBudgetRequest request);
-
-    void deleteSubBudget(Long userId, Long familyId, Long totalBudgetId, Long subBudgetId);
 }
