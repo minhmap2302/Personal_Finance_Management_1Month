@@ -14,4 +14,6 @@ import org.springframework.data.domain.Pageable;
  */
 public interface TransactionService {
 
+    TransactionResponse createTransaction(Long userId, Long familyId, CreateTransactionRequest request);
+
 }
