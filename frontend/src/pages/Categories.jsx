@@ -129,7 +129,7 @@ export default function Categories() {
         <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3"><span className="text-xs text-slate-400">{typeLabel(category.type)}</span>{!system && canManage && <div className="flex gap-1">{archived ? <button disabled={busy} onClick={() => restoreCategory(category)} title="Khôi phục" className="rounded-lg p-2 text-emerald-700 hover:bg-emerald-50"><Archive size={15}/></button> : <><button onClick={() => setModal(category)} title="Sửa danh mục" className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-emerald-700"><Pencil size={15}/></button><button onClick={() => setArchiveTarget(category)} title="Lưu trữ danh mục" className="rounded-lg p-2 text-rose-500 hover:bg-rose-50"><Trash2 size={15}/></button></>}</div>}</div>
       </article>;
     })}</div>}
-    {!canManage && <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-500">Vai trò hiện tại chỉ được xem và sử dụng danh mục. Nếu muốn thêm mục chi tiêu riêng cho nhà mình hãy nhờ trưởng nhóm cấp quyền nhé!</p>}
+    {!canManage && <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-500">Bạn hiện chỉ có quyền xem và dùng các danh mục này. Để tự tạo thêm mục chi tiêu riêng cho nhà mình, hãy nhờ trưởng nhóm mở quyền nhé!</p>}
 
     {modal && <CategoryModal initial={modal.id ? modal : null} onClose={() => setModal(null)} onSave={saveCategory} busy={busy}/>}
     {archiveTarget && <ConfirmModal category={archiveTarget} onClose={() => setArchiveTarget(null)} onConfirm={archiveCategory} busy={busy}/>}
