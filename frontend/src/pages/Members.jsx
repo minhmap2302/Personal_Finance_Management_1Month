@@ -651,17 +651,9 @@ export default function Members() {
                         !searching &&
                         inviteQuery.trim().length >= 2 && (
                             <p className="mt-3 text-xs text-slate-400">
-                              Nhập username và chọn “Tìm người dùng” để xem kết quả.
+                              Nhập chính xác tên tài khoản để tìm và gửi lời mời.
                             </p>
                         )}
-
-                    <p className="mt-4 rounded-xl bg-white/80 p-3 text-xs leading-5 text-slate-500">
-                      API backend hiện chỉ nhận{' '}
-                      <code className="rounded bg-slate-100 px-1">userId</code> khi
-                      gửi lời mời; role của người được mời chưa được chọn ở bước gửi.
-                      OWNER có thể điều chỉnh MANAGER/MEMBER sau khi người đó chấp
-                      nhận lời mời.
-                    </p>
                   </section>
               )}
 
@@ -707,9 +699,9 @@ export default function Members() {
                           action.member.fullName || action.member.username
                       } khỏi gia đình ${activeFamily?.name}.`
                       : action.type === 'transfer'
-                          ? `Bạn sẽ chuyển quyền OWNER cho ${
+                          ? `Bạn sẽ chuyển quyền chủ nhóm cho ${
                               action.member.fullName || action.member.username
-                          }. Sau đó vai trò của bạn sẽ là MANAGER.`
+                          }. Sau đó vai trò của bạn sẽ là quản lý.`
                           : `Đổi vai trò của ${
                               action.member.fullName || action.member.username
                           } thành ${
