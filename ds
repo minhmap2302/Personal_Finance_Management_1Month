@@ -1,0 +1,40 @@
+*   [33m38fe2ce[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/Vinh/DevOps[m[33m)[m Merge remote branch Vinh/DevOps
+[31m|[m[32m\[m  
+* [32m|[m [33mc0bc4f7[m them cong viec
+* [32m|[m [33m8a8a98c[m feat(devops): add backend Dockerfile, Cloudinary env, restart policy and backup guide
+* [32m|[m [33mdd25234[m[33m ([m[1;31morigin/develop[m[33m)[m changed some of the category logic and migration V3 file
+* [32m|[m   [33m1c47ffe[m merge
+[33m|[m[34m\[m [32m\[m  
+[33m|[m * [32m|[m [33m120e296[m Update frontend from Luyen FE
+[33m|[m * [32m|[m   [33m132faab[m FE
+[33m|[m [35m|[m[36m\[m [32m\[m  
+* [35m|[m [36m|[m [32m|[m [33m5cdb5ea[m merge
+[1;31m|[m[35m\[m[35m|[m [36m|[m [32m|[m 
+[1;31m|[m * [36m|[m [32m|[m [33m01311f3[m update code frontend
+* [1;32m|[m [36m|[m [32m|[m [33md4dfe3a[m fixed bugs
+[36m|[m [1;32m|[m[36m/[m [32m/[m  
+[36m|[m[36m/[m[1;32m|[m [32m|[m   
+* [1;32m|[m [32m|[m   [33mbf2505d[m merge Duy/BE to develop
+[1;33m|[m[1;34m\[m [1;32m\[m [32m\[m  
+[1;33m|[m * [1;32m|[m [32m|[m [33m4fda884[m added image field upload to transactions
+[1;33m|[m * [1;32m|[m [32m|[m   [33mfd3acc2[m Merge branch 'Vinh/DevOps' of https://github.com/minhmap2302/personal-finance-management-1Month into Duy/BE
+[1;33m|[m [1;35m|[m[1;36m\[m [1;32m\[m [32m\[m  
+[1;33m|[m * [1;36m|[m [1;32m|[m [32m|[m [33m0f13da8[m pull from main
+* [1;36m|[m [1;36m|[m [1;32m|[m [32m|[m   [33m9b3f097[m Merge pull request #7 from minhmap2302/Lộc/BE
+[31m|[m[32m\[m [1;36m\[m [1;36m\[m [1;32m\[m [32m\[m  
+[31m|[m * [1;36m|[m [1;36m|[m [1;32m|[m [32m|[m [33m5bc6842[m login/logout/signin/category
+* [32m|[m [1;36m|[m [1;36m|[m [1;32m|[m [32m|[m   [33m9b46a9a[m Merge pull request #6 from minhmap2302/Vinh/DevOps
+[33m|[m[1;36m\[m [32m\[m [1;36m\[m [1;36m\[m [1;32m\[m [32m\[m  
+[33m|[m [1;36m|[m [32m|[m[1;36m_[m[1;36m|[m[1;36m/[m [1;32m/[m [32m/[m  
+[33m|[m [1;36m|[m[1;36m/[m[32m|[m [1;36m|[m [1;32m|[m [32m|[m   
+[33m|[m * [32m|[m [1;36m|[m [1;32m|[m [32m|[m [33m694a7cd[m[33m ([m[1;32mVinh/DevOps[m[33m)[m added tests
+[33m|[m [1;32m|[m [32m|[m[1;32m_[m[1;36m|[m[1;32m/[m [32m/[m  
+[33m|[m [1;32m|[m[1;32m/[m[32m|[m [1;36m|[m [32m|[m   
+* [1;32m|[m [32m|[m [1;36m|[m [32m|[m   [33mabc0a9b[m Merge pull request #5 from minhmap2302/Lộc/BE
+[35m|[m[32m\[m [1;32m\[m [32m\[m [1;36m\[m [32m\[m  
+[35m|[m [32m|[m [1;32m|[m[32m/[m [1;36m/[m [32m/[m  
+[35m|[m [32m|[m[32m/[m[1;32m|[m [1;36m|[m [32m|[m   
+[35m|[m * [1;32m|[m [1;36m|[m [32m|[m   [33m395a4aa[m Merge branch 'main' of https://github.com/minhmap2302/personal-finance-management-1Month into Lộc/BE
+[35m|[m [1;31m|[m[1;36m\[m [1;32m\[m [1;36m\[m [32m\[m  
+[35m|[m [1;31m|[m [1;36m|[m [1;32m|[m[1;36m/[m [32m/[m  
+[35m|[m [1;31m|[m [1;36m|[m[1;36m/[m[1;32m|[m [32m|[m   
