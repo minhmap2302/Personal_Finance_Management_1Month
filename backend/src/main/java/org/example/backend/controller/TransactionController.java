@@ -37,4 +37,30 @@ public class TransactionController {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Tạo giao dịch thành công", data));
     }
+
+    /**
+     * Lịch sử giao dịch của gia đình, mới nhất trước.
+     * Lọc bằng tham số: keyword, startDate, endDate (yyyy-MM-dd), categoryId, type, userId, minAmount, maxAmount.
+     * Sắp xếp được theo transactionDate, amount, createdAt, id.
+     */
+    @GetMapping
+    public ResponseEntity<ApiResponse<Page<TransactionResponse>>> searchTransactions(
+            @AuthenticationPrincipal User currentUser,
+            @PathVariable Long familyId,
+            @ModelAttribute TransactionSearchRequest search,
+            @PageableDefault(size = 20, sort = {"transactionDate", "id"}, direction = Sort.Direction.DESC)
+            Pageable pageable) {
+        Page<TransactionResponse> data =
+                transactionService.searchTransactions(currentUser.getId(), familyId, search, pageable);
+        return ResponseEntity.ok(ApiResponse.success("Lấy danh sách giao dịch thành công", data));
+    }
+
+    @GetMapping("/{transactionId}")
+    public ResponseEntity<ApiResponse<TransactionResponse>> getTransaction(
+            @AuthenticationPrincipal User currentUser,
+            @PathVariable Long familyId,
+            @PathVariable Long transactionId) {
+        TransactionResponse data = transactionService.getTransaction(currentUser.getId(), familyId, transactionId);
+        return ResponseEntity.ok(ApiResponse.success("Lấy thông tin giao dịch thành công", data));
+    }
 }
