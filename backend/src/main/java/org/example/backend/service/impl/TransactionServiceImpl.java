@@ -59,82 +59,6 @@ public class TransactionServiceImpl implements TransactionService {
         return toResponse(transactionRepository.save(transaction));
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public TransactionResponse getTransaction(Long userId, Long familyId, Long transactionId) {
-        accessChecker.requireMember(userId, familyId);
-        return toResponse(findTransaction(familyId, transactionId));
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<TransactionResponse> searchTransactions(Long userId, Long familyId,
-                                                        TransactionSearchRequest search, Pageable pageable) {
-        accessChecker.requireMember(userId, familyId);
-        validateSearch(search);
-        validateSort(pageable);
-
-        Specification<Transaction> spec = Specification
-                .where(TransactionSpecifications.inFamily(familyId))
-                .and(TransactionSpecifications.descriptionContains(search.getKeyword()))
-                .and(TransactionSpecifications.dateFrom(search.getStartDate()))
-                .and(TransactionSpecifications.dateTo(search.getEndDate()))
-                .and(TransactionSpecifications.hasCategory(search.getCategoryId()))
-                .and(TransactionSpecifications.hasType(search.getType()))
-                .and(TransactionSpecifications.recordedBy(search.getUserId()))
-                .and(TransactionSpecifications.amountAtLeast(search.getMinAmount()))
-                .and(TransactionSpecifications.amountAtMost(search.getMaxAmount()));
-
-        return transactionRepository.findAll(spec, pageable).map(this::toResponse);
-    }
-
-    @Override
-    @Transactional
-    public TransactionResponse updateTransaction(Long userId, Long familyId, Long transactionId,
-                                                 UpdateTransactionRequest request) {
-        FamilyMember member = accessChecker.requireMember(userId, familyId);
-        Transaction transaction = findTransaction(familyId, transactionId);
-        checkCanModify(member, userId, transaction, "Bạn chỉ được sửa giao dịch do mình ghi nhận");
-
-        // Chỉ kiểm tra danh mục khi đổi sang danh mục khác, để giao dịch cũ vẫn sửa được
-        // khi danh mục của nó đã bị lưu trữ.
-        if (!transaction.getCategory().getId().equals(request.getCategoryId())) {
-            transaction.setCategory(findUsableCategory(familyId, request.getCategoryId()));
-        }
-        transaction.setAmount(request.getAmount());
-        transaction.setTransactionDate(request.getTransactionDate());
-        transaction.setDescription(normalizeDescription(request.getDescription()));
-
-        return toResponse(transaction);
-    }
-
-    @Override
-    @Transactional
-    public void deleteTransaction(Long userId, Long familyId, Long transactionId) {
-        FamilyMember member = accessChecker.requireMember(userId, familyId);
-        Transaction transaction = findTransaction(familyId, transactionId);
-        checkCanModify(member, userId, transaction, "Bạn chỉ được xóa giao dịch do mình ghi nhận");
-
-        transactionRepository.delete(transaction);
-    }
-
-    // =====================================================================
-    // Kiểm tra
-    // =====================================================================
-
-    private Transaction findTransaction(Long familyId, Long transactionId) {
-        return transactionRepository.findByIdAndFamilyId(transactionId, familyId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy giao dịch"));
-    }
-
-    /** Người ghi nhận giao dịch, quản lý và chủ gia đình được sửa hoặc xóa. */
-    private void checkCanModify(FamilyMember member, Long userId, Transaction transaction, String message) {
-        boolean isRecorder = transaction.getUser().getId().equals(userId);
-        if (!isRecorder && !member.getRole().isAtLeast(FamilyRole.MANAGER)) {
-            throw new ForbiddenException(message);
-        }
-    }
-
     /**
      * Danh mục dùng cho giao dịch phải là danh mục hệ thống hoặc của chính gia đình, và đang hoạt động.
      * Danh mục của gia đình khác được coi như không tồn tại.
@@ -150,25 +74,6 @@ public class TransactionServiceImpl implements TransactionService {
             throw new BadRequestException("Danh mục đã được lưu trữ, không thể dùng cho giao dịch");
         }
         return category;
-    }
-
-    private void validateSearch(TransactionSearchRequest search) {
-        if (search.getStartDate() != null && search.getEndDate() != null
-                && search.getStartDate().isAfter(search.getEndDate())) {
-            throw new BadRequestException("Ngày bắt đầu không được sau ngày kết thúc");
-        }
-        if (search.getMinAmount() != null && search.getMaxAmount() != null
-                && search.getMinAmount().compareTo(search.getMaxAmount()) > 0) {
-            throw new BadRequestException("Số tiền tối thiểu không được lớn hơn số tiền tối đa");
-        }
-    }
-
-    private void validateSort(Pageable pageable) {
-        for (Sort.Order order : pageable.getSort()) {
-            if (!SORTABLE_FIELDS.contains(order.getProperty())) {
-                throw new BadRequestException("Không thể sắp xếp theo trường: " + order.getProperty());
-            }
-        }
     }
 
     // =====================================================================
