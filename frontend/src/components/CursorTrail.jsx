@@ -66,9 +66,12 @@ export default function CursorTrail() {
 
         ctx.save();
         ctx.globalAlpha = Math.max(0, p.alpha);
-        ctx.fillStyle = '#10b981';
-        ctx.shadowColor = '#10b981';
-        ctx.shadowBlur = 12;
+        // Respect current theme color via CSS variable
+        const primaryColor = getComputedStyle(document.documentElement)
+          .getPropertyValue('--color-primary').trim() || '#059669';
+        ctx.fillStyle = primaryColor;
+        ctx.shadowColor = primaryColor;
+        ctx.shadowBlur = 10;
 
         ctx.beginPath();
         ctx.arc(
