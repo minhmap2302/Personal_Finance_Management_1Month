@@ -16,4 +16,9 @@ public interface TransactionService {
 
     TransactionResponse createTransaction(Long userId, Long familyId, CreateTransactionRequest request);
 
+    TransactionResponse getTransaction(Long userId, Long familyId, Long transactionId);
+
+    /** Lịch sử giao dịch của cả gia đình, có tìm kiếm, lọc theo nhiều điều kiện và phân trang. */
+    Page<TransactionResponse> searchTransactions(Long userId, Long familyId, TransactionSearchRequest search,
+                                                 Pageable pageable);
 }
