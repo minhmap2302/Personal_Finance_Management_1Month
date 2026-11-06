@@ -6,7 +6,6 @@ import {
   ArrowRight,
   Eye,
   EyeOff,
-  Home,
   LockKeyhole,
   Mail,
   ShieldCheck,
@@ -14,6 +13,7 @@ import {
   Wallet
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import BrandLogoMark from '../components/BrandLogoMark';
 
 export default function Login() {
   const [identifier, setIdentifier] = useState('');
@@ -65,9 +65,7 @@ export default function Login() {
             transition={{ duration: 0.55 }}
         >
           <Link to="/" className="auth-brand">
-                    <span className="brand-mark">
-                        <Home size={22} />
-                    </span>
+            <BrandLogoMark />
 
             <span>
                         <b>FinHome</b>
@@ -142,9 +140,7 @@ export default function Login() {
                 className="mobile-auth-brand"
                 aria-label="Quay về trang chủ FinHome"
             >
-                        <span className="brand-mark">
-                            <Home size={21} />
-                        </span>
+              <BrandLogoMark />
               <b>FinHome</b>
             </Link>
 

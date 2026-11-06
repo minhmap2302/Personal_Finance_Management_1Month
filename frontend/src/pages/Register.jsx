@@ -7,12 +7,12 @@ import {
  Check,
  Eye,
  EyeOff,
- Home,
  LockKeyhole,
  Mail,
  UserRound
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import BrandLogoMark from '../components/BrandLogoMark';
 
 export default function Register() {
  const [form, setForm] = useState({
@@ -137,9 +137,7 @@ export default function Register() {
           animate={{ opacity: 1, x: 0 }}
       >
        <Link to="/" className="auth-brand">
-                    <span className="brand-mark">
-                        <Home size={22} />
-                    </span>
+        <BrandLogoMark />
 
         <span>
                         <b>FinHome</b>
@@ -196,9 +194,7 @@ export default function Register() {
             className="mobile-auth-brand"
             aria-label="Quay về trang chủ FinHome"
         >
-                        <span className="brand-mark">
-                            <Home size={21} />
-                        </span>
+         <BrandLogoMark />
          <b>FinHome</b>
         </Link>
 
