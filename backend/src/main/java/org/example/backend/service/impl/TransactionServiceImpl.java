@@ -88,6 +88,36 @@ public class TransactionServiceImpl implements TransactionService {
         return transactionRepository.findAll(spec, pageable).map(this::toResponse);
     }
 
+    @Override
+    @Transactional
+    public TransactionResponse updateTransaction(Long userId, Long familyId, Long transactionId,
+                                                 UpdateTransactionRequest request) {
+        FamilyMember member = accessChecker.requireMember(userId, familyId);
+        Transaction transaction = findTransaction(familyId, transactionId);
+        checkCanModify(member, userId, transaction, "Bạn chỉ được sửa giao dịch do mình ghi nhận");
+
+        // Chỉ kiểm tra danh mục khi đổi sang danh mục khác, để giao dịch cũ vẫn sửa được
+        // khi danh mục của nó đã bị lưu trữ.
+        if (!transaction.getCategory().getId().equals(request.getCategoryId())) {
+            transaction.setCategory(findUsableCategory(familyId, request.getCategoryId()));
+        }
+        transaction.setAmount(request.getAmount());
+        transaction.setTransactionDate(request.getTransactionDate());
+        transaction.setDescription(normalizeDescription(request.getDescription()));
+
+        return toResponse(transaction);
+    }
+
+    @Override
+    @Transactional
+    public void deleteTransaction(Long userId, Long familyId, Long transactionId) {
+        FamilyMember member = accessChecker.requireMember(userId, familyId);
+        Transaction transaction = findTransaction(familyId, transactionId);
+        checkCanModify(member, userId, transaction, "Bạn chỉ được xóa giao dịch do mình ghi nhận");
+
+        transactionRepository.delete(transaction);
+    }
+
     // =====================================================================
     // Kiểm tra
     // =====================================================================
