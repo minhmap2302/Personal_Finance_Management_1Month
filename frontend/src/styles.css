@@ -198,7 +198,7 @@ button:disabled { opacity: .55; cursor: not-allowed; }
   transition: opacity var(--transition-fast);
 }
 .brand-mark-image {
-  display: block;
+
   width: 100%;
   height: 100%;
   object-fit: contain;
