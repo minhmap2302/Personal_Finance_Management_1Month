@@ -63,4 +63,24 @@ public class TransactionController {
         TransactionResponse data = transactionService.getTransaction(currentUser.getId(), familyId, transactionId);
         return ResponseEntity.ok(ApiResponse.success("Lấy thông tin giao dịch thành công", data));
     }
+
+    @PutMapping("/{transactionId}")
+    public ResponseEntity<ApiResponse<TransactionResponse>> updateTransaction(
+            @AuthenticationPrincipal User currentUser,
+            @PathVariable Long familyId,
+            @PathVariable Long transactionId,
+            @Valid @RequestBody UpdateTransactionRequest request) {
+        TransactionResponse data =
+                transactionService.updateTransaction(currentUser.getId(), familyId, transactionId, request);
+        return ResponseEntity.ok(ApiResponse.success("Cập nhật giao dịch thành công", data));
+    }
+
+    @DeleteMapping("/{transactionId}")
+    public ResponseEntity<ApiResponse<Void>> deleteTransaction(
+            @AuthenticationPrincipal User currentUser,
+            @PathVariable Long familyId,
+            @PathVariable Long transactionId) {
+        transactionService.deleteTransaction(currentUser.getId(), familyId, transactionId);
+        return ResponseEntity.ok(ApiResponse.success("Xóa giao dịch thành công"));
+    }
 }
