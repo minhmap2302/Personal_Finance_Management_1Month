@@ -37,16 +37,16 @@ function Modal({ title, children, onClose, locked = false }) {
               initial={{ opacity: 0, y: 16, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 10, scale: 0.98 }}
-              className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl sm:p-6"
+              className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl dark:bg-surface-dark sm:p-6"
           >
             <div className="mb-5 flex items-center justify-between gap-3">
-              <h2 id="family-modal-title" className="text-lg font-extrabold text-slate-900">{title}</h2>
+              <h2 id="family-modal-title" className="text-lg font-extrabold text-slate-900 dark:text-fin-text-dark">{title}</h2>
               <button
                   type="button"
                   disabled={locked}
                   onClick={onClose}
                   aria-label="Đóng hộp thoại"
-                  className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+                  className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <X size={18} />
               </button>
@@ -61,12 +61,12 @@ function Modal({ title, children, onClose, locked = false }) {
 function ImpactRow({ icon: Icon, title, description, retained = false }) {
   return (
       <div className="flex items-start gap-3">
-      <span className={`mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg ${retained ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
+      <span className={`mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg ${retained ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300' : 'bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-300'}`}>
         <Icon size={16} />
       </span>
         <div>
-          <p className="text-sm font-semibold text-slate-800">{title}</p>
-          <p className="mt-0.5 text-xs leading-5 text-slate-500">{description}</p>
+          <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">{title}</p>
+          <p className="mt-0.5 text-xs leading-5 text-slate-500 dark:text-slate-400">{description}</p>
         </div>
       </div>
   );
@@ -203,21 +203,21 @@ export default function Family() {
           className="mx-auto max-w-6xl space-y-6"
       >
         <header>
-          <p className="text-xs font-bold uppercase tracking-[.18em] text-emerald-700">Không gian chung</p>
-          <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-slate-900">Gia đình</h1>
-          <p className="mt-2 text-sm text-slate-500">Chọn không gian làm việc, xem vai trò và quản lý thiết lập gia đình.</p>
+          <p className="text-xs font-bold uppercase tracking-[.18em] text-emerald-700 dark:text-primary-dark">Không gian chung</p>
+          <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-slate-900 dark:text-fin-text-dark">Gia đình</h1>
+          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Chọn không gian làm việc, xem vai trò và quản lý thiết lập gia đình.</p>
         </header>
 
-        <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+        <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-fin-border-dark dark:bg-surface-dark sm:p-6">
           <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="text-lg font-extrabold text-slate-900">Không gian gia đình của bạn</h2>
-              <p className="mt-1 text-xs text-slate-500">Chọn một gia đình để dùng cho các phân hệ liên quan.</p>
+              <h2 className="text-lg font-extrabold text-slate-900 dark:text-fin-text-dark">Không gian gia đình của bạn</h2>
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Chọn một gia đình để dùng cho các phân hệ liên quan.</p>
             </div>
             <button
                 type="button"
                 onClick={() => { setName(''); setModal('create'); }}
-                className="inline-flex h-10 items-center gap-2 rounded-xl bg-emerald-700 px-4 text-sm font-bold text-white hover:bg-emerald-800"
+                className="inline-flex h-10 items-center gap-2 rounded-xl bg-emerald-700 px-4 text-sm font-bold text-white hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500"
             >
               <Plus size={16} />Tạo gia đình mới
             </button>
@@ -226,14 +226,14 @@ export default function Family() {
           {familiesLoading ? (
               <div className="py-12 text-center text-sm text-slate-400">Đang tải danh sách gia đình…</div>
           ) : families.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-slate-200 px-5 py-12 text-center">
-                <Home size={28} className="mx-auto text-slate-300" />
-                <h3 className="mt-3 font-bold text-slate-800">Bạn chưa có không gian gia đình</h3>
-                <p className="mt-1 text-sm text-slate-500">Tạo gia đình mới hoặc chấp nhận lời mời từ thành viên khác.</p>
+              <div className="rounded-2xl border border-dashed border-slate-200 px-5 py-12 text-center dark:border-fin-border-dark">
+                <Home size={28} className="mx-auto text-slate-300 dark:text-slate-500" />
+                <h3 className="mt-3 font-bold text-slate-800 dark:text-slate-100">Bạn chưa có không gian gia đình</h3>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Tạo gia đình mới hoặc chấp nhận lời mời từ thành viên khác.</p>
                 <button
                     type="button"
                     onClick={() => { setName(''); setModal('create'); }}
-                    className="mt-4 rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white"
+                    className="mt-4 rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500"
                 >
                   Tạo gia đình đầu tiên
                 </button>
@@ -247,22 +247,22 @@ export default function Family() {
                           type="button"
                           key={family.id}
                           onClick={() => setActiveFamilyId(family.id)}
-                          className={`rounded-2xl border p-4 text-left transition hover:-translate-y-0.5 hover:shadow-md ${active ? 'border-emerald-500 bg-emerald-50/60 ring-2 ring-emerald-100' : 'border-slate-200 bg-white hover:border-slate-300'}`}
+                          className={`rounded-2xl border p-4 text-left transition hover:-translate-y-0.5 hover:shadow-md ${active ? 'border-emerald-500 bg-emerald-50/60 ring-2 ring-emerald-100 dark:bg-emerald-950/30 dark:ring-emerald-900' : 'border-slate-200 bg-white hover:border-slate-300 dark:border-fin-border-dark dark:bg-surface-dark dark:hover:border-slate-500'}`}
                       >
                         <div className="flex items-start gap-3">
-                    <span className={`grid h-11 w-11 place-items-center rounded-xl ${active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>
+                    <span className={`grid h-11 w-11 place-items-center rounded-xl ${active ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/60 dark:text-emerald-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'}`}>
                       <Home size={20} />
                     </span>
                           <span className="min-w-0 flex-1">
                       <span className="flex flex-wrap items-center gap-2">
-                        <b className="truncate text-sm text-slate-900">{family.name}</b>
-                        {active && <span className="rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-bold text-white">Đang hoạt động</span>}
+                        <b className="truncate text-sm text-slate-900 dark:text-fin-text-dark">{family.name}</b>
+                        {active && <span className="rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-bold text-white dark:bg-emerald-500 dark:text-slate-950">Đang hoạt động</span>}
                       </span>
-                      <small className="mt-1 block text-xs text-slate-500">{roleLabel(family.myRole)}</small>
+                      <small className="mt-1 block text-xs text-slate-500 dark:text-slate-400">{roleLabel(family.myRole)}</small>
                     </span>
-                          {active && <Check size={18} className="text-emerald-700" />}
+                          {active && <Check size={18} className="text-emerald-700 dark:text-primary-dark" />}
                         </div>
-                        <div className="mt-4 flex items-center justify-between border-t border-slate-200/70 pt-3 text-xs text-slate-500">
+                        <div className="mt-4 flex items-center justify-between border-t border-slate-200/70 pt-3 text-xs text-slate-500 dark:border-fin-border-dark dark:text-slate-400">
                           <span className="inline-flex items-center gap-1.5"><Users size={14} />{family.memberCount ?? 0} thành viên</span>
                           <span>Ngày tạo: {dateLabel(family.createdAt)}</span>
                         </div>
@@ -276,7 +276,7 @@ export default function Family() {
             <button
                 type="button"
                 onClick={() => refreshFamilies().catch((error) => toast(getErrorMessage(error, 'Không thể tải danh sách gia đình.'), 'error'))}
-                className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-emerald-700"
+                className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-emerald-700 dark:text-slate-400 dark:hover:text-emerald-400"
             >
               <RefreshCw size={14} />Làm mới danh sách
             </button>
@@ -284,31 +284,31 @@ export default function Family() {
         </section>
 
         {activeFamily && (
-            <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+            <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-fin-border-dark dark:bg-surface-dark sm:p-6">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-widest text-emerald-700">Gia đình đang hoạt động</p>
-                  <h2 className="mt-2 text-xl font-extrabold text-slate-900">{activeName}</h2>
-                  <p className="mt-1 text-sm text-slate-500">Tạo ngày {createdLabel} · {activeFamily.memberCount ?? 0} thành viên</p>
+                  <p className="text-xs font-bold uppercase tracking-widest text-emerald-700 dark:text-primary-dark">Gia đình đang hoạt động</p>
+                  <h2 className="mt-2 text-xl font-extrabold text-slate-900 dark:text-fin-text-dark">{activeName}</h2>
+                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Tạo ngày {createdLabel} · {activeFamily.memberCount ?? 0} thành viên</p>
                 </div>
-                <span className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-700">{roleLabel(activeFamily.myRole)}</span>
+                <span className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-700 dark:bg-slate-700 dark:text-slate-200">{roleLabel(activeFamily.myRole)}</span>
               </div>
 
               {canManage && (
-                  <div className="mt-6 rounded-2xl border border-slate-100 bg-slate-50 p-4 sm:p-5">
+                  <div className="mt-6 rounded-2xl border border-slate-100 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800 sm:p-5">
                     <div className="mb-4">
-                      <h3 className="font-bold text-slate-900">Cài đặt gia đình</h3>
-                      <p className="mt-1 text-xs text-slate-500">Thông tin gia đình hiện chỉ quản lý tên và thành viên.</p>
+                      <h3 className="font-bold text-slate-900 dark:text-slate-100">Cài đặt gia đình</h3>
+                      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Thông tin gia đình hiện chỉ quản lý tên và thành viên.</p>
                     </div>
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
-                        <b className="text-sm text-slate-800">Tên gia đình</b>
-                        <p className="mt-1 text-xs text-slate-500">Chỉ OWNER/MANAGER được thao tác theo phân quyền.</p>
+                        <b className="text-sm text-slate-800 dark:text-slate-100">Tên gia đình</b>
+                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Chỉ OWNER/MANAGER được thao tác theo phân quyền.</p>
                       </div>
                       <button
                           type="button"
                           onClick={() => { setName(activeName); setModal('edit'); }}
-                          className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 hover:border-emerald-300 hover:text-emerald-700"
+                          className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 hover:border-emerald-300 hover:text-emerald-700 dark:border-slate-600 dark:bg-surface-dark dark:text-slate-200 dark:hover:border-emerald-500 dark:hover:text-emerald-400"
                       >
                         Đổi tên gia đình
                       </button>
@@ -316,15 +316,15 @@ export default function Family() {
                   </div>
               )}
 
-              <div className="mt-6 border-t border-slate-100 pt-5">
+              <div className="mt-6 border-t border-slate-100 pt-5 dark:border-slate-700">
                 <div className="mb-3">
-                  <h3 className="font-bold text-slate-900">Vùng thao tác quan trọng</h3>
-                  <p className="mt-1 text-xs text-slate-500">Thao tác giải tán chỉ dành cho OWNER; thành viên khác chỉ có thể rời gia đình.</p>
+                  <h3 className="font-bold text-slate-900 dark:text-slate-100">Vùng thao tác quan trọng</h3>
+                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Thao tác giải tán chỉ dành cho OWNER; thành viên khác chỉ có thể rời gia đình.</p>
                 </div>
-                <div className="flex flex-col justify-between gap-3 rounded-2xl border border-rose-100 bg-rose-50/60 p-4 sm:flex-row sm:items-center">
+                <div className="flex flex-col justify-between gap-3 rounded-2xl border border-rose-100 bg-rose-50/60 p-4 dark:border-rose-900/70 dark:bg-rose-950/35 sm:flex-row sm:items-center">
                   <div>
-                    <b className="text-sm text-rose-800">{isOwner ? 'Giải tán gia đình' : 'Rời khỏi gia đình'}</b>
-                    <p className="mt-1 max-w-xl text-xs leading-5 text-rose-700">
+                    <b className="text-sm text-rose-800 dark:text-rose-300">{isOwner ? 'Giải tán gia đình' : 'Rời khỏi gia đình'}</b>
+                    <p className="mt-1 max-w-xl text-xs leading-5 text-rose-700 dark:text-rose-300">
                       {isOwner
                           ? 'Giải tán sẽ xóa không gian gia đình và dữ liệu nghiệp vụ thuộc gia đình. Tài khoản cá nhân của các thành viên không bị xóa.'
                           : 'Bạn sẽ mất quyền truy cập vào không gian gia đình này sau khi rời đi.'}
@@ -333,7 +333,7 @@ export default function Family() {
                   <button
                       type="button"
                       onClick={() => { setConfirmName(''); setModal(isOwner ? 'delete' : 'leave'); }}
-                      className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-rose-200 bg-white px-4 py-2.5 text-sm font-bold text-rose-700 hover:bg-rose-100"
+                      className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-rose-200 bg-white px-4 py-2.5 text-sm font-bold text-rose-700 hover:bg-rose-100 dark:border-rose-800 dark:bg-surface-dark dark:text-rose-300 dark:hover:bg-rose-950/60"
                   >
                     {isOwner ? <Trash2 size={15} /> : <X size={15} />}
                     {isOwner ? 'Giải tán gia đình' : 'Rời gia đình'}
@@ -347,13 +347,13 @@ export default function Family() {
             <Modal title="Tạo gia đình mới" onClose={closeModal} locked={creating}>
               <form onSubmit={createFamily} className="space-y-4">
                 <label className="block">
-                  <span className="mb-2 block text-sm font-semibold text-slate-700">Tên gia đình <span className="text-rose-500">*</span></span>
-                  <input autoFocus required maxLength={100} value={name} onChange={(event) => setName(event.target.value)} placeholder="Ví dụ: Gia đình Nguyễn" className="h-12 w-full rounded-xl border border-slate-200 px-4 text-sm outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-50" />
+                  <span className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Tên gia đình <span className="text-rose-500">*</span></span>
+                  <input autoFocus required maxLength={100} value={name} onChange={(event) => setName(event.target.value)} placeholder="Ví dụ: Gia đình Nguyễn" className="h-12 w-full rounded-xl border border-slate-200 px-4 text-sm outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-50 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:ring-emerald-900/40" />
                 </label>
-                <p className="rounded-xl bg-slate-50 p-3 text-xs leading-5 text-slate-500">Sau khi tạo thành công, backend tự gán bạn làm OWNER.</p>
+                <p className="rounded-xl bg-slate-50 p-3 text-xs leading-5 text-slate-500 dark:bg-slate-800 dark:text-slate-400">Sau khi tạo thành công, backend tự gán bạn làm OWNER.</p>
                 <div className="flex justify-end gap-2">
-                  <button type="button" disabled={creating} onClick={closeModal} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold disabled:opacity-50">Hủy</button>
-                  <button disabled={creating || !name.trim()} className="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50">{creating ? 'Đang tạo…' : 'Tạo gia đình'}</button>
+                  <button type="button" disabled={creating} onClick={closeModal} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-700 disabled:opacity-50">Hủy</button>
+                  <button disabled={creating || !name.trim()} className="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-50">{creating ? 'Đang tạo…' : 'Tạo gia đình'}</button>
                 </div>
               </form>
             </Modal>
@@ -363,12 +363,12 @@ export default function Family() {
             <Modal title="Đổi tên gia đình" onClose={closeModal} locked={saving}>
               <form onSubmit={saveFamily} className="space-y-4">
                 <label className="block">
-                  <span className="mb-2 block text-sm font-semibold text-slate-700">Tên mới</span>
-                  <input autoFocus required maxLength={100} value={name} onChange={(event) => setName(event.target.value)} className="h-12 w-full rounded-xl border border-slate-200 px-4 text-sm outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-50" />
+                  <span className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Tên mới</span>
+                  <input autoFocus required maxLength={100} value={name} onChange={(event) => setName(event.target.value)} className="h-12 w-full rounded-xl border border-slate-200 px-4 text-sm outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-50 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-emerald-900/40" />
                 </label>
                 <div className="flex justify-end gap-2">
-                  <button type="button" disabled={saving} onClick={closeModal} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold disabled:opacity-50">Hủy</button>
-                  <button disabled={saving || !name.trim()} className="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50">{saving ? 'Đang lưu…' : 'Lưu thay đổi'}</button>
+                  <button type="button" disabled={saving} onClick={closeModal} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-700 disabled:opacity-50">Hủy</button>
+                  <button disabled={saving || !name.trim()} className="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-50">{saving ? 'Đang lưu…' : 'Lưu thay đổi'}</button>
                 </div>
               </form>
             </Modal>
@@ -382,34 +382,34 @@ export default function Family() {
             >
               {isDeleteModal ? (
                   <div className="space-y-4">
-                    <div className="flex items-start gap-3 rounded-xl border border-rose-200 bg-rose-50 p-3">
-                      <AlertTriangle size={20} className="mt-0.5 shrink-0 text-rose-600" />
+                    <div className="flex items-start gap-3 rounded-xl border border-rose-200 bg-rose-50 p-3 dark:border-rose-900/70 dark:bg-rose-950/35">
+                      <AlertTriangle size={20} className="mt-0.5 shrink-0 text-rose-600 dark:text-rose-300" />
                       <div>
-                        <p className="text-sm font-bold text-rose-800">Đây là thao tác không thể hoàn tác</p>
-                        <p className="mt-1 text-xs leading-5 text-rose-700">
+                        <p className="text-sm font-bold text-rose-800 dark:text-rose-300">Đây là thao tác không thể hoàn tác</p>
+                        <p className="mt-1 text-xs leading-5 text-rose-700 dark:text-rose-300">
                           Gia đình <b>{activeName}</b> sẽ bị xóa khỏi hệ thống. Các thành viên sẽ không còn truy cập được không gian này.
                         </p>
                       </div>
                     </div>
 
                     <div>
-                      <p className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-500">Dữ liệu bị xóa cùng gia đình</p>
-                      <div className="space-y-3 rounded-xl border border-slate-200 p-3">
+                      <p className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Dữ liệu bị xóa cùng gia đình</p>
+                      <div className="space-y-3 rounded-xl border border-slate-200 p-3 dark:border-slate-700">
                         <ImpactRow icon={Database} title="Dữ liệu tài chính gia đình" description="Giao dịch, ngân sách, danh mục do gia đình tạo, mục tiêu tiết kiệm và các khoản đóng góp." />
                         <ImpactRow icon={Users} title="Thông tin không gian chung" description="Danh sách thành viên, lời mời và liên kết thành viên với gia đình." />
                       </div>
                     </div>
                   </div>
               ) : (
-                  <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm leading-6 text-amber-800">
+                  <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm leading-6 text-amber-800 dark:border-amber-900/70 dark:bg-amber-950/35 dark:text-amber-200">
                     Bạn sẽ rời khỏi <b>{activeName}</b> và không còn quyền truy cập dữ liệu của gia đình này. Không gian gia đình vẫn tồn tại cho các thành viên còn lại.
                   </div>
               )}
 
               <div className="mt-5">
                 <label className="block">
-              <span className="mb-2 block text-sm font-semibold text-slate-700">
-                Để xác nhận, nhập chính xác tên gia đình: <b className="text-slate-900">{activeName}</b>
+              <span className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">
+                Để xác nhận, nhập chính xác tên gia đình: <b className="text-slate-900 dark:text-slate-100">{activeName}</b>
               </span>
                   <input
                       autoFocus
@@ -417,16 +417,16 @@ export default function Family() {
                       onChange={(event) => setConfirmName(event.target.value)}
                       disabled={dangerBusy}
                       placeholder="Nhập tên gia đình"
-                      className="h-12 w-full rounded-xl border border-slate-200 px-4 text-sm outline-none focus:border-rose-400 focus:ring-4 focus:ring-rose-50 disabled:bg-slate-100"
+                      className="h-12 w-full rounded-xl border border-slate-200 px-4 text-sm outline-none focus:border-rose-400 focus:ring-4 focus:ring-rose-50 disabled:bg-slate-100 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:ring-rose-900/40 dark:disabled:bg-slate-800"
                   />
                 </label>
                 <div className="mt-5 flex flex-wrap justify-end gap-2">
-                  <button type="button" disabled={dangerBusy} onClick={closeModal} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold disabled:opacity-50">Hủy</button>
+                  <button type="button" disabled={dangerBusy} onClick={closeModal} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-700 disabled:opacity-50">Hủy</button>
                   <button
                       type="button"
                       disabled={dangerBusy || !canConfirmDanger || (isDeleteModal && !isOwner)}
                       onClick={runDangerAction}
-                      className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-40"
+                      className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-rose-700 dark:bg-rose-700 dark:hover:bg-rose-600 disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     <Trash2 size={15} />
                     {dangerBusy ? 'Đang xử lý…' : isDeleteModal ? 'Xác nhận giải tán' : 'Xác nhận rời gia đình'}
