@@ -4,11 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.backend.exception.BadRequestException;
 import org.example.backend.exception.ForbiddenException;
 import org.example.backend.model.dto.response.DashboardResponse;
-import org.example.backend.model.entity.Budget;
-import org.example.backend.model.entity.Category;
-import org.example.backend.model.entity.FamilyMember;
-import org.example.backend.model.entity.Transaction;
-import org.example.backend.model.entity.SavingGoal;
+import org.example.backend.model.entity.*;
 import org.example.backend.model.enums.CategoryType;
 import org.example.backend.model.projection.CategorySpent;
 import org.example.backend.repository.BudgetRepository;
@@ -87,6 +83,10 @@ public class DashboardServiceImpl implements DashboardService {
         List<DashboardResponse.CategoryBreakdown> expenseByCategory = buildExpenseBreakdown(familyId, effectiveStart, effectiveEnd, totalExpense);
         List<DashboardResponse.TrendPoint> trend = buildTrend(familyId, effectiveStart, effectiveEnd);
 
+        // Tình hình ngân sách hiện tại lấy theo ngày hiện tại theo múi giờ Việt Nam.
+        DashboardResponse.BudgetStatus budget = buildBudgetStatus(familyId, LocalDate.now(ZONE));
+        List<DashboardResponse.SavingGoalProgress> savingGoals = buildSavingGoals(familyId);
+        List<DashboardResponse.RecentTransaction> recentTransactions = buildRecentTransactions(familyId);
 
 
 
@@ -95,6 +95,11 @@ public class DashboardServiceImpl implements DashboardService {
                         .summary(summary)
                         .expenseByCategory(expenseByCategory)
                         .trend(trend)
+                        .build())
+                .budgetAndSavings(DashboardResponse.BudgetAndSavings.builder()
+                        .budget(budget)
+                        .savingGoals(savingGoals)
+                        .recentTransactions(recentTransactions)
                         .build())
                 .build();
     }
@@ -167,6 +172,118 @@ public class DashboardServiceImpl implements DashboardService {
     }
 
 
+    /**
+     * Lấy ngân sách hiện tại (ngân sách tổng đang áp dụng cho ngày hiện tại).
+     * Tính cả số chi tiêu thực tế và số tiết kiệm đã dùng trong kỳ ngân sách.
+     */
+    private DashboardResponse.BudgetStatus buildBudgetStatus(Long familyId, LocalDate targetDate) {
+        Optional<Budget> current = budgetRepository.findTotalCoveringDate(familyId, targetDate);
+        if (current.isEmpty()) {
+            return null;
+        }
+
+        Budget total = current.get();
+        BigDecimal spent = zeroIfNull(budgetRepository.sumExpenses(familyId, CategoryType.EXPENSE, total.getStartDate(), total.getEndDate()));
+        BigDecimal saved = zeroIfNull(savingGoalRepository.sumSavedAmountByFamilyAndDateRange(familyId, total.getStartDate(), total.getEndDate()));
+        BigDecimal used = spent.add(saved);
+        BigDecimal remaining = total.getAmount().subtract(used);
+        BigDecimal usedPercent = percent(used, total.getAmount());
+
+        List<Budget> subBudgets = budgetRepository.findByParentBudgetIdOrderByIdAsc(total.getId());
+        List<DashboardResponse.BudgetItem> subBudgetItems = subBudgets.stream()
+                .map(sub -> {
+                    BigDecimal subSpent = zeroIfNull(budgetRepository.sumExpensesForCategory(
+                            familyId,
+                            sub.getCategory().getId(),
+                            total.getStartDate(),
+                            total.getEndDate()));
+                    BigDecimal subRemaining = sub.getAmount().subtract(subSpent);
+                    BigDecimal subUsedPercent = percent(subSpent, sub.getAmount());
+                    return DashboardResponse.BudgetItem.builder()
+                            .categoryId(sub.getCategory().getId())
+                            .categoryName(sub.getCategory().getName())
+                            .amount(sub.getAmount())
+                            .spent(subSpent)
+                            .remaining(subRemaining)
+                            .usedPercent(subUsedPercent)
+                            .alertLevel(alertLevel(subUsedPercent))
+                            .build();
+                })
+                .toList();
+
+        return DashboardResponse.BudgetStatus.builder()
+                .budgetId(total.getId())
+                .startDate(total.getStartDate())
+                .endDate(total.getEndDate())
+                .totalAmount(total.getAmount())
+                .spent(spent)
+                .saved(saved)
+                .used(used)
+                .remaining(remaining)
+                .usedPercent(usedPercent)
+                .alertLevel(alertLevel(usedPercent))
+                .subBudgets(subBudgetItems)
+                .build();
+    }
+
+    /**
+     * Tạo tiến độ từng mục tiêu tiết kiệm trong gia đình.
+     * Dữ liệu này phục vụ vòng tròn hoặc thanh tiến độ trên màn hình dashboard.
+     */
+    private List<DashboardResponse.SavingGoalProgress> buildSavingGoals(Long familyId) {
+        return savingGoalRepository.findByFamilyIdOrderByCreatedAtDesc(familyId).stream()
+                .map(goal -> {
+                    BigDecimal savedAmount = zeroIfNull(savingGoalRepository.sumSavedAmountByGoalId(goal.getId()));
+                    BigDecimal remainingAmount = goal.getTargetAmount().subtract(savedAmount);
+                    BigDecimal progressPercent = percent(savedAmount, goal.getTargetAmount());
+                    return DashboardResponse.SavingGoalProgress.builder()
+                            .id(goal.getId())
+                            .name(goal.getName())
+                            .targetAmount(goal.getTargetAmount())
+                            .savedAmount(savedAmount)
+                            .remainingAmount(remainingAmount)
+                            .progressPercent(progressPercent)
+                            .status(goal.getStatus().name())
+                            .targetDate(goal.getTargetDate())
+                            .build();
+                })
+                .toList();
+    }
+
+    /**
+     * Trả về 10 giao dịch gần nhất để hiển thị trên dashboard.
+     * Đặc biệt hữu ích cho phần "Giao dịch gần đây".
+     */
+    private List<DashboardResponse.RecentTransaction> buildRecentTransactions(Long familyId) {
+        return transactionRepository.findTop10ByFamilyIdOrderByTransactionDateDescIdDesc(familyId).stream()
+                .map(transaction -> DashboardResponse.RecentTransaction.builder()
+                        .id(transaction.getId())
+                        .categoryId(transaction.getCategory().getId())
+                        .categoryName(transaction.getCategory().getName())
+                        .categoryType(transaction.getCategory().getType())
+                        .description(transaction.getDescription())
+                        .amount(transaction.getAmount())
+                        .transactionDate(transaction.getTransactionDate())
+                        .userName(displayName(transaction.getUser()))
+                        .build())
+                .toList();
+    }
+
+    /**
+     * Cấp cảnh báo ngân sách theo ngưỡng:
+     * - 80% trở lên: cảnh báo vàng
+     * - 100% trở lên: cảnh báo đỏ
+     * - dưới 80%: bình thường
+     */
+    private String alertLevel(BigDecimal usedPercent) {
+        if (usedPercent.compareTo(BigDecimal.valueOf(100)) >= 0) {
+            return "RED";
+        }
+        if (usedPercent.compareTo(BigDecimal.valueOf(80)) >= 0) {
+            return "YELLOW";
+        }
+        return "GREEN";
+    }
 
 
 
@@ -184,7 +301,7 @@ public class DashboardServiceImpl implements DashboardService {
         return value != null ? value : ZERO;
     }
 
-    private String displayName(org.example.backend.model.entity.User user) {
+    private String displayName(User user) {
         if (user == null) {
             return "Unknown";
         }
