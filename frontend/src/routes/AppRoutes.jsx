@@ -11,12 +11,13 @@ import Profile from '../pages/Profile';
 import Family from '../pages/Family';
 import Members from '../pages/Members';
 import Categories from '../pages/Categories';
+import { CircleHelp, PiggyBank, ReceiptText, WalletCards } from 'lucide-react';
 
 const modules = [
-  ['transactions','Giao dịch','Theo dõi thu nhập, chi tiêu và lịch sử biến động tài chính.'],
-  ['budgets','Ngân sách','Theo dõi hạn mức tổng và hạn mức theo từng danh mục.'],
-  ['saving-goals','Mục tiêu tiết kiệm','Thiết lập mục tiêu và theo dõi tiến độ tích lũy của gia đình.'],
-  ['support','Hỗ trợ & Trợ giúp','Tìm câu trả lời và thông tin hỗ trợ sử dụng ứng dụng.']
+  { path: 'transactions', title: 'Giao dịch', description: 'Theo dõi thu nhập, chi tiêu và lịch sử biến động tài chính.', icon: ReceiptText },
+  { path: 'budgets', title: 'Ngân sách', description: 'Theo dõi hạn mức tổng và hạn mức theo từng danh mục.', icon: WalletCards },
+  { path: 'saving-goals', title: 'Mục tiêu tiết kiệm', description: 'Thiết lập mục tiêu và theo dõi tiến độ tích lũy của gia đình.', icon: PiggyBank },
+  { path: 'support', title: 'Hỗ trợ & Trợ giúp', description: 'Tìm câu trả lời và thông tin hỗ trợ sử dụng ứng dụng.', icon: CircleHelp },
 ];
 
 export default function AppRoutes() {
@@ -31,7 +32,13 @@ export default function AppRoutes() {
       <Route path="members" element={<Members/>}/>
       <Route path="family" element={<Family/>}/>
       <Route path="profile" element={<Profile/>}/>
-      {modules.map(([path,title,description]) => <Route key={path} path={path} element={<ModulePage title={title} description={description}/>}/>)}
+      {modules.map(({ path, title, description, icon }) => (
+        <Route
+          key={path}
+          path={path}
+          element={<ModulePage title={title} description={description} icon={icon} />}
+        />
+      ))}
     </Route>
     <Route path="*" element={<NotFound404/>}/>
   </Routes>;

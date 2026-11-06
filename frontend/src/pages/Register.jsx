@@ -128,11 +128,12 @@ export default function Register() {
  }
 
  return (
-     <div className="auth-page register-page">
+     <main className="auth-page register-page">
 
       {/* Left visual section */}
       <motion.section
           className="auth-visual"
+          aria-label="Giới thiệu FinHome"
           initial={{ opacity: 0, x: -24 }}
           animate={{ opacity: 1, x: 0 }}
       >
@@ -181,7 +182,7 @@ export default function Register() {
       </motion.section>
 
       {/* Right form section */}
-      <section className="auth-form-side">
+      <section className="auth-form-side" aria-labelledby="register-title">
        <motion.div
            className="auth-form-wrap register-form-wrap"
            initial={{ opacity: 0, y: 18 }}
@@ -202,7 +203,7 @@ export default function Register() {
                         TẠO KHÔNG GIAN TÀI CHÍNH RIÊNG
                     </span>
 
-        <h2>Tạo tài khoản</h2>
+        <h2 id="register-title">Tạo tài khoản</h2>
 
         <p className="form-subtitle">
          Chỉ mất một phút để bắt đầu.
@@ -214,7 +215,7 @@ export default function Register() {
             </div>
         )}
 
-        <form className="auth-form" onSubmit={submit}>
+        <form className="auth-form" onSubmit={submit} aria-label="Tạo tài khoản">
 
          {/* Username */}
          <label htmlFor="username">
@@ -226,6 +227,7 @@ export default function Register() {
 
           <input
               id="username"
+              type="text"
               autoComplete="username"
               placeholder="Ví dụ: nguyenvana"
               value={form.username}
@@ -243,6 +245,7 @@ export default function Register() {
 
           <input
               id="fullName"
+              type="text"
               autoComplete="name"
               placeholder="Tên hiển thị của bạn"
               value={form.fullName}
@@ -352,7 +355,7 @@ export default function Register() {
          </div>
 
          {form.confirm && form.confirm !== form.password && (
-             <small className="field-error">
+             <small className="field-error" role="status" aria-live="polite">
               Mật khẩu chưa khớp.
              </small>
          )}
@@ -384,6 +387,7 @@ export default function Register() {
 
          {/* Submit */}
          <button
+             type="submit"
              className="btn-primary auth-submit"
              disabled={busy}
          >
@@ -412,6 +416,6 @@ export default function Register() {
 
        </motion.div>
       </section>
-     </div>
+     </main>
  );
 }
