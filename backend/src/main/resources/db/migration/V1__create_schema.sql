@@ -75,7 +75,7 @@ CREATE TABLE invitations (
     CONSTRAINT fk_invitation_family       FOREIGN KEY (family_id)       REFERENCES families (id) ON DELETE CASCADE,
     CONSTRAINT fk_invitation_invited_user FOREIGN KEY (invited_user_id) REFERENCES users (id)    ON DELETE CASCADE,
     CONSTRAINT fk_invitation_invited_by   FOREIGN KEY (invited_by_id)   REFERENCES users (id)    ON DELETE CASCADE,
-    CONSTRAINT ck_invitation_status CHECK (status IN ('PENDING', 'ACCEPTED', 'DECLINED'))
+    CONSTRAINT ck_invitation_status CHECK (status IN ('PENDING', 'ACCEPTED', 'DECLINED', 'CANCELLED'))
 ) ENGINE = InnoDB;
 
 CREATE INDEX idx_invitation_invited_user_status ON invitations (invited_user_id, status);
