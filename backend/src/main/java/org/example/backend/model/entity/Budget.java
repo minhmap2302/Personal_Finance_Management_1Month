@@ -9,6 +9,7 @@ import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -68,8 +69,8 @@ public class Budget {
     private LocalDate endDate;
 
     /** Giới hạn chi theo VND, luôn lớn hơn 0. Vượt giới hạn vẫn được phép nhưng sẽ cảnh báo. */
-    @Column(name = "amount", nullable = false)
-    private Long amount;
+    @Column(name = "amount", nullable = false, precision = 19, scale = 2)
+    private BigDecimal amount;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

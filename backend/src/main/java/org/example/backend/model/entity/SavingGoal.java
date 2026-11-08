@@ -10,6 +10,7 @@ import org.example.backend.model.enums.SavingGoalStatus;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -48,8 +49,8 @@ public class SavingGoal {
     private String name;
 
     /** Số tiền cần đạt theo VND, luôn lớn hơn 0. */
-    @Column(name = "target_amount", nullable = false)
-    private Long targetAmount;
+    @Column(name = "target_amount", nullable = false, precision = 19, scale = 2)
+    private BigDecimal targetAmount;
 
     /** Ngày dự kiến hoàn thành, có thể để trống. */
     @Column(name = "target_date")

@@ -2,6 +2,13 @@ package org.example.backend.controller;
 
 import org.example.backend.exception.ConflictException;
 import org.example.backend.exception.GlobalExceptionHandler;
+import org.example.backend.exception.UnauthorizedException;
+import org.example.backend.model.dto.request.LoginRequest;
+import org.example.backend.model.dto.request.RefreshTokenRequest;
+import org.example.backend.model.dto.request.RegisterRequest;
+import org.example.backend.model.dto.response.AuthResponse;
+import org.example.backend.model.dto.response.UserResponse;
+import org.example.backend.service.AuthService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -121,6 +128,7 @@ class AuthControllerTest {
 
         AuthResponse authResponse = AuthResponse.builder()
                 .accessToken("mock.jwt.token")
+                .refreshToken("mock.refresh.token")
                 .tokenType("Bearer")
                 .user(user)
                 .build();
@@ -167,12 +175,63 @@ class AuthControllerTest {
     @Test
     @DisplayName("POST /api/v1/auth/logout - Đăng xuất thành công trả về 200 OK")
     void logout_success() throws Exception {
-        doNothing().when(authService).logout(any());
+        doNothing().when(authService).logout(anyString(), anyString());
 
         mockMvc.perform(post("/api/v1/auth/logout")
-                        .header("Authorization", "Bearer sample.jwt.token"))
+                        .header("Authorization", "Bearer sample.jwt.token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {
+                                "refreshToken": "sample.refresh.token"
+                            }
+                            """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Đăng xuất thành công"));
+    }
+
+    @Test
+    @DisplayName("POST /api/v1/auth/refresh - Làm mới token thành công")
+    void refresh_success() throws Exception {
+        AuthResponse authResponse = AuthResponse.builder()
+                .accessToken("new.access.token")
+                .refreshToken("new.refresh.token")
+                .tokenType("Bearer")
+                .build();
+
+        when(authService.refreshToken(any(RefreshTokenRequest.class))).thenReturn(authResponse);
+
+        String json = """
+                {
+                    "refreshToken": "valid-refresh-token"
+                }
+                """;
+
+        mockMvc.perform(post("/api/v1/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.accessToken").value("new.access.token"));
+    }
+
+    @Test
+    @DisplayName("POST /api/v1/auth/refresh - Token hết hạn hoặc không hợp lệ trả về 401 Unauthorized")
+    void refresh_unauthorized() throws Exception {
+        when(authService.refreshToken(any(RefreshTokenRequest.class)))
+                .thenThrow(new UnauthorizedException("Refresh token đã hết hạn. Vui lòng đăng nhập lại"));
+
+        String json = """
+                {
+                    "refreshToken": "expired-refresh-token"
+                }
+                """;
+
+        mockMvc.perform(post("/api/v1/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.message").value("Refresh token đã hết hạn. Vui lòng đăng nhập lại"));
     }
 }

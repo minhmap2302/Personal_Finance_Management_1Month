@@ -9,6 +9,7 @@ import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -51,14 +52,18 @@ public class Transaction {
     private Category category;
 
     /** Số tiền theo VND, luôn lớn hơn 0. */
-    @Column(name = "amount", nullable = false)
-    private Long amount;
+    @Column(name = "amount", nullable = false, precision = 19, scale = 2)
+    private BigDecimal amount;
 
     @Column(name = "transaction_date", nullable = false)
     private LocalDate transactionDate;
 
     @Column(name = "description", length = 255)
     private String description;
+
+    /** Đường dẫn ảnh hóa đơn trên Cloudinary, có thể để trống. */
+    @Column(name = "receipt_image", length = 500)
+    private String receiptImage;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

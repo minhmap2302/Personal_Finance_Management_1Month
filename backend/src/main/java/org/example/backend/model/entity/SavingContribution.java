@@ -9,6 +9,7 @@ import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -44,8 +45,8 @@ public class SavingContribution {
     private User user;
 
     /** Số tiền đóng góp theo VND, luôn lớn hơn 0. */
-    @Column(name = "amount", nullable = false)
-    private Long amount;
+    @Column(name = "amount", nullable = false, precision = 19, scale = 2)
+    private BigDecimal amount;
 
     @Column(name = "contribution_date", nullable = false)
     private LocalDate contributionDate;

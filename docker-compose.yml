@@ -1,6 +1,9 @@
+
 services:
+  # ─────────────────── DATABASE ───────────────────
   db:
     image: mysql:8.0
+    restart: unless-stopped
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
@@ -10,22 +13,49 @@ services:
       TZ: ${TZ}
     volumes:
       - mysql_data:/var/lib/mysql
+      # Tự động chạy SQL khởi tạo khi MySQL tạo volume mới
+      - ./backend/scripts/create_database.sql:/docker-entrypoint-initdb.d/01-create_database.sql:ro
     healthcheck:
+      test:
+        - CMD-SHELL
+        - 'MYSQL_PWD="$${MYSQL_ROOT_PASSWORD}" mysql -h 127.0.0.1 -u root -D "$${MYSQL_DATABASE}" -e "SELECT 1" > /dev/null 2>&1'
       test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$$MYSQL_ROOT_PASSWORD"]
       interval: 5s
       timeout: 5s
+      retries: 30
+      start_period: 30s
       retries: 20
     networks:
       - app-net
 
+  # ─────────────────── BACKEND ────────────────────
   backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
     build: ./backend            # Dockerfile sẽ làm ở task kế tiếp
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/${DB_NAME}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh
       SPRING_DATASOURCE_USERNAME: ${DB_USER}
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+
       JWT_SECRET_KEY: ${JWT_SECRET_KEY}
       JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS}
+      REFRESH_EXPIRATION_DAYS: ${REFRESH_EXPIRATION_DAYS}
+
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
+
+      ADMIN_USERNAME: ${ADMIN_USERNAME}
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_MODEL: ${OPENAI_MODEL}
+
       TZ: ${TZ}
     ports:
       - "${BACKEND_PORT}:8080"
@@ -35,7 +65,15 @@ services:
     networks:
       - app-net
 
+  # ─────────────────── FRONTEND ───────────────────
   frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        # Axios gọi /api/... qua Nginx proxy
+        VITE_API_BASE_URL: ""
+    restart: unless-stopped
     image: nginx:alpine         # tạm dùng Nginx có sẵn, Dockerfile FE làm sau
     volumes:
       - ./frontend:/usr/share/nginx/html:ro
@@ -51,3 +89,4 @@ volumes:
 
 networks:
   app-net:
+    driver: bridge
