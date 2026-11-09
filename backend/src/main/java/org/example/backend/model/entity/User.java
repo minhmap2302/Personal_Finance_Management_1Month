@@ -67,6 +67,13 @@ public class User implements UserDetails {
     @Builder.Default
     private boolean enabled = true;
 
+    /**
+     * Thời điểm người dùng tự xóa tài khoản, null nghĩa là chưa xóa.
+     * Khác với enabled (admin khóa, mở khóa lại được): tài khoản đã xóa bị ẩn danh hóa và không khôi phục được.
+     */
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -102,5 +109,10 @@ public class User implements UserDetails {
     @Override
     public boolean isEnabled() {
         return enabled;
+    }
+
+    @JsonIgnore
+    public boolean isDeleted() {
+        return deletedAt != null;
     }
 }

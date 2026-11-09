@@ -7,10 +7,7 @@ import org.example.backend.model.enums.InvitationStatus;
 import org.example.backend.model.enums.SystemRole;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Lock;
-import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 
 import java.util.Collection;
@@ -83,4 +80,9 @@ public interface InvitationRepository extends JpaRepository<Invitation, Long> {
     Optional<Invitation> findSentForUpdate(@Param("id") Long id,
                                            @Param("familyId") Long familyId,
                                            @Param("userId") Long userId);
+
+    /** Xóa mọi lời mời mà người dùng đã gửi hoặc đã nhận (dùng khi xóa tài khoản). */
+    @Modifying
+    @Query("delete from Invitation i where i.invitedUser.id = :userId or i.invitedBy.id = :userId")
+    int deleteAllInvolving(@Param("userId") Long userId);
 }

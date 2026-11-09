@@ -2,6 +2,7 @@ package org.example.backend.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.backend.exception.BadRequestException;
 import org.example.backend.exception.ConflictException;
 import org.example.backend.exception.UnauthorizedException;
 import org.example.backend.model.dto.request.LoginRequest;
@@ -18,6 +19,7 @@ import org.example.backend.repository.RefreshTokenRepository;
 import org.example.backend.repository.UserRepository;
 import org.example.backend.security.jwt.JwtService;
 import org.example.backend.service.AuthService;
+import org.example.backend.util.DeletedUserNaming;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
@@ -48,6 +50,13 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public UserResponse register(RegisterRequest request) {
+        if (DeletedUserNaming.isReservedUsername(request.getUsername())) {
+            throw new BadRequestException("Tên đăng nhập '" + request.getUsername() + "' không được phép sử dụng");
+        }
+        if (DeletedUserNaming.isReservedEmail(request.getEmail())) {
+            throw new BadRequestException("Email '" + request.getEmail() + "' không được phép sử dụng");
+        }
+
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new ConflictException("Tên đăng nhập '" + request.getUsername() + "' đã tồn tại");
         }
@@ -79,6 +88,10 @@ public class AuthServiceImpl implements AuthService {
 
         User user = userRepository.findByUsernameOrEmail(identifier)
                 .orElseThrow(() -> new BadCredentialsException("Tên đăng nhập hoặc mật khẩu không chính xác"));
+
+        if (user.isDeleted()) {
+            throw new BadCredentialsException("Tên đăng nhập hoặc mật khẩu không chính xác");
+        }
 
         if (!user.isEnabled()) {
             throw new DisabledException("Tài khoản của bạn đã bị vô hiệu hóa hoặc bị khóa");

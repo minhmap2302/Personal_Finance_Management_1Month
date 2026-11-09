@@ -44,4 +44,8 @@ public interface FamilyMemberRepository extends JpaRepository<FamilyMember, Long
     Page<FamilyMember> searchMembers(@Param("familyId") Long familyId,
                                      @Param("keyword") String keyword,
                                      Pageable pageable);
+
+    /** Id các gia đình của người dùng, tăng dần (chỉ lấy id, chưa nạp FamilyMember). Dùng để khóa theo thứ tự cố định. */
+    @Query("select m.family.id from FamilyMember m where m.user.id = :userId order by m.family.id")
+    List<Long> findFamilyIdsByUserId(@Param("userId") Long userId);
 }
