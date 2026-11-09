@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.backend.exception.UnauthorizedException;
 import org.example.backend.model.dto.request.ChangePasswordRequest;
+import org.example.backend.model.dto.request.DeleteAccountRequest;
 import org.example.backend.model.dto.request.UpdateProfileRequest;
 import org.example.backend.model.dto.response.ApiResponse;
 import org.example.backend.model.dto.response.UserResponse;
@@ -22,9 +23,6 @@ public class UserController {
 
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<UserResponse>> getCurrentUser(@AuthenticationPrincipal User currentUser) {
-        if (currentUser == null) {
-            throw new UnauthorizedException("Bạn chưa đăng nhập");
-        }
         UserResponse response = userService.getCurrentProfile(currentUser.getId());
         return ResponseEntity.ok(ApiResponse.success("Lấy thông tin người dùng thành công", response));
     }
@@ -33,9 +31,6 @@ public class UserController {
     public ResponseEntity<ApiResponse<UserResponse>> updateProfile(
             @AuthenticationPrincipal User currentUser,
             @Valid @RequestBody UpdateProfileRequest request) {
-        if (currentUser == null) {
-            throw new UnauthorizedException("Bạn chưa đăng nhập");
-        }
         UserResponse response = userService.updateProfile(currentUser.getId(), request);
         return ResponseEntity.ok(ApiResponse.success("Cập nhật thông tin hồ sơ thành công", response));
     }
@@ -44,11 +39,16 @@ public class UserController {
     public ResponseEntity<ApiResponse<Void>> changePassword(
             @AuthenticationPrincipal User currentUser,
             @Valid @RequestBody ChangePasswordRequest request) {
-        if (currentUser == null) {
-            throw new UnauthorizedException("Bạn chưa đăng nhập");
-        }
         userService.changePassword(currentUser.getId(), request);
         return ResponseEntity.ok(ApiResponse.success("Đổi mật khẩu thành công"));
+    }
+
+    @DeleteMapping("/me")
+    public ResponseEntity<ApiResponse<Void>> deleteAccount(
+            @AuthenticationPrincipal User currentUser,
+            @Valid @RequestBody DeleteAccountRequest request) {
+        userService.deleteAccount(currentUser.getId(), request);
+        return ResponseEntity.ok(ApiResponse.success("Đã xóa tài khoản"));
     }
 }
 
