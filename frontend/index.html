@@ -27,7 +27,13 @@
       try {
         var mode = localStorage.getItem('pfm.theme') || 'light';
         var dark = mode === 'dark' || (mode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-        if (dark) document.documentElement.setAttribute('data-theme', 'dark');
+        if (dark) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.removeAttribute('data-theme');
+          document.documentElement.classList.remove('dark');
+        }
       } catch(e) {}
     })();
   </script>
