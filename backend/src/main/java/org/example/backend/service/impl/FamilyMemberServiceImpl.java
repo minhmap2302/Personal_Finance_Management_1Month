@@ -55,6 +55,12 @@ public class FamilyMemberServiceImpl implements FamilyMemberService {
         }
 
         FamilyMember target = findMember(familyId, targetUserId);
+        // Người đang bị khóa không nâng lên quản lý được (họ không đăng nhập để làm việc được),
+        // nhưng vẫn hạ xuống thành viên được để chủ gia đình dọn dẹp.
+        if (request.getRole() == FamilyRole.MANAGER && !target.getUser().isEnabled()) {
+            throw new BadRequestException("Không thể nâng người dùng đang bị khóa lên làm quản lý");
+        }
+
         target.setRole(request.getRole());
         return toResponse(target);
     }
@@ -106,6 +112,10 @@ public class FamilyMemberServiceImpl implements FamilyMemberService {
         }
 
         FamilyMember newOwner = findMember(familyId, request.getNewOwnerUserId());
+        if (!newOwner.getUser().isEnabled()) {
+            throw new BadRequestException("Không thể chuyển quyền cho người dùng đang bị khóa");
+        }
+
         newOwner.setRole(FamilyRole.OWNER);
         owner.setRole(FamilyRole.MANAGER);
     }
