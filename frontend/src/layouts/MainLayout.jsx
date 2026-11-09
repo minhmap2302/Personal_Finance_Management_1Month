@@ -10,6 +10,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useFamily } from '../context/FamilyContext';
 import ThemeToggle from '../components/ThemeToggle';
+import BrandLogoMark from '../components/BrandLogoMark';
 
 const NAV_ITEMS = [
   { to: '/app/dashboard',    label: 'Tổng quan',           icon: LayoutDashboard },
@@ -29,7 +30,7 @@ function SidebarContent({ onNavigate }) {
     <div className="sidebar">
       {/* Brand */}
       <NavLink to="/app/dashboard" className="brand" onClick={onNavigate} aria-label="FinHome — Trang tổng quan">
-        <span className="brand-mark"><Home size={20} strokeWidth={2.2} /></span>
+        <BrandLogoMark />
         <span>
           <b>FinHome</b>
           <small>QUẢN LÝ TÀI CHÍNH GIA ĐÌNH</small>

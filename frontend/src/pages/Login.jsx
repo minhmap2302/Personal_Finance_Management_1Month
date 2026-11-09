@@ -6,7 +6,6 @@ import {
   ArrowRight,
   Eye,
   EyeOff,
-  Home,
   LockKeyhole,
   Mail,
   ShieldCheck,
@@ -14,6 +13,7 @@ import {
   Wallet
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import BrandLogoMark from '../components/BrandLogoMark';
 
 export default function Login() {
   const [identifier, setIdentifier] = useState('');
@@ -55,19 +55,18 @@ export default function Login() {
   }
 
   return (
-      <div className="auth-page">
+      <main className="auth-page">
 
         {/* Left visual section */}
         <motion.section
             className="auth-visual"
+            aria-label="Giới thiệu FinHome"
             initial={{ opacity: 0, x: -24 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.55 }}
         >
           <Link to="/" className="auth-brand">
-                    <span className="brand-mark">
-                        <Home size={22} />
-                    </span>
+            <BrandLogoMark />
 
             <span>
                         <b>FinHome</b>
@@ -128,7 +127,7 @@ export default function Login() {
         </motion.section>
 
         {/* Right form section */}
-        <section className="auth-form-side">
+        <section className="auth-form-side" aria-labelledby="login-title">
           <motion.div
               className="auth-form-wrap"
               initial={{ opacity: 0, y: 18 }}
@@ -142,9 +141,7 @@ export default function Login() {
                 className="mobile-auth-brand"
                 aria-label="Quay về trang chủ FinHome"
             >
-                        <span className="brand-mark">
-                            <Home size={21} />
-                        </span>
+              <BrandLogoMark />
               <b>FinHome</b>
             </Link>
 
@@ -152,7 +149,7 @@ export default function Login() {
                         CHÀO MỪNG BẠN TRỞ LẠI
                     </span>
 
-            <h2>Đăng nhập</h2>
+            <h2 id="login-title">Đăng nhập</h2>
 
             <p className="form-subtitle">
               Tiếp tục hành trình quản lý tài chính gia đình.
@@ -164,7 +161,7 @@ export default function Login() {
                 </div>
             )}
 
-            <form onSubmit={submit} className="auth-form">
+            <form onSubmit={submit} className="auth-form" aria-label="Đăng nhập">
 
               <label htmlFor="identifier">
                 Tên đăng nhập hoặc Email
@@ -175,6 +172,7 @@ export default function Login() {
 
                 <input
                     id="identifier"
+                    type="text"
                     autoComplete="username"
                     placeholder="Nhập tên đăng nhập hoặc email"
                     value={identifier}
@@ -225,6 +223,7 @@ export default function Login() {
               </label>
 
               <button
+                  type="submit"
                   className="btn-primary auth-submit"
                   disabled={busy}
               >
@@ -258,6 +257,6 @@ export default function Login() {
 
           </motion.div>
         </section>
-      </div>
+      </main>
   );
 }
