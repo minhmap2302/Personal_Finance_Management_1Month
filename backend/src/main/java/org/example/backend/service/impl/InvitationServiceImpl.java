@@ -94,6 +94,10 @@ public class InvitationServiceImpl implements InvitationService {
         User invited = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng"));
 
+        if (invited.isDeleted()) {
+            throw new ResourceNotFoundException("Không tìm thấy người dùng");
+        }
+
         if (!invited.isEnabled()) {
             throw new BadRequestException("Tài khoản này đã bị khóa");
         }

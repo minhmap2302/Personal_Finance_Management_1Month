@@ -38,11 +38,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (token != null && jwtService.validateToken(token)) {
             try {
                 String username = jwtService.extractUsername(token);
+                Long tokenUserId = jwtService.extractUserId(token);
 
                 if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                     CustomUserDetails userDetails = (CustomUserDetails) customUserDetailsService.loadUserByUsername(username);
                     User currentUser = userDetails.getUser();
-                    if (currentUser.isEnabled()) {
+
+                    // Token tìm người dùng theo username, mà username có thể được người khác dùng lại sau khi
+                    // chủ cũ đổi tên hoặc xóa tài khoản. Phải đúng id trong token thì mới là cùng một người.
+                    if (tokenUserId == null || !tokenUserId.equals(currentUser.getId())) {
+                        log.warn("Token cấp cho user ID {} nhưng username '{}' hiện thuộc user ID {}, từ chối xác thực",
+                                tokenUserId, username, currentUser.getId());
+                    } else if (currentUser.isEnabled()) {
                         UsernamePasswordAuthenticationToken authentication =
                                 new UsernamePasswordAuthenticationToken(currentUser, null, currentUser.getAuthorities());
                         authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
@@ -67,4 +74,3 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         return null;
     }
 }
-

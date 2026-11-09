@@ -14,6 +14,8 @@
 -- Trường hợp được minh họa:
 --   - đủ ba vai trò OWNER, MANAGER, MEMBER
 --   - một tài khoản bị khóa
+--   - một tài khoản đã xóa (ẩn danh hóa): không còn thành viên hay lời mời nào, nhưng giao dịch và khoản đóng góp
+--     của người đó vẫn nằm trong "Tổ Ấm Nhỏ" (kỳ trước) và hiển thị là "Người dùng đã xóa"
 --   - lời mời đủ bốn trạng thái (PENDING, ACCEPTED, DECLINED, CANCELLED), do cả chủ gia đình
 --     lẫn quản lý gửi, để thử danh sách "lời mời đã gửi" (mỗi người chỉ thấy lời mời do chính mình gửi)
 --   - danh mục tùy chỉnh, trong đó có một danh mục đã lưu trữ
@@ -55,6 +57,18 @@ SET @u_lan = LAST_INSERT_ID();
 -- Tài khoản bị khóa (enabled = FALSE).
 INSERT INTO users (username, email, password, full_name, role, enabled)
 VALUES ('vuvanminh', 'minh@example.com', '$2a$10$/N62ErV9FKWID3nRmf4X1u2IiW1guGCLtum7wCSotoxhSTG4QyRzm', 'Vũ Văn Minh', 'USER', FALSE);
+
+-- Tài khoản đã xóa: được ẩn danh hóa đúng như chức năng xóa tài khoản làm (enabled = FALSE, có deleted_at,
+-- username và email theo id, mật khẩu ngẫu nhiên không ai biết). Username và email được đặt theo id ngay sau khi
+-- biết id, vì hai cột này là duy nhất và không dùng giá trị tạm trùng nhau.
+INSERT INTO users (username, email, password, full_name, role, enabled, deleted_at)
+VALUES ('deleted_user_tmp', 'deleted_tmp@deleted.invalid', '$2a$10$ZiKvIGEK4i/AyhO0ql1Gy.uc4mAby52FlBYkyvKMV.pueskkxSImG',
+        'Người dùng đã xóa', 'USER', FALSE, DATE_SUB(NOW(6), INTERVAL 15 DAY));
+SET @u_deleted = LAST_INSERT_ID();
+UPDATE users
+SET username = CONCAT('deleted_user_', id),
+    email    = CONCAT('deleted_', id, '@deleted.invalid')
+WHERE id = @u_deleted;
 
 -- ---------------------------------------------------------------------
 -- Gia đình và thành viên
@@ -170,7 +184,8 @@ INSERT INTO saving_contributions (saving_goal_id, user_id, amount, contribution_
                                                                                                 (@g_trip,      @u_an,   1500000.00, DATE_SUB(CURDATE(), INTERVAL 28 DAY), NULL),
                                                                                                 (@g_trip,      @u_an,   2000000.00, DATE_SUB(CURDATE(), INTERVAL 11 DAY), 'Góp tiền đi Đà Nẵng'),
                                                                                                 (@g_trip,      @u_binh, 1000000.00, DATE_SUB(CURDATE(), INTERVAL 9 DAY),  NULL),
-                                                                                                (@g_bike,      @u_an,   1000000.00, DATE_SUB(CURDATE(), INTERVAL 8 DAY),  'Đóng góp trước khi hủy mục tiêu');
+                                                                                                (@g_bike,      @u_an,   1000000.00, DATE_SUB(CURDATE(), INTERVAL 8 DAY),  'Đóng góp trước khi hủy mục tiêu'),
+                                                                                                (@g_emergency, @u_deleted, 500000.00, DATE_SUB(CURDATE(), INTERVAL 36 DAY), 'Góp quỹ khẩn cấp trước khi xóa tài khoản');
 
 -- ---------------------------------------------------------------------
 -- Giao dịch "Tổ Ấm Nhỏ", kỳ trước
@@ -182,7 +197,9 @@ INSERT INTO transactions (family_id, user_id, category_id, amount, transaction_d
                                                                                                       (@f_nest, @u_an,   @c_coffee,      450000.00, DATE_SUB(CURDATE(), INTERVAL 38 DAY), 'Cà phê với đồng nghiệp'),
                                                                                                       (@f_nest, @u_an,   @c_transport,   900000.00, DATE_SUB(CURDATE(), INTERVAL 35 DAY), 'Xăng xe'),
                                                                                                       (@f_nest, @u_an,   @c_bills,      1500000.00, DATE_SUB(CURDATE(), INTERVAL 33 DAY), 'Điện, nước, internet'),
-                                                                                                      (@f_nest, @u_an,   @c_food,       2300000.00, DATE_SUB(CURDATE(), INTERVAL 30 DAY), 'Đi chợ và siêu thị');
+                                                                                                      (@f_nest, @u_an,   @c_food,       2300000.00, DATE_SUB(CURDATE(), INTERVAL 30 DAY), 'Đi chợ và siêu thị'),
+                                                                                                      -- Giao dịch của người đã xóa tài khoản: vẫn được giữ và vẫn tính vào số liệu của gia đình.
+                                                                                                      (@f_nest, @u_deleted, @c_fun,      350000.00, DATE_SUB(CURDATE(), INTERVAL 37 DAY), 'Xem phim cùng cả nhà');
 
 -- ---------------------------------------------------------------------
 -- Giao dịch "Tổ Ấm Nhỏ", kỳ hiện tại
