@@ -1,15 +1,14 @@
 package org.example.backend.repository;
 
-import org.example.backend.model.entity.Invitation;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Range;
-import org.springframework.data.jpa.repository.JpaRepository;
 import jakarta.persistence.LockModeType;
+import org.example.backend.model.entity.Invitation;
 import org.example.backend.model.entity.User;
 import org.example.backend.model.enums.InvitationStatus;
 import org.example.backend.model.enums.SystemRole;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -58,4 +57,30 @@ public interface InvitationRepository extends JpaRepository<Invitation, Long> {
     /** Một lời mời gửi cho đúng người dùng này, kèm gia đình và những người liên quan. */
     @EntityGraph(attributePaths = {"family", "invitedUser", "invitedBy"})
     Optional<Invitation> findByIdAndInvitedUserId(Long id, Long invitedUserId);
+
+    // ---- Phía người gửi ----
+
+    /** Lời mời do người dùng này gửi trong gia đình, mọi trạng thái. */
+    @EntityGraph(attributePaths = {"family", "invitedUser", "invitedBy"})
+    Page<Invitation> findByFamilyIdAndInvitedById(Long familyId, Long invitedById, Pageable pageable);
+
+    /** Lời mời do người dùng này gửi trong gia đình, lọc theo trạng thái. */
+    @EntityGraph(attributePaths = {"family", "invitedUser", "invitedBy"})
+    Page<Invitation> findByFamilyIdAndInvitedByIdAndStatus(Long familyId, Long invitedById,
+                                                           InvitationStatus status, Pageable pageable);
+
+    /** Một lời mời do người dùng này gửi trong đúng gia đình này. */
+    @EntityGraph(attributePaths = {"family", "invitedUser", "invitedBy"})
+    Optional<Invitation> findByIdAndFamilyIdAndInvitedById(Long id, Long familyId, Long invitedById);
+
+    /**
+     * Như trên nhưng khóa dòng, để hủy/xóa không đụng độ với việc người được mời chấp nhận hoặc từ chối
+     * cùng lúc (chấp nhận/từ chối cũng khóa dòng lời mời này).
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select i from Invitation i "
+            + "where i.id = :id and i.family.id = :familyId and i.invitedBy.id = :userId")
+    Optional<Invitation> findSentForUpdate(@Param("id") Long id,
+                                           @Param("familyId") Long familyId,
+                                           @Param("userId") Long userId);
 }

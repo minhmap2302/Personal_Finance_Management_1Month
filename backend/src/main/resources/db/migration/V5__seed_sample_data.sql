@@ -13,7 +13,9 @@
 --
 -- Trường hợp được minh họa:
 --   - đủ ba vai trò OWNER, MANAGER, MEMBER
---   - lời mời đang chờ và lời mời bị từ chối, một tài khoản bị khóa
+--   - một tài khoản bị khóa
+--   - lời mời đủ bốn trạng thái (PENDING, ACCEPTED, DECLINED, CANCELLED), do cả chủ gia đình
+--     lẫn quản lý gửi, để thử danh sách "lời mời đã gửi" (mỗi người chỉ thấy lời mời do chính mình gửi)
 --   - danh mục tùy chỉnh, trong đó có một danh mục đã lưu trữ
 --   - ngân sách tổng đang ở mức cam (>= 80%), một ngân sách con vượt mức (đỏ), một ngân sách con đúng 80%
 --   - mục tiêu tiết kiệm đang thực hiện và một mục tiêu đã hủy (khoản đóng góp không tính vào ngân sách)
@@ -73,10 +75,34 @@ INSERT INTO family_members (user_id, family_id, role) VALUES
                                                           (@u_khoa,  @f_snack, 'MEMBER'),
                                                           (@u_lan,   @f_snack, 'MEMBER');
 
--- Lời mời: An mời Hoa vào "Tổ Ấm Nhỏ" (đang chờ), Dung mời Cường vào "Biệt Đội Ăn Vặt" (đã bị từ chối).
-INSERT INTO invitations (family_id, invited_user_id, invited_by_id, status) VALUES
-                                                                                (@f_nest,  @u_hoa,   @u_an,   'PENDING'),
-                                                                                (@f_snack, @u_cuong, @u_dung, 'DECLINED');
+-- ---------------------------------------------------------------------
+-- Lời mời (cột created_at đặt rõ để danh sách "mới nhất trước" có thứ tự dễ nhìn)
+--
+-- "Tổ Ấm Nhỏ" (chủ: An, quản lý: Bình):
+--   An   mời Hoa    -> PENDING   (đang chờ)
+--   Bình mời Khoa   -> PENDING   (quản lý gửi, An không thấy trong danh sách "đã gửi" của mình)
+--   An   mời Lan    -> CANCELLED (An đã hủy khi còn chờ, Lan không còn thấy)
+--   An   mời Cường  -> ACCEPTED  (Cường hiện là thành viên)
+--   Bình mời Dung   -> ACCEPTED  (Dung hiện là thành viên)
+--
+-- "Biệt Đội Ăn Vặt" (chủ: Dung, quản lý: Hoa):
+--   Hoa  mời An     -> PENDING
+--   Dung mời Cường  -> DECLINED  (bị từ chối, có thể mời lại)
+--   Dung mời Bình   -> CANCELLED
+--   Hoa  mời Khoa   -> ACCEPTED  (Khoa hiện là thành viên)
+--   Dung mời Lan    -> ACCEPTED  (Lan hiện là thành viên)
+-- ---------------------------------------------------------------------
+INSERT INTO invitations (family_id, invited_user_id, invited_by_id, status, created_at) VALUES
+                                                                                            (@f_nest,  @u_cuong, @u_an,   'ACCEPTED',  DATE_SUB(NOW(6), INTERVAL 60 DAY)),
+                                                                                            (@f_nest,  @u_dung,  @u_binh, 'ACCEPTED',  DATE_SUB(NOW(6), INTERVAL 58 DAY)),
+                                                                                            (@f_snack, @u_khoa,  @u_hoa,  'ACCEPTED',  DATE_SUB(NOW(6), INTERVAL 45 DAY)),
+                                                                                            (@f_snack, @u_lan,   @u_dung, 'ACCEPTED',  DATE_SUB(NOW(6), INTERVAL 44 DAY)),
+                                                                                            (@f_snack, @u_cuong, @u_dung, 'DECLINED',  DATE_SUB(NOW(6), INTERVAL 20 DAY)),
+                                                                                            (@f_nest,  @u_lan,   @u_an,   'CANCELLED', DATE_SUB(NOW(6), INTERVAL 9 DAY)),
+                                                                                            (@f_snack, @u_binh,  @u_dung, 'CANCELLED', DATE_SUB(NOW(6), INTERVAL 6 DAY)),
+                                                                                            (@f_nest,  @u_hoa,   @u_an,   'PENDING',   DATE_SUB(NOW(6), INTERVAL 3 DAY)),
+                                                                                            (@f_snack, @u_an,    @u_hoa,  'PENDING',   DATE_SUB(NOW(6), INTERVAL 2 DAY)),
+                                                                                            (@f_nest,  @u_khoa,  @u_binh, 'PENDING',   DATE_SUB(NOW(6), INTERVAL 1 DAY));
 
 -- ---------------------------------------------------------------------
 -- Danh mục
