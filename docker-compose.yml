@@ -5,10 +5,10 @@ services:
     restart: unless-stopped
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_0900_ai_ci
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?Thieu DB_ROOT_PASSWORD trong .env}
       MYSQL_DATABASE: ${DB_NAME}
       MYSQL_USER: ${DB_USER}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?Thieu DB_PASSWORD trong .env}
       TZ: ${TZ}
     volumes:
       - mysql_data:/var/lib/mysql
@@ -35,7 +35,7 @@ services:
       SPRING_DATASOURCE_USERNAME: ${DB_USER}
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
 
-      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:?Thieu JWT_SECRET_KEY trong .env}
       JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS}
       REFRESH_EXPIRATION_DAYS: ${REFRESH_EXPIRATION_DAYS}
 
