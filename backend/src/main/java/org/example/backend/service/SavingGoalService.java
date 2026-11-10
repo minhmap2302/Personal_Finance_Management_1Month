@@ -19,4 +19,10 @@ public interface SavingGoalService {
                                       Pageable pageable);
 
     SavingGoalResponse getGoal(Long userId, Long familyId, Long goalId);
+
+    /** Mục tiêu đã hủy không sửa được. Sửa số tiền cần đạt có thể làm đổi trạng thái ACTIVE/COMPLETED. */
+    SavingGoalResponse updateGoal(Long userId, Long familyId, Long goalId, SavingGoalRequest request);
+
+    /** Chưa có khoản đóng góp nào thì xóa cứng, đã có thì chuyển sang CANCELLED để giữ lịch sử. */
+    void deleteGoal(Long userId, Long familyId, Long goalId);
 }

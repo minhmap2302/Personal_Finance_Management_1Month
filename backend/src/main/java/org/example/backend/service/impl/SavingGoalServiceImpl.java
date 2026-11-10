@@ -97,6 +97,46 @@ public class SavingGoalServiceImpl implements SavingGoalService {
         return toResponse(goal, savedAmountOf(goal));
     }
 
+    @Override
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public SavingGoalResponse updateGoal(Long userId, Long familyId, Long goalId, SavingGoalRequest request) {
+        accessChecker.requireRole(userId, familyId, FamilyRole.MANAGER,
+                "Chỉ chủ gia đình và quản lý mới được sửa mục tiêu tiết kiệm");
+        SavingGoal goal = lockGoal(familyId, goalId);
+        if (goal.getStatus() == SavingGoalStatus.CANCELLED) {
+            throw new BadRequestException("Mục tiêu đã hủy, không thể chỉnh sửa");
+        }
+
+        goal.setName(request.getName().trim());
+        goal.setTargetAmount(request.getTargetAmount());
+        goal.setTargetDate(request.getTargetDate());
+
+        // Đổi số tiền cần đạt có thể làm mục tiêu đạt hoặc chưa đạt.
+        BigDecimal saved = savedAmountOf(goal);
+        goal.setStatus(saved.compareTo(goal.getTargetAmount()) >= 0
+                ? SavingGoalStatus.COMPLETED
+                : SavingGoalStatus.ACTIVE);
+
+        return toResponse(goal, saved);
+    }
+
+    @Override
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public void deleteGoal(Long userId, Long familyId, Long goalId) {
+        accessChecker.requireRole(userId, familyId, FamilyRole.MANAGER,
+                "Chỉ chủ gia đình và quản lý mới được hủy mục tiêu tiết kiệm");
+        SavingGoal goal = lockGoal(familyId, goalId);
+
+        if (goal.getStatus() == SavingGoalStatus.CANCELLED) {
+            return;
+        }
+        if (contributionRepository.existsBySavingGoalId(goalId)) {
+            goal.setStatus(SavingGoalStatus.CANCELLED);
+            return;
+        }
+        goalRepository.delete(goal);
+    }
+
     // =====================================================================
     // Hàm hỗ trợ
     // =====================================================================
