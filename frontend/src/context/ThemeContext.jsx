@@ -22,8 +22,10 @@ function applyTheme(resolved) {
   const root = document.documentElement;
   if (resolved === 'dark') {
     root.setAttribute('data-theme', 'dark');
+    root.classList.add('dark');
   } else {
     root.removeAttribute('data-theme');
+    root.classList.remove('dark');
   }
 }
 

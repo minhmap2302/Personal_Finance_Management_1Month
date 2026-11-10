@@ -1,81 +1,72 @@
-import { useMemo, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import React, { useMemo, useState } from 'react';
+import { motion } from 'framer-motion';
 import {
-  AlertTriangle, Check, Home, Plus, RefreshCw, ShieldAlert,
-  Trash2, Users, X, Database, Image as ImageIcon, UserRound,
+  AlertTriangle,
+  Check,
+  Home,
+  Plus,
+  RefreshCw,
+  Trash2,
+  Users,
+  X,
+  Database,
+  ArrowRight,
+  Shield,
+  Crown,
+  UserCheck,
+  Calendar,
+  Sparkles,
+  Info,
 } from 'lucide-react';
+import PageHeader from '../components/PageHeader';
+import { Button, Badge, Card, Input, Modal } from '../components/ui';
 import { useFamily } from '../context/FamilyContext';
 import { familyApi, getErrorMessage } from '../services/familyFinanceApi';
 import { useToast } from '../context/ToastContext';
 
-const roleLabel = (role) => ({
-  OWNER: 'Chủ gia đình',
-  MANAGER: 'Quản lý',
-  MEMBER: 'Thành viên',
-}[role] || role || 'Thành viên');
+const roleMeta = {
+  OWNER: { label: 'Chủ gia đình', variant: 'amber', icon: Crown },
+  MANAGER: { label: 'Quản lý', variant: 'sky', icon: Shield },
+  MEMBER: { label: 'Thành viên', variant: 'slate', icon: null },
+};
 
-const dateLabel = (date) => date
+const dateLabel = (date) =>
+  date
     ? new Intl.DateTimeFormat('vi-VN', { dateStyle: 'medium' }).format(new Date(date))
     : '—';
 
-function Modal({ title, children, onClose, locked = false }) {
-  return (
-      <AnimatePresence>
-        <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onMouseDown={(event) => {
-              if (!locked && event.target === event.currentTarget) onClose();
-            }}
-        >
-          <motion.div
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="family-modal-title"
-              initial={{ opacity: 0, y: 16, scale: 0.98 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 10, scale: 0.98 }}
-              className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl dark:bg-surface-dark sm:p-6"
-          >
-            <div className="mb-5 flex items-center justify-between gap-3">
-              <h2 id="family-modal-title" className="text-lg font-extrabold text-slate-900 dark:text-fin-text-dark">{title}</h2>
-              <button
-                  type="button"
-                  disabled={locked}
-                  onClick={onClose}
-                  aria-label="Đóng hộp thoại"
-                  className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                <X size={18} />
-              </button>
-            </div>
-            {children}
-          </motion.div>
-        </motion.div>
-      </AnimatePresence>
-  );
-}
-
 function ImpactRow({ icon: Icon, title, description, retained = false }) {
   return (
-      <div className="flex items-start gap-3">
-      <span className={`mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg ${retained ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300' : 'bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-300'}`}>
+    <div className="flex items-start gap-3">
+      <div
+        className={`mt-0.5 h-8 w-8 shrink-0 grid place-items-center rounded-lg ${
+          retained
+            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400'
+            : 'bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400'
+        }`}
+      >
         <Icon size={16} />
-      </span>
-        <div>
-          <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">{title}</p>
-          <p className="mt-0.5 text-xs leading-5 text-slate-500 dark:text-slate-400">{description}</p>
-        </div>
       </div>
+      <div>
+        <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+          {title}
+        </p>
+        <p className="mt-0.5 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+          {description}
+        </p>
+      </div>
+    </div>
   );
 }
 
 export default function Family() {
   const {
-    families, activeFamily, activeFamilyId, setActiveFamilyId,
-    refreshFamilies, familiesLoading,
+    families,
+    activeFamily,
+    activeFamilyId,
+    setActiveFamilyId,
+    refreshFamilies,
+    familiesLoading,
   } = useFamily();
 
   const [modal, setModal] = useState('');
@@ -90,8 +81,8 @@ export default function Family() {
   const canManage = isOwner || activeFamily?.myRole === 'MANAGER';
   const activeName = activeFamily?.name || '';
   const createdLabel = useMemo(
-      () => dateLabel(activeFamily?.createdAt),
-      [activeFamily?.createdAt],
+    () => dateLabel(activeFamily?.createdAt),
+    [activeFamily?.createdAt]
   );
 
   function closeModal() {
@@ -111,7 +102,7 @@ export default function Family() {
       if (data?.id) setActiveFamilyId(data.id);
       setName('');
       setModal('');
-      toast('Đã tạo gia đình mới.', 'success');
+      toast('Đã tạo không gian gia đình mới.', 'success');
     } catch (error) {
       toast(getErrorMessage(error, 'Không thể tạo gia đình.'), 'error');
     } finally {
@@ -138,10 +129,11 @@ export default function Family() {
 
   async function runDangerAction() {
     if (
-        !activeFamilyId ||
-        confirmName.trim() !== activeName ||
-        dangerBusy
-    ) return;
+      !activeFamilyId ||
+      confirmName.trim() !== activeName ||
+      dangerBusy
+    )
+      return;
 
     const deleting = modal === 'delete';
     const familyIdToProcess = activeFamilyId;
@@ -169,24 +161,26 @@ export default function Family() {
         // The server action has succeeded; a failed list refresh must not be
         // reported as a failed deletion.
         toast(
-            'Thao tác đã hoàn tất. Không tải lại được danh sách; hãy bấm “Làm mới danh sách”.',
-            'info',
+          'Thao tác đã hoàn tất. Không tải lại được danh sách; hãy bấm “Làm mới danh sách”.',
+          'info'
         );
       }
 
       toast(
-          deleting
-              ? 'Đã giải tán gia đình. Tài khoản cá nhân của các thành viên vẫn được giữ lại.'
-              : 'Bạn đã rời khỏi gia đình.',
-          'success',
+        deleting
+          ? 'Đã giải tán gia đình. Tài khoản cá nhân của các thành viên vẫn được giữ lại.'
+          : 'Bạn đã rời khỏi gia đình.',
+        'success'
       );
     } catch (error) {
       toast(
-          getErrorMessage(
-              error,
-              deleting ? 'Không thể giải tán gia đình.' : 'Không thể rời khỏi gia đình.',
-          ),
-          'error',
+        getErrorMessage(
+          error,
+          deleting
+            ? 'Không thể giải tán gia đình.'
+            : 'Không thể rời khỏi gia đình.'
+        ),
+        'error'
       );
     } finally {
       setDangerBusy(false);
@@ -194,247 +188,467 @@ export default function Family() {
   }
 
   const isDeleteModal = modal === 'delete';
-  const canConfirmDanger = confirmName.trim() === activeName && activeName.length > 0;
+  const canConfirmDanger =
+    confirmName.trim() === activeName && activeName.length > 0;
 
   return (
-      <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mx-auto max-w-6xl space-y-6"
-      >
-        <header>
-          <p className="text-xs font-bold uppercase tracking-[.18em] text-emerald-700 dark:text-primary-dark">Không gian chung</p>
-          <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-slate-900 dark:text-fin-text-dark">Gia đình</h1>
-          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Chọn không gian làm việc, xem vai trò và quản lý thiết lập gia đình.</p>
-        </header>
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.2 }}
+      className="space-y-6"
+    >
+      {/* Tiêu đề trang */}
+      <PageHeader
+        title="Không gian Gia đình"
+        subtitle="Chọn không gian làm việc, xem vai trò và quản lý các thiết lập gia đình"
+        breadcrumbs={[{ label: 'Cài đặt' }, { label: 'Gia đình' }]}
+        badge="FinHome V3"
+        action={
+          <Button
+            variant="primary"
+            icon={Plus}
+            size="sm"
+            onClick={() => {
+              setName('');
+              setModal('create');
+            }}
+          >
+            Tạo gia đình mới
+          </Button>
+        }
+      />
 
-        <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-fin-border-dark dark:bg-surface-dark sm:p-6">
-          <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h2 className="text-lg font-extrabold text-slate-900 dark:text-fin-text-dark">Không gian gia đình của bạn</h2>
-              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Chọn một gia đình để dùng cho các phân hệ liên quan.</p>
-            </div>
-            <button
-                type="button"
-                onClick={() => { setName(''); setModal('create'); }}
-                className="inline-flex h-10 items-center gap-2 rounded-xl bg-emerald-700 px-4 text-sm font-bold text-white hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500"
-            >
-              <Plus size={16} />Tạo gia đình mới
-            </button>
+      {/* Danh sách không gian gia đình */}
+      <Card>
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+          <div>
+            <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
+              Không gian gia đình của bạn
+            </h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Chọn một gia đình để làm việc trong các phân hệ quản lý tài chính.
+            </p>
           </div>
 
-          {familiesLoading ? (
-              <div className="py-12 text-center text-sm text-slate-400">Đang tải danh sách gia đình…</div>
-          ) : families.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-slate-200 px-5 py-12 text-center dark:border-fin-border-dark">
-                <Home size={28} className="mx-auto text-slate-300 dark:text-slate-500" />
-                <h3 className="mt-3 font-bold text-slate-800 dark:text-slate-100">Bạn chưa có không gian gia đình</h3>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Tạo gia đình mới hoặc chấp nhận lời mời từ thành viên khác.</p>
-                <button
-                    type="button"
-                    onClick={() => { setName(''); setModal('create'); }}
-                    className="mt-4 rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500"
+          <Button
+            variant="secondary"
+            size="sm"
+            icon={RefreshCw}
+            onClick={() =>
+              refreshFamilies().catch((error) =>
+                toast(
+                  getErrorMessage(error, 'Không thể tải danh sách gia đình.'),
+                  'error'
+                )
+              )
+            }
+          >
+            Làm mới danh sách
+          </Button>
+        </div>
+
+        {familiesLoading ? (
+          <div className="py-12 text-center text-sm text-slate-400">
+            <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent mb-2" />
+            <p>Đang tải danh sách gia đình…</p>
+          </div>
+        ) : families.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 p-8 text-center bg-slate-50/50 dark:bg-slate-900/40">
+            <div className="h-12 w-12 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 grid place-items-center mx-auto mb-3">
+              <Home size={24} />
+            </div>
+            <h3 className="font-bold text-sm text-slate-800 dark:text-slate-200">
+              Bạn chưa có không gian gia đình
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
+              Hãy tạo một không gian mới hoặc chấp nhận lời mời từ thành viên khác ở trang Thành viên.
+            </p>
+            <div className="mt-4">
+              <Button
+                variant="primary"
+                icon={Plus}
+                size="sm"
+                onClick={() => {
+                  setName('');
+                  setModal('create');
+                }}
+              >
+                Tạo gia đình đầu tiên
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="grid gap-3.5 sm:grid-cols-2">
+            {families.map((family) => {
+              const active = String(family.id) === String(activeFamilyId);
+              const meta = roleMeta[family.myRole] || roleMeta.MEMBER;
+
+              return (
+                <div
+                  key={family.id}
+                  onClick={() => setActiveFamilyId(family.id)}
+                  className={`group relative cursor-pointer rounded-2xl border p-4.5 transition-all text-left ${
+                    active
+                      ? 'border-emerald-500/80 bg-emerald-50/40 dark:bg-emerald-950/20 shadow-sm ring-2 ring-emerald-500/20 dark:ring-emerald-500/30'
+                      : 'border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900/80 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-xs'
+                  }`}
                 >
-                  Tạo gia đình đầu tiên
-                </button>
-              </div>
-          ) : (
-              <div className="grid gap-3 md:grid-cols-2">
-                {families.map((family) => {
-                  const active = String(family.id) === String(activeFamilyId);
-                  return (
-                      <button
-                          type="button"
-                          key={family.id}
-                          onClick={() => setActiveFamilyId(family.id)}
-                          className={`rounded-2xl border p-4 text-left transition hover:-translate-y-0.5 hover:shadow-md ${active ? 'border-emerald-500 bg-emerald-50/60 ring-2 ring-emerald-100 dark:bg-emerald-950/30 dark:ring-emerald-900' : 'border-slate-200 bg-white hover:border-slate-300 dark:border-fin-border-dark dark:bg-surface-dark dark:hover:border-slate-500'}`}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div
+                        className={`h-11 w-11 rounded-xl grid place-items-center shrink-0 transition-colors ${
+                          active
+                            ? 'bg-emerald-500 text-white shadow-xs'
+                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 group-hover:bg-emerald-50 group-hover:text-emerald-700 dark:group-hover:bg-emerald-950/40 dark:group-hover:text-emerald-400'
+                        }`}
                       >
-                        <div className="flex items-start gap-3">
-                    <span className={`grid h-11 w-11 place-items-center rounded-xl ${active ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/60 dark:text-emerald-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'}`}>
-                      <Home size={20} />
-                    </span>
-                          <span className="min-w-0 flex-1">
-                      <span className="flex flex-wrap items-center gap-2">
-                        <b className="truncate text-sm text-slate-900 dark:text-fin-text-dark">{family.name}</b>
-                        {active && <span className="rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-bold text-white dark:bg-emerald-500 dark:text-slate-950">Đang hoạt động</span>}
-                      </span>
-                      <small className="mt-1 block text-xs text-slate-500 dark:text-slate-400">{roleLabel(family.myRole)}</small>
-                    </span>
-                          {active && <Check size={18} className="text-emerald-700 dark:text-primary-dark" />}
+                        <Home size={20} />
+                      </div>
+
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-bold text-sm text-slate-900 dark:text-slate-100 truncate">
+                            {family.name}
+                          </h4>
+                          {active && (
+                            <Badge variant="emerald" size="sm" dot>
+                              Đang hoạt động
+                            </Badge>
+                          )}
                         </div>
-                        <div className="mt-4 flex items-center justify-between border-t border-slate-200/70 pt-3 text-xs text-slate-500 dark:border-fin-border-dark dark:text-slate-400">
-                          <span className="inline-flex items-center gap-1.5"><Users size={14} />{family.memberCount ?? 0} thành viên</span>
-                          <span>Ngày tạo: {dateLabel(family.createdAt)}</span>
+                        <div className="mt-1">
+                          <Badge
+                            variant={meta.variant}
+                            size="sm"
+                            icon={meta.icon}
+                          >
+                            {meta.label}
+                          </Badge>
                         </div>
-                      </button>
-                  );
-                })}
+                      </div>
+                    </div>
+
+                    {active && (
+                      <div className="h-6 w-6 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 grid place-items-center shrink-0 border border-emerald-500/30">
+                        <Check size={14} />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="mt-4 flex items-center justify-between border-t border-slate-100 dark:border-slate-800/80 pt-3 text-xs text-slate-500 dark:text-slate-400 tabular-nums">
+                    <span className="inline-flex items-center gap-1.5">
+                      <Users size={14} className="text-slate-400" />
+                      {family.memberCount ?? 0} thành viên
+                    </span>
+                    <span className="inline-flex items-center gap-1.5">
+                      <Calendar size={13} className="text-slate-400" />
+                      {dateLabel(family.createdAt)}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </Card>
+
+      {/* Chi tiết và Quản trị Gia đình đang hoạt động */}
+      {activeFamily && (
+        <Card className="border-emerald-200/60 dark:border-emerald-900/40 bg-gradient-to-br from-white via-emerald-50/15 to-white dark:from-slate-900 dark:via-emerald-950/10 dark:to-slate-900">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+                  Gia đình đang hoạt động
+                </span>
+                <Badge variant="emerald" size="sm" dot>
+                  Được chọn
+                </Badge>
               </div>
+              <h3 className="mt-1.5 text-xl font-extrabold text-slate-900 dark:text-slate-100">
+                {activeName}
+              </h3>
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                Khởi tạo ngày {createdLabel} • {activeFamily.memberCount ?? 0} thành viên đồng hành
+              </p>
+            </div>
+
+            <Badge
+              variant={
+                roleMeta[activeFamily.myRole]?.variant || 'slate'
+              }
+              size="md"
+              icon={roleMeta[activeFamily.myRole]?.icon}
+            >
+              {roleMeta[activeFamily.myRole]?.label || activeFamily.myRole}
+            </Badge>
+          </div>
+
+          {/* Thiết lập đổi tên (chỉ dành cho OWNER và MANAGER) */}
+          {canManage && (
+            <div className="mt-6 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-800/60 p-4.5">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h4 className="font-bold text-sm text-slate-900 dark:text-slate-100">
+                    Tên không gian gia đình
+                  </h4>
+                  <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                    Tên hiển thị chung cho tất cả các thành viên trong gia đình.
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setName(activeName);
+                    setModal('edit');
+                  }}
+                >
+                  Đổi tên gia đình
+                </Button>
+              </div>
+            </div>
           )}
 
-          <div className="mt-4 flex justify-end">
-            <button
-                type="button"
-                onClick={() => refreshFamilies().catch((error) => toast(getErrorMessage(error, 'Không thể tải danh sách gia đình.'), 'error'))}
-                className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-emerald-700 dark:text-slate-400 dark:hover:text-emerald-400"
-            >
-              <RefreshCw size={14} />Làm mới danh sách
-            </button>
+          {/* Vùng thao tác quan trọng (Danger Zone) */}
+          <div className="mt-6 pt-5 border-t border-slate-200/70 dark:border-slate-800/80">
+            <div className="mb-3">
+              <h4 className="font-bold text-sm text-slate-900 dark:text-slate-100">
+                Vùng thao tác quan trọng
+              </h4>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                {isOwner
+                  ? 'Thao tác giải tán xóa toàn bộ dữ liệu tài chính của gia đình và không thể hoàn tác.'
+                  : 'Rời gia đình sẽ làm bạn mất quyền truy cập vào dữ liệu thu chi chung.'}
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-rose-200/80 dark:border-rose-900/60 bg-rose-50/50 dark:bg-rose-950/25 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <b className="text-sm font-bold text-rose-800 dark:text-rose-300">
+                  {isOwner ? 'Giải tán gia đình' : 'Rời khỏi gia đình'}
+                </b>
+                <p className="mt-1 text-xs text-rose-700/90 dark:text-rose-300/80 leading-relaxed max-w-xl">
+                  {isOwner
+                    ? 'Giải tán sẽ xóa không gian gia đình và tất cả dữ liệu thu chi, ngân sách, mục tiêu chung. Tài khoản cá nhân của các thành viên được giữ nguyên.'
+                    : 'Bạn sẽ rời khỏi không gian gia đình này và không thể xem lại các giao dịch chung trừ khi được mời lại.'}
+                </p>
+              </div>
+
+              <Button
+                variant="danger"
+                size="sm"
+                icon={isOwner ? Trash2 : X}
+                onClick={() => {
+                  setConfirmName('');
+                  setModal(isOwner ? 'delete' : 'leave');
+                }}
+              >
+                {isOwner ? 'Giải tán gia đình' : 'Rời gia đình'}
+              </Button>
+            </div>
           </div>
-        </section>
+        </Card>
+      )}
 
-        {activeFamily && (
-            <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-fin-border-dark dark:bg-surface-dark sm:p-6">
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-widest text-emerald-700 dark:text-primary-dark">Gia đình đang hoạt động</p>
-                  <h2 className="mt-2 text-xl font-extrabold text-slate-900 dark:text-fin-text-dark">{activeName}</h2>
-                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Tạo ngày {createdLabel} · {activeFamily.memberCount ?? 0} thành viên</p>
-                </div>
-                <span className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-700 dark:bg-slate-700 dark:text-slate-200">{roleLabel(activeFamily.myRole)}</span>
-              </div>
+      {/* Modal Tạo gia đình mới */}
+      <Modal
+        isOpen={modal === 'create'}
+        onClose={closeModal}
+        locked={creating}
+        title="Tạo gia đình mới"
+        description="Khởi tạo không gian tài chính mới cho gia đình bạn"
+      >
+        <form onSubmit={createFamily} className="space-y-4">
+          <div>
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+              Tên gia đình <span className="text-rose-500">*</span>
+            </label>
+            <Input
+              autoFocus
+              required
+              maxLength={100}
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              placeholder="Ví dụ: Gia đình Nguyễn, Tổ ấm nhỏ…"
+              icon={Home}
+            />
+          </div>
 
-              {canManage && (
-                  <div className="mt-6 rounded-2xl border border-slate-100 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800 sm:p-5">
-                    <div className="mb-4">
-                      <h3 className="font-bold text-slate-900 dark:text-slate-100">Cài đặt gia đình</h3>
-                      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Thông tin gia đình hiện chỉ quản lý tên và thành viên.</p>
-                    </div>
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <div>
-                        <b className="text-sm text-slate-800 dark:text-slate-100">Tên gia đình</b>
-                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Chỉ OWNER/MANAGER được thao tác theo phân quyền.</p>
-                      </div>
-                      <button
-                          type="button"
-                          onClick={() => { setName(activeName); setModal('edit'); }}
-                          className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 hover:border-emerald-300 hover:text-emerald-700 dark:border-slate-600 dark:bg-surface-dark dark:text-slate-200 dark:hover:border-emerald-500 dark:hover:text-emerald-400"
-                      >
-                        Đổi tên gia đình
-                      </button>
-                    </div>
-                  </div>
-              )}
+          <div className="rounded-xl bg-slate-50 dark:bg-slate-800/60 p-3 text-xs leading-relaxed text-slate-500 dark:text-slate-400 border border-slate-200/50 dark:border-slate-700/50">
+            💡 Sau khi tạo thành công, hệ thống sẽ tự động gán bạn làm <strong>Chủ gia đình (OWNER)</strong> để bạn có toàn quyền quản trị và mời thành viên.
+          </div>
 
-              <div className="mt-6 border-t border-slate-100 pt-5 dark:border-slate-700">
-                <div className="mb-3">
-                  <h3 className="font-bold text-slate-900 dark:text-slate-100">Vùng thao tác quan trọng</h3>
-                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Thao tác giải tán chỉ dành cho OWNER; thành viên khác chỉ có thể rời gia đình.</p>
-                </div>
-                <div className="flex flex-col justify-between gap-3 rounded-2xl border border-rose-100 bg-rose-50/60 p-4 dark:border-rose-900/70 dark:bg-rose-950/35 sm:flex-row sm:items-center">
-                  <div>
-                    <b className="text-sm text-rose-800 dark:text-rose-300">{isOwner ? 'Giải tán gia đình' : 'Rời khỏi gia đình'}</b>
-                    <p className="mt-1 max-w-xl text-xs leading-5 text-rose-700 dark:text-rose-300">
-                      {isOwner
-                          ? 'Giải tán sẽ xóa không gian gia đình và dữ liệu nghiệp vụ thuộc gia đình. Tài khoản cá nhân của các thành viên không bị xóa.'
-                          : 'Bạn sẽ mất quyền truy cập vào không gian gia đình này sau khi rời đi.'}
-                    </p>
-                  </div>
-                  <button
-                      type="button"
-                      onClick={() => { setConfirmName(''); setModal(isOwner ? 'delete' : 'leave'); }}
-                      className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-rose-200 bg-white px-4 py-2.5 text-sm font-bold text-rose-700 hover:bg-rose-100 dark:border-rose-800 dark:bg-surface-dark dark:text-rose-300 dark:hover:bg-rose-950/60"
-                  >
-                    {isOwner ? <Trash2 size={15} /> : <X size={15} />}
-                    {isOwner ? 'Giải tán gia đình' : 'Rời gia đình'}
-                  </button>
-                </div>
-              </div>
-            </section>
-        )}
-
-        {modal === 'create' && (
-            <Modal title="Tạo gia đình mới" onClose={closeModal} locked={creating}>
-              <form onSubmit={createFamily} className="space-y-4">
-                <label className="block">
-                  <span className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Tên gia đình <span className="text-rose-500">*</span></span>
-                  <input autoFocus required maxLength={100} value={name} onChange={(event) => setName(event.target.value)} placeholder="Ví dụ: Gia đình Nguyễn" className="h-12 w-full rounded-xl border border-slate-200 px-4 text-sm outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-50 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:ring-emerald-900/40" />
-                </label>
-                <p className="rounded-xl bg-slate-50 p-3 text-xs leading-5 text-slate-500 dark:bg-slate-800 dark:text-slate-400">Sau khi tạo thành công, backend tự gán bạn làm OWNER.</p>
-                <div className="flex justify-end gap-2">
-                  <button type="button" disabled={creating} onClick={closeModal} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-700 disabled:opacity-50">Hủy</button>
-                  <button disabled={creating || !name.trim()} className="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-50">{creating ? 'Đang tạo…' : 'Tạo gia đình'}</button>
-                </div>
-              </form>
-            </Modal>
-        )}
-
-        {modal === 'edit' && (
-            <Modal title="Đổi tên gia đình" onClose={closeModal} locked={saving}>
-              <form onSubmit={saveFamily} className="space-y-4">
-                <label className="block">
-                  <span className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Tên mới</span>
-                  <input autoFocus required maxLength={100} value={name} onChange={(event) => setName(event.target.value)} className="h-12 w-full rounded-xl border border-slate-200 px-4 text-sm outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-50 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-emerald-900/40" />
-                </label>
-                <div className="flex justify-end gap-2">
-                  <button type="button" disabled={saving} onClick={closeModal} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-700 disabled:opacity-50">Hủy</button>
-                  <button disabled={saving || !name.trim()} className="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-50">{saving ? 'Đang lưu…' : 'Lưu thay đổi'}</button>
-                </div>
-              </form>
-            </Modal>
-        )}
-
-        {(modal === 'delete' || modal === 'leave') && (
-            <Modal
-                title={isDeleteModal ? 'Giải tán gia đình?' : 'Rời khỏi gia đình?'}
-                onClose={closeModal}
-                locked={dangerBusy}
+          <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-slate-800">
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              disabled={creating}
+              onClick={closeModal}
             >
-              {isDeleteModal ? (
-                  <div className="space-y-4">
-                    <div className="flex items-start gap-3 rounded-xl border border-rose-200 bg-rose-50 p-3 dark:border-rose-900/70 dark:bg-rose-950/35">
-                      <AlertTriangle size={20} className="mt-0.5 shrink-0 text-rose-600 dark:text-rose-300" />
-                      <div>
-                        <p className="text-sm font-bold text-rose-800 dark:text-rose-300">Đây là thao tác không thể hoàn tác</p>
-                        <p className="mt-1 text-xs leading-5 text-rose-700 dark:text-rose-300">
-                          Gia đình <b>{activeName}</b> sẽ bị xóa khỏi hệ thống. Các thành viên sẽ không còn truy cập được không gian này.
-                        </p>
-                      </div>
-                    </div>
+              Hủy
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              size="sm"
+              loading={creating}
+              disabled={creating || !name.trim()}
+            >
+              {creating ? 'Đang tạo…' : 'Tạo gia đình'}
+            </Button>
+          </div>
+        </form>
+      </Modal>
 
-                    <div>
-                      <p className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Dữ liệu bị xóa cùng gia đình</p>
-                      <div className="space-y-3 rounded-xl border border-slate-200 p-3 dark:border-slate-700">
-                        <ImpactRow icon={Database} title="Dữ liệu tài chính gia đình" description="Giao dịch, ngân sách, danh mục do gia đình tạo, mục tiêu tiết kiệm và các khoản đóng góp." />
-                        <ImpactRow icon={Users} title="Thông tin không gian chung" description="Danh sách thành viên, lời mời và liên kết thành viên với gia đình." />
-                      </div>
-                    </div>
-                  </div>
-              ) : (
-                  <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm leading-6 text-amber-800 dark:border-amber-900/70 dark:bg-amber-950/35 dark:text-amber-200">
-                    Bạn sẽ rời khỏi <b>{activeName}</b> và không còn quyền truy cập dữ liệu của gia đình này. Không gian gia đình vẫn tồn tại cho các thành viên còn lại.
-                  </div>
-              )}
+      {/* Modal Đổi tên gia đình */}
+      <Modal
+        isOpen={modal === 'edit'}
+        onClose={closeModal}
+        locked={saving}
+        title="Đổi tên gia đình"
+        description="Cập nhật tên hiển thị của không gian gia đình"
+      >
+        <form onSubmit={saveFamily} className="space-y-4">
+          <div>
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+              Tên mới của gia đình <span className="text-rose-500">*</span>
+            </label>
+            <Input
+              autoFocus
+              required
+              maxLength={100}
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              placeholder="Nhập tên mới…"
+              icon={Home}
+            />
+          </div>
 
-              <div className="mt-5">
-                <label className="block">
-              <span className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">
-                Để xác nhận, nhập chính xác tên gia đình: <b className="text-slate-900 dark:text-slate-100">{activeName}</b>
-              </span>
-                  <input
-                      autoFocus
-                      value={confirmName}
-                      onChange={(event) => setConfirmName(event.target.value)}
-                      disabled={dangerBusy}
-                      placeholder="Nhập tên gia đình"
-                      className="h-12 w-full rounded-xl border border-slate-200 px-4 text-sm outline-none focus:border-rose-400 focus:ring-4 focus:ring-rose-50 disabled:bg-slate-100 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:ring-rose-900/40 dark:disabled:bg-slate-800"
-                  />
-                </label>
-                <div className="mt-5 flex flex-wrap justify-end gap-2">
-                  <button type="button" disabled={dangerBusy} onClick={closeModal} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-700 disabled:opacity-50">Hủy</button>
-                  <button
-                      type="button"
-                      disabled={dangerBusy || !canConfirmDanger || (isDeleteModal && !isOwner)}
-                      onClick={runDangerAction}
-                      className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-rose-700 dark:bg-rose-700 dark:hover:bg-rose-600 disabled:cursor-not-allowed disabled:opacity-40"
-                  >
-                    <Trash2 size={15} />
-                    {dangerBusy ? 'Đang xử lý…' : isDeleteModal ? 'Xác nhận giải tán' : 'Xác nhận rời gia đình'}
-                  </button>
+          <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-slate-800">
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              disabled={saving}
+              onClick={closeModal}
+            >
+              Hủy
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              size="sm"
+              loading={saving}
+              disabled={saving || !name.trim()}
+            >
+              {saving ? 'Đang lưu…' : 'Lưu thay đổi'}
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Modal Xác nhận Nguy hiểm (Delete / Leave) */}
+      <Modal
+        isOpen={modal === 'delete' || modal === 'leave'}
+        onClose={closeModal}
+        locked={dangerBusy}
+        maxWidth="max-w-lg"
+        title={isDeleteModal ? 'Giải tán gia đình?' : 'Rời khỏi gia đình?'}
+      >
+        <div className="space-y-4">
+          {isDeleteModal ? (
+            <>
+              <div className="flex items-start gap-3 rounded-xl border border-rose-200/80 dark:border-rose-900/60 bg-rose-50/70 dark:bg-rose-950/40 p-3.5">
+                <AlertTriangle
+                  size={20}
+                  className="mt-0.5 shrink-0 text-rose-600 dark:text-rose-400"
+                />
+                <div>
+                  <p className="text-sm font-bold text-rose-800 dark:text-rose-300">
+                    Cảnh báo: Hành động này không thể hoàn tác
+                  </p>
+                  <p className="mt-1 text-xs leading-relaxed text-rose-700/90 dark:text-rose-300/90">
+                    Không gian gia đình <strong>{activeName}</strong> sẽ bị xóa vĩnh viễn khỏi hệ thống. Tất cả thành viên sẽ lập tức mất quyền truy cập.
+                  </p>
                 </div>
               </div>
-            </Modal>
-        )}
-      </motion.div>
+
+              <div>
+                <p className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  Dữ liệu bị xóa cùng gia đình
+                </p>
+                <div className="space-y-2.5 rounded-xl border border-slate-200 dark:border-slate-800 p-3 bg-slate-50/50 dark:bg-slate-900/50">
+                  <ImpactRow
+                    icon={Database}
+                    title="Dữ liệu tài chính gia đình"
+                    description="Toàn bộ giao dịch thu chi, ngân sách, danh mục và mục tiêu tiết kiệm thuộc gia đình này."
+                  />
+                  <ImpactRow
+                    icon={Users}
+                    title="Liên kết thành viên & lời mời"
+                    description="Mọi lời mời đang chờ và liên kết thành viên với không gian này sẽ bị hủy bỏ."
+                  />
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="flex items-start gap-3 rounded-xl border border-amber-200/80 dark:border-amber-900/60 bg-amber-50/70 dark:bg-amber-950/40 p-3.5 text-xs leading-relaxed text-amber-800 dark:text-amber-200">
+              <AlertTriangle size={18} className="shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
+              <div>
+                Bạn sẽ rời khỏi không gian <strong>{activeName}</strong>. Không gian và dữ liệu thu chi vẫn được giữ lại cho các thành viên khác trong gia đình.
+              </div>
+            </div>
+          )}
+
+          <div>
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+              Để xác nhận, vui lòng nhập chính xác tên gia đình:{' '}
+              <span className="font-extrabold text-rose-600 dark:text-rose-400">
+                {activeName}
+              </span>
+            </label>
+            <Input
+              autoFocus
+              value={confirmName}
+              onChange={(event) => setConfirmName(event.target.value)}
+              disabled={dangerBusy}
+              placeholder="Nhập chính xác tên gia đình…"
+            />
+          </div>
+
+          <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-slate-800">
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              disabled={dangerBusy}
+              onClick={closeModal}
+            >
+              Hủy
+            </Button>
+            <Button
+              type="button"
+              variant="danger"
+              size="sm"
+              icon={Trash2}
+              loading={dangerBusy}
+              disabled={
+                dangerBusy || !canConfirmDanger || (isDeleteModal && !isOwner)
+              }
+              onClick={runDangerAction}
+            >
+              {dangerBusy
+                ? 'Đang xử lý…'
+                : isDeleteModal
+                ? 'Xác nhận giải tán'
+                : 'Xác nhận rời gia đình'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+    </motion.div>
   );
 }

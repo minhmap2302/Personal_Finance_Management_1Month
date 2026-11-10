@@ -6,5 +6,6 @@ package org.example.backend.model.enums;
 public enum InvitationStatus {
     PENDING,
     ACCEPTED,
-    DECLINED
+    DECLINED,
+    CANCELLED
 }

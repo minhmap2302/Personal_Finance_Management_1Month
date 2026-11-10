@@ -10,18 +10,13 @@ import org.example.backend.model.entity.User;
 import org.example.backend.model.enums.InvitationStatus;
 import org.example.backend.service.InvitationService;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -61,6 +56,44 @@ public class InvitationController {
                 .body(ApiResponse.success("Gửi lời mời thành công", data));
     }
 
+    @GetMapping("/api/v1/families/{familyId}/invitations")
+    public ResponseEntity<ApiResponse<Page<InvitationResponse>>> getSentInvitations(
+            @AuthenticationPrincipal User currentUser,
+            @PathVariable Long familyId,
+            @RequestParam(required = false) InvitationStatus status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Page<InvitationResponse> result = invitationService.getSentInvitations(
+                currentUser.getId(), familyId, status, PageRequest.of(page, size));
+        return ResponseEntity.ok(ApiResponse.success("Lấy danh sách lời mời đã gửi thành công", result));
+    }
+
+    @GetMapping("/api/v1/families/{familyId}/invitations/{invitationId}")
+    public ResponseEntity<ApiResponse<InvitationResponse>> getSentInvitation(
+            @AuthenticationPrincipal User currentUser,
+            @PathVariable Long familyId,
+            @PathVariable Long invitationId) {
+        return ResponseEntity.ok(ApiResponse.success("Lấy lời mời thành công",
+                invitationService.getSentInvitation(currentUser.getId(), familyId, invitationId)));
+    }
+
+    @PostMapping("/api/v1/families/{familyId}/invitations/{invitationId}/cancel")
+    public ResponseEntity<ApiResponse<InvitationResponse>> cancelInvitation(
+            @AuthenticationPrincipal User currentUser,
+            @PathVariable Long familyId,
+            @PathVariable Long invitationId) {
+        return ResponseEntity.ok(ApiResponse.success("Đã hủy lời mời",
+                invitationService.cancelInvitation(currentUser.getId(), familyId, invitationId)));
+    }
+
+    @DeleteMapping("/api/v1/families/{familyId}/invitations/{invitationId}")
+    public ResponseEntity<ApiResponse<Void>> deleteSentInvitation(
+            @AuthenticationPrincipal User currentUser,
+            @PathVariable Long familyId,
+            @PathVariable Long invitationId) {
+        invitationService.deleteSentInvitation(currentUser.getId(), familyId, invitationId);
+        return ResponseEntity.ok(ApiResponse.success("Đã xóa lời mời"));
+    }
     // ------------------------- Phía người được mời -------------------------
 
     /** Lời mời gửi cho tôi, mặc định là các lời mời đang chờ. */
