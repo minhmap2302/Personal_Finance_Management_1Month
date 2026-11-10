@@ -4,7 +4,7 @@ import {
   ArrowDownLeft, ArrowUpRight, CalendarDays,
   ChevronLeft, ChevronRight, CirclePlus, Ellipsis,
   Goal, PiggyBank, TrendingDown, TrendingUp,
-  Wallet, Utensils, CarFront, House, ShoppingBag,
+  Wallet, Utensils, CarFront, House,
 } from 'lucide-react';
 import {
   Bar, BarChart, CartesianGrid, Cell, Pie, PieChart,
@@ -12,13 +12,13 @@ import {
 } from 'recharts';
 import { useTheme } from '../context/ThemeContext';
 
-/* ── Mock data (replace with real API calls) ─────────────── */
+/* ── Sample dataset (sẵn sàng kết nối API Sprint 3) ─────────────── */
 const MONTHLY = [
-  { month: 'Th.5', income: 42, expense: 28 },
-  { month: 'Th.6', income: 46, expense: 31 },
-  { month: 'Th.7', income: 44, expense: 35 },
-  { month: 'Th.8', income: 52, expense: 32 },
-  { month: 'Th.9', income: 48, expense: 36 },
+  { month: 'Th.5',  income: 42, expense: 28 },
+  { month: 'Th.6',  income: 46, expense: 31 },
+  { month: 'Th.7',  income: 44, expense: 35 },
+  { month: 'Th.8',  income: 52, expense: 32 },
+  { month: 'Th.9',  income: 48, expense: 36 },
   { month: 'Th.10', income: 56, expense: 34 },
 ];
 
@@ -31,10 +31,10 @@ const CATEGORIES = [
 ];
 
 const TRANSACTIONS = [
-  { title: 'Đi chợ cuối tuần',  category: 'Ăn uống',  date: 'Hôm nay, 09:42',    amount: -850000,   icon: Utensils,    color: 'mint' },
-  { title: 'Lương tháng 10',    category: 'Thu nhập', date: 'Hôm nay, 08:15',    amount: 18500000,  icon: TrendingUp,  color: 'blue' },
-  { title: 'Đổ xăng xe máy',   category: 'Di chuyển', date: 'Hôm qua, 18:20',   amount: -120000,   icon: CarFront,    color: 'amber' },
-  { title: 'Tiền điện tháng 10', category: 'Hóa đơn', date: '27 thg 10, 14:03',  amount: -740000,   icon: House,       color: 'violet' },
+  { title: 'Đi chợ cuối tuần',   category: 'Ăn uống',  date: 'Hôm nay, 09:42',    amount: -850000,   icon: Utensils,   color: 'mint' },
+  { title: 'Lương tháng 10',     category: 'Thu nhập', date: 'Hôm nay, 08:15',    amount: 18500000,  icon: TrendingUp, color: 'blue' },
+  { title: 'Đổ xăng xe máy',    category: 'Di chuyển', date: 'Hôm qua, 18:20',   amount: -120000,   icon: CarFront,   color: 'amber' },
+  { title: 'Tiền điện tháng 10', category: 'Hóa đơn', date: '27 thg 10, 14:03',  amount: -740000,   icon: House,      color: 'violet' },
 ];
 
 const MEMBERS = [
@@ -44,7 +44,7 @@ const MEMBERS = [
 ];
 
 const GOALS = [
-  { name: 'Quỹ dự phòng',     saved: 18500000, target: 30000000, color: '#059669', icon: PiggyBank },
+  { name: 'Quỹ dự phòng',    saved: 18500000, target: 30000000, color: '#059669', icon: PiggyBank },
   { name: 'Du lịch Đà Nẵng', saved: 7200000,  target: 12000000, color: '#2563EB', icon: Goal },
 ];
 
@@ -60,22 +60,27 @@ const shortMoney = (n) => {
   return money(n);
 };
 
-/* Custom Recharts tooltip */
+/* Custom Recharts tooltips with theme tokens */
 function ChartTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
   return (
-    <div style={{
-      background: 'var(--bg-surface)',
-      border: '1px solid var(--border-default)',
-      borderRadius: 10,
-      padding: '10px 14px',
-      boxShadow: 'var(--shadow-dropdown)',
-      fontSize: 12,
-    }}>
-      <p style={{ margin: '0 0 6px', fontWeight: 700, color: 'var(--text-primary)' }}>{label}</p>
+    <div
+      style={{
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border-default)',
+        borderRadius: 10,
+        padding: '10px 14px',
+        boxShadow: 'var(--shadow-dropdown)',
+        fontSize: 12,
+      }}
+    >
+      <p style={{ margin: '0 0 6px', fontWeight: 700, color: 'var(--text-primary)' }}>
+        {label}
+      </p>
       {payload.map((p) => (
-        <p key={p.name} style={{ margin: '2px 0', color: p.fill }}>
-          {p.name}: <strong>{p.value} tr ₫</strong>
+        <p key={p.name} style={{ margin: '2px 0', color: p.fill, display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span>{p.name}:</span>
+          <strong className="font-tabular">{p.value} tr ₫</strong>
         </p>
       ))}
     </div>
@@ -85,23 +90,27 @@ function ChartTooltip({ active, payload, label }) {
 function PieTooltip({ active, payload }) {
   if (!active || !payload?.length) return null;
   return (
-    <div style={{
-      background: 'var(--bg-surface)',
-      border: '1px solid var(--border-default)',
-      borderRadius: 9,
-      padding: '8px 12px',
-      boxShadow: 'var(--shadow-dropdown)',
-      fontSize: 12,
-    }}>
-      <b style={{ color: 'var(--text-primary)' }}>{payload[0].name}</b>
-      <span style={{ marginLeft: 8, color: payload[0].payload.color }}>
+    <div
+      style={{
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border-default)',
+        borderRadius: 10,
+        padding: '8px 12px',
+        boxShadow: 'var(--shadow-dropdown)',
+        fontSize: 12,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+      }}
+    >
+      <b style={{ color: 'var(--text-primary)' }}>{payload[0].name}:</b>
+      <span style={{ color: payload[0].payload.color, fontWeight: 700 }}>
         {payload[0].value}%
       </span>
     </div>
   );
 }
 
-/* ── Dashboard Component ─────────────────────────────────── */
 export default function Dashboard() {
   const { isDark } = useTheme();
   const [monthOffset, setMonthOffset] = useState(0);
@@ -112,8 +121,8 @@ export default function Dashboard() {
     return `Tháng ${d.getMonth() + 1}, ${d.getFullYear()}`;
   }, [monthOffset]);
 
-  const axisColor = isDark ? '#64748B' : '#94A3B8';
-  const gridColor = isDark ? '#273449' : '#F1F5F9';
+  const axisColor   = isDark ? '#64748B' : '#94A3B8';
+  const gridColor   = isDark ? '#1E293B' : '#F1F5F9';
   const incomeColor = isDark ? '#34D399' : '#059669';
   const expenseColor = isDark ? '#FB7185' : '#E05A61';
 
@@ -161,18 +170,19 @@ export default function Dashboard() {
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: .3 }}
+      transition={{ duration: 0.3 }}
+      className="dashboard-container"
     >
       {/* ── Page heading ───────────────────────────────────── */}
       <div className="page-heading">
         <div className="page-heading-left">
           <div className="page-heading-meta">
             <span className="live-dot" aria-hidden="true" />
-            Tổng quan tài chính
+            Tổng quan tài chính gia đình
           </div>
           <h1 className="page-heading-title">Báo cáo tài chính gia đình</h1>
           <p className="page-heading-sub">
-            Theo dõi tình hình thu chi và sức khỏe tài chính của gia đình.
+            Theo dõi tình hình thu chi, số dư và tiến độ tích lũy của cả gia đình.
           </p>
         </div>
 
@@ -182,14 +192,18 @@ export default function Dashboard() {
           aria-label="Chọn tháng xem báo cáo"
         >
           <CalendarDays size={15} aria-hidden="true" />
-          <span aria-live="polite" aria-atomic="true">{monthLabel}</span>
+          <span aria-live="polite" aria-atomic="true" className="font-tabular font-semibold">
+            {monthLabel}
+          </span>
           <button
+            type="button"
             onClick={() => setMonthOffset((n) => n - 1)}
             aria-label="Tháng trước"
           >
             <ChevronLeft size={14} />
           </button>
           <button
+            type="button"
             onClick={() => setMonthOffset((n) => Math.min(0, n + 1))}
             disabled={monthOffset >= 0}
             aria-label="Tháng sau"
@@ -199,13 +213,14 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* ── KPI Cards ──────────────────────────────────────── */}
+      {/* ── KPI StatCards ──────────────────────────────────────── */}
       <div className="stat-grid" role="list" aria-label="Chỉ số tài chính">
         {KPI_CARDS.map((card) => (
-          <article
+          <motion.article
             key={card.title}
             className="stat-card"
             role="listitem"
+            whileHover={{ y: -3, transition: { duration: 0.18 } }}
           >
             <div className="stat-card-top">
               <span className="stat-card-label">{card.title}</span>
@@ -221,10 +236,11 @@ export default function Dashboard() {
                 className={`change-pill ${card.positive ? 'positive' : 'negative'}`}
                 aria-label={`Thay đổi: ${card.change}`}
               >
-                {card.positive
-                  ? <TrendingUp size={11} aria-hidden="true" />
-                  : <TrendingDown size={11} aria-hidden="true" />
-                }
+                {card.positive ? (
+                  <TrendingUp size={11} aria-hidden="true" />
+                ) : (
+                  <TrendingDown size={11} aria-hidden="true" />
+                )}
                 {card.change}
               </span>
               <span>{card.hint}</span>
@@ -242,20 +258,20 @@ export default function Dashboard() {
                 <span style={{ width: `${card.progress}%` }} />
               </div>
             )}
-          </article>
+          </motion.article>
         ))}
       </div>
 
       {/* ── Charts row ─────────────────────────────────────── */}
       <div className="dashboard-grid chart-grid">
-        {/* Bar chart */}
+        {/* Bar chart: 6 months */}
         <section className="panel chart-panel" aria-label="Biểu đồ thu chi 6 tháng">
           <div className="panel-heading">
             <div>
               <h2 className="panel-title">Thu chi 6 tháng gần nhất</h2>
-              <p className="panel-subtitle">Dòng tiền vào và ra của gia đình</p>
+              <p className="panel-subtitle">Dòng tiền thu và chi của cả gia đình</p>
             </div>
-            <button className="more-button" aria-label="Tùy chọn biểu đồ">
+            <button type="button" className="more-button" aria-label="Tùy chọn biểu đồ">
               <Ellipsis size={18} />
             </button>
           </div>
@@ -269,8 +285,8 @@ export default function Dashboard() {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={MONTHLY}
-                barGap={5}
-                margin={{ top: 4, right: 4, left: -20, bottom: 0 }}
+                barGap={6}
+                margin={{ top: 6, right: 6, left: -20, bottom: 0 }}
               >
                 <CartesianGrid vertical={false} stroke={gridColor} strokeDasharray="3 3" />
                 <XAxis
@@ -286,27 +302,47 @@ export default function Dashboard() {
                   tick={{ fill: axisColor, fontSize: 11 }}
                   tickFormatter={(v) => `${v}tr`}
                 />
-                <Tooltip content={<ChartTooltip />} cursor={{ fill: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)' }} />
-                <Bar dataKey="income" name="Thu nhập" fill={incomeColor} radius={[4, 4, 0, 0]} maxBarSize={20} />
-                <Bar dataKey="expense" name="Chi tiêu" fill={expenseColor} radius={[4, 4, 0, 0]} maxBarSize={20} opacity={0.8} />
+                <Tooltip
+                  content={<ChartTooltip />}
+                  cursor={{ fill: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)' }}
+                />
+                <Bar
+                  dataKey="income"
+                  name="Thu nhập"
+                  fill={incomeColor}
+                  radius={[5, 5, 0, 0]}
+                  maxBarSize={22}
+                />
+                <Bar
+                  dataKey="expense"
+                  name="Chi tiêu"
+                  fill={expenseColor}
+                  radius={[5, 5, 0, 0]}
+                  maxBarSize={22}
+                  opacity={0.82}
+                />
               </BarChart>
             </ResponsiveContainer>
           </div>
 
           <div className="chart-footnote" aria-live="polite">
-            <span className="footnote-icon" aria-hidden="true"><TrendingUp size={14} /></span>
-            <span>Thu nhập tháng này cao hơn chi tiêu <b>22 triệu ₫</b></span>
+            <span className="footnote-icon" aria-hidden="true">
+              <TrendingUp size={14} />
+            </span>
+            <span>
+              Thu nhập tháng này cao hơn chi tiêu <b className="font-tabular">22 triệu ₫</b>
+            </span>
           </div>
         </section>
 
-        {/* Donut chart */}
+        {/* Donut chart: Categories */}
         <section className="panel category-panel" aria-label="Phân bổ chi tiêu theo danh mục">
           <div className="panel-heading">
             <div>
               <h2 className="panel-title">Chi tiêu theo danh mục</h2>
-              <p className="panel-subtitle">Phân bổ trong tháng</p>
+              <p className="panel-subtitle">Phân bổ chi tiêu trong tháng</p>
             </div>
-            <button className="more-button" aria-label="Tùy chọn">
+            <button type="button" className="more-button" aria-label="Tùy chọn">
               <Ellipsis size={18} />
             </button>
           </div>
@@ -318,9 +354,9 @@ export default function Dashboard() {
                   data={CATEGORIES}
                   dataKey="value"
                   nameKey="name"
-                  innerRadius="62%"
-                  outerRadius="85%"
-                  paddingAngle={2}
+                  innerRadius="64%"
+                  outerRadius="88%"
+                  paddingAngle={3}
                   stroke="none"
                 >
                   {CATEGORIES.map((c) => (
@@ -332,7 +368,7 @@ export default function Dashboard() {
             </ResponsiveContainer>
             <div className="donut-center">
               <small>Tổng chi</small>
-              <b>26,75 tr</b>
+              <b className="font-tabular">26,75 tr</b>
               <span>VND</span>
             </div>
           </div>
@@ -344,16 +380,16 @@ export default function Dashboard() {
                   <i style={{ background: c.color }} aria-hidden="true" />
                   {c.name}
                 </span>
-                <b>{c.value}%</b>
+                <b className="font-tabular">{c.value}%</b>
               </div>
             ))}
           </div>
         </section>
       </div>
 
-      {/* ── Lower row ──────────────────────────────────────── */}
+      {/* ── Lower row: Transactions, Members, Goals ─────────── */}
       <div className="dashboard-grid lower-grid">
-        {/* Transactions */}
+        {/* Recent Transactions */}
         <section className="panel transaction-panel" aria-label="Giao dịch gần đây">
           <div className="panel-heading">
             <div>
@@ -386,14 +422,14 @@ export default function Dashboard() {
           </div>
         </section>
 
-        {/* Member spending */}
+        {/* Member Spending */}
         <section className="panel member-panel" aria-label="Chi tiêu theo thành viên">
           <div className="panel-heading">
             <div>
               <h2 className="panel-title">Chi tiêu theo thành viên</h2>
               <p className="panel-subtitle">Phân bổ tháng này</p>
             </div>
-            <button className="more-button" aria-label="Tùy chọn">
+            <button type="button" className="more-button" aria-label="Tùy chọn">
               <Ellipsis size={18} />
             </button>
           </div>
@@ -440,14 +476,19 @@ export default function Dashboard() {
           </a>
         </section>
 
-        {/* Saving goals */}
+        {/* Saving Goals */}
         <section className="panel goals-panel" aria-label="Mục tiêu tiết kiệm">
           <div className="panel-heading">
             <div>
               <h2 className="panel-title">Mục tiêu tiết kiệm</h2>
               <p className="panel-subtitle">Từng bước chạm tới ước mơ</p>
             </div>
-            <button className="round-add" title="Thêm mục tiêu" aria-label="Thêm mục tiêu tiết kiệm">
+            <button
+              type="button"
+              className="round-add"
+              title="Thêm mục tiêu"
+              aria-label="Thêm mục tiêu tiết kiệm"
+            >
               <CirclePlus size={17} />
             </button>
           </div>
@@ -467,7 +508,7 @@ export default function Dashboard() {
                   <div className="goal-detail">
                     <div className="goal-title">
                       <b>{g.name}</b>
-                      <strong>{pct}%</strong>
+                      <strong className="font-tabular">{pct}%</strong>
                     </div>
                     <div
                       className="goal-progress"
@@ -500,7 +541,7 @@ export default function Dashboard() {
           <span className="live-dot" aria-hidden="true" />
           Dữ liệu minh họa giao diện — kết nối API để xem dữ liệu thực
         </span>
-        <span>FinHome V2</span>
+        <span>FinHome V3</span>
       </div>
     </motion.div>
   );
