@@ -3,7 +3,6 @@ package org.example.backend.service.impl;
 import lombok.RequiredArgsConstructor;
 import org.example.backend.exception.BadRequestException;
 import org.example.backend.exception.ConflictException;
-import org.example.backend.exception.ForbiddenException;
 import org.example.backend.exception.ResourceNotFoundException;
 import org.example.backend.model.dto.request.CreateSubBudgetRequest;
 import org.example.backend.model.dto.request.CreateTotalBudgetRequest;
@@ -15,7 +14,6 @@ import org.example.backend.model.dto.response.SubBudgetResponse;
 import org.example.backend.model.entity.Budget;
 import org.example.backend.model.entity.Category;
 import org.example.backend.model.entity.Family;
-import org.example.backend.model.entity.FamilyMember;
 import org.example.backend.model.enums.BudgetStatus;
 import org.example.backend.model.enums.CategoryType;
 import org.example.backend.model.enums.FamilyRole;
@@ -23,9 +21,9 @@ import org.example.backend.model.enums.SavingGoalStatus;
 import org.example.backend.model.projection.CategorySpent;
 import org.example.backend.repository.BudgetRepository;
 import org.example.backend.repository.CategoryRepository;
-import org.example.backend.repository.FamilyMemberRepository;
 import org.example.backend.repository.FamilyRepository;
 import org.example.backend.service.BudgetService;
+import org.example.backend.service.FamilyAccessChecker;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -68,8 +66,8 @@ public class BudgetServiceImpl implements BudgetService {
 
     private final BudgetRepository budgetRepository;
     private final FamilyRepository familyRepository;
-    private final FamilyMemberRepository familyMemberRepository;
     private final CategoryRepository categoryRepository;
+    private final FamilyAccessChecker accessChecker;
 
     // =====================================================================
     // Đọc dữ liệu (mọi thành viên của gia đình)
@@ -78,7 +76,7 @@ public class BudgetServiceImpl implements BudgetService {
     @Transactional(readOnly = true)
     @Override
     public Page<BudgetSummaryResponse> getBudgets(Long userId, Long familyId, Pageable pageable) {
-        requireMember(userId, familyId);
+        accessChecker.requireMember(userId, familyId);
         return budgetRepository.findByFamilyIdAndParentBudgetIsNull(familyId, pageable)
                 .map(this::toSummary);
     }
@@ -86,7 +84,7 @@ public class BudgetServiceImpl implements BudgetService {
     @Transactional(readOnly = true)
     @Override
     public BudgetDetailResponse getBudget(Long userId, Long familyId, Long budgetId) {
-        requireMember(userId, familyId);
+        accessChecker.requireMember(userId, familyId);
         return toDetail(findTotal(familyId, budgetId));
     }
 
@@ -94,7 +92,7 @@ public class BudgetServiceImpl implements BudgetService {
     @Transactional(readOnly = true)
     @Override
     public BudgetDetailResponse getCurrentBudget(Long userId, Long familyId, LocalDate date) {
-        requireMember(userId, familyId);
+        accessChecker.requireMember(userId, familyId);
         LocalDate target = date != null ? date : LocalDate.now(ZoneId.of(timezone));
         Budget total = budgetRepository.findTotalCoveringDate(familyId, target)
                 .orElseThrow(() -> new ResourceNotFoundException("Không có ngân sách tổng nào bao phủ ngày này"));
@@ -108,8 +106,15 @@ public class BudgetServiceImpl implements BudgetService {
     @Transactional(isolation = Isolation.READ_COMMITTED)
     @Override
     public BudgetDetailResponse createTotalBudget(Long userId, Long familyId, CreateTotalBudgetRequest request) {
-        requireManager(userId, familyId);
-        Family family = lockFamily(familyId);
+        accessChecker.requireRoleWithLock(
+                userId,
+                familyId,
+                FamilyRole.MANAGER,
+                "Bạn không có quyền quản lý ngân sách của gia đình này"
+        );
+
+        Family family = familyRepository.findById(familyId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy gia đình"));
 
         validateDateRange(request.getStartDate(), request.getEndDate());
         checkNoOverlap(familyId, request.getStartDate(), request.getEndDate(), -1L);
@@ -129,8 +134,12 @@ public class BudgetServiceImpl implements BudgetService {
     @Override
     public BudgetDetailResponse updateTotalBudget(Long userId, Long familyId, Long budgetId,
                                                   UpdateTotalBudgetRequest request) {
-        requireManager(userId, familyId);
-        lockFamily(familyId);
+        accessChecker.requireRoleWithLock(
+                userId,
+                familyId,
+                FamilyRole.MANAGER,
+                "Bạn không có quyền quản lý ngân sách của gia đình này"
+        );
 
         Budget total = findTotal(familyId, budgetId);
         validateDateRange(request.getStartDate(), request.getEndDate());
@@ -160,8 +169,12 @@ public class BudgetServiceImpl implements BudgetService {
     @Transactional(isolation = Isolation.READ_COMMITTED)
     @Override
     public void deleteTotalBudget(Long userId, Long familyId, Long budgetId) {
-        requireManager(userId, familyId);
-        lockFamily(familyId);
+        accessChecker.requireRoleWithLock(
+                userId,
+                familyId,
+                FamilyRole.MANAGER,
+                "Bạn không có quyền quản lý ngân sách của gia đình này"
+        );
 
         Budget total = findTotal(familyId, budgetId);
         List<Budget> subBudgets = budgetRepository.findByParentBudgetIdOrderByIdAsc(total.getId());
@@ -177,8 +190,12 @@ public class BudgetServiceImpl implements BudgetService {
     @Override
     public SubBudgetResponse createSubBudget(Long userId, Long familyId, Long totalBudgetId,
                                              CreateSubBudgetRequest request) {
-        requireManager(userId, familyId);
-        lockFamily(familyId);
+        accessChecker.requireRoleWithLock(
+                userId,
+                familyId,
+                FamilyRole.MANAGER,
+                "Bạn không có quyền quản lý ngân sách của gia đình này"
+        );
 
         Budget total = findTotal(familyId, totalBudgetId);
         Category category = findUsableExpenseCategory(familyId, request.getCategoryId());
@@ -207,8 +224,12 @@ public class BudgetServiceImpl implements BudgetService {
     @Override
     public SubBudgetResponse updateSubBudget(Long userId, Long familyId, Long totalBudgetId, Long subBudgetId,
                                              UpdateSubBudgetRequest request) {
-        requireManager(userId, familyId);
-        lockFamily(familyId);
+        accessChecker.requireRoleWithLock(
+                userId,
+                familyId,
+                FamilyRole.MANAGER,
+                "Bạn không có quyền quản lý ngân sách của gia đình này"
+        );
 
         Budget total = findTotal(familyId, totalBudgetId);
         Budget sub = findSub(total, subBudgetId);
@@ -226,8 +247,12 @@ public class BudgetServiceImpl implements BudgetService {
     @Transactional(isolation = Isolation.READ_COMMITTED)
     @Override
     public void deleteSubBudget(Long userId, Long familyId, Long totalBudgetId, Long subBudgetId) {
-        requireManager(userId, familyId);
-        lockFamily(familyId);
+        accessChecker.requireRoleWithLock(
+                userId,
+                familyId,
+                FamilyRole.MANAGER,
+                "Bạn không có quyền quản lý ngân sách của gia đình này"
+        );
 
         Budget total = findTotal(familyId, totalBudgetId);
         Budget sub = findSub(total, subBudgetId);
@@ -235,32 +260,8 @@ public class BudgetServiceImpl implements BudgetService {
     }
 
     // =====================================================================
-    // Quyền truy cập
-    // =====================================================================
-
-    /** Người dùng phải là thành viên của gia đình. Admin hệ thống không phải thành viên nên không xem được. */
-    private FamilyMember requireMember(Long userId, Long familyId) {
-        return familyMemberRepository.findByUserIdAndFamilyId(userId, familyId)
-                .orElseThrow(() -> new ForbiddenException("Bạn không thuộc gia đình này"));
-    }
-
-    /** Chỉ chủ gia đình và quản lý được thay đổi ngân sách. */
-    private FamilyMember requireManager(Long userId, Long familyId) {
-        FamilyMember member = requireMember(userId, familyId);
-        if (!member.getRole().isAtLeast(FamilyRole.MANAGER)) {
-            throw new ForbiddenException("Bạn không có quyền quản lý ngân sách của gia đình này");
-        }
-        return member;
-    }
-
-    // =====================================================================
     // Kiểm tra nghiệp vụ
     // =====================================================================
-
-    private Family lockFamily(Long familyId) {
-        return familyRepository.findByIdForUpdate(familyId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy gia đình"));
-    }
 
     private Budget findTotal(Long familyId, Long budgetId) {
         return budgetRepository.findByIdAndFamilyIdAndParentBudgetIsNull(budgetId, familyId)
@@ -438,6 +439,4 @@ public class BudgetServiceImpl implements BudgetService {
     private BigDecimal zeroIfNull(BigDecimal value) {
         return value != null ? value : BigDecimal.ZERO;
     }
-
-
 }
