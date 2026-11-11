@@ -61,4 +61,24 @@ public class SavingGoalController {
         SavingGoalResponse data = savingGoalService.getGoal(currentUser.getId(), familyId, goalId);
         return ResponseEntity.ok(ApiResponse.success("Lấy thông tin mục tiêu tiết kiệm thành công", data));
     }
+
+    @PutMapping("/{goalId}")
+    public ResponseEntity<ApiResponse<SavingGoalResponse>> updateGoal(
+            @AuthenticationPrincipal User currentUser,
+            @PathVariable Long familyId,
+            @PathVariable Long goalId,
+            @Valid @RequestBody SavingGoalRequest request) {
+        SavingGoalResponse data = savingGoalService.updateGoal(currentUser.getId(), familyId, goalId, request);
+        return ResponseEntity.ok(ApiResponse.success("Cập nhật mục tiêu tiết kiệm thành công", data));
+    }
+
+    /** Chưa có đóng góp thì xóa hẳn, đã có thì chuyển sang đã hủy (giữ lịch sử). */
+    @DeleteMapping("/{goalId}")
+    public ResponseEntity<ApiResponse<Void>> deleteGoal(
+            @AuthenticationPrincipal User currentUser,
+            @PathVariable Long familyId,
+            @PathVariable Long goalId) {
+        savingGoalService.deleteGoal(currentUser.getId(), familyId, goalId);
+        return ResponseEntity.ok(ApiResponse.success("Hủy mục tiêu tiết kiệm thành công"));
+    }
 }

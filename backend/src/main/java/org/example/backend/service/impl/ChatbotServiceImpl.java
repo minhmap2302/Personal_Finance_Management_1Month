@@ -23,6 +23,8 @@ import org.example.backend.repository.UserRepository;
 import org.example.backend.service.ChatbotService;
 import org.example.backend.service.FamilyAccessChecker;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -63,8 +65,11 @@ public class ChatbotServiceImpl implements ChatbotService {
     @Autowired(required = false)
     private ChatClient chatClient;
 
-    @Value("${spring.ai.openai.chat.options.model:gpt-4o-mini}")
+    @Value("${OPENROUTER_MODEL:${OPENAI_MODEL:gpt-4o-mini}}")
     private String defaultModel;
+
+    @Value("${OPENROUTER_BASE_URL:${OPENAI_BASE_URL:https://openrouter.ai/api/v1}}")
+    private String aiBaseUrl;
 
     @Override
     @Transactional(readOnly = true)
@@ -97,11 +102,12 @@ public class ChatbotServiceImpl implements ChatbotService {
 
         // 3. Kiểm tra cấu hình AI ChatClient
         if (chatClient == null) {
-            log.error("[CHATBOT_ERROR] ChatClient chưa được cấu hình. Hãy kiểm tra OPENAI_API_KEY trong .env");
+            log.error("[CHATBOT_ERROR] ChatClient chưa được cấu hình. Hãy kiểm tra OPENROUTER_API_KEY hoặc OPENAI_API_KEY trong .env");
             throw new BadRequestException("Dịch vụ Chatbot AI chưa được kích hoạt hoặc chưa cấu hình API Key. Vui lòng kiểm tra lại cấu hình hệ thống");
         }
 
         String chosenModel = StringUtils.hasText(request.getModel()) ? request.getModel().trim() : defaultModel;
+        String providerName = isOpenRouter() ? "OpenRouter" : "OpenAI";
 
         // 4. Tổng hợp dữ liệu tài chính gia đình (Read-Only)
         String financialContext = collectFinancialContext(familyId, effectiveStart, effectiveEnd);
@@ -111,31 +117,36 @@ public class ChatbotServiceImpl implements ChatbotService {
 
         // 6. Gửi câu hỏi và ngữ cảnh đến AI model
         String conversationId = "family-" + familyId + "-user-" + userId;
-        log.info("[CHATBOT] Đang gọi OpenAI model='{}' cho conversationId='{}'", chosenModel, conversationId);
+        log.info("[CHATBOT] Đang gọi {} model='{}' cho conversationId='{}'", providerName, chosenModel, conversationId);
 
         String answer;
         try {
             answer = chatClient.prompt()
                     .system(systemPrompt)
                     .user(request.getMessage())
-                    .advisors(advisorSpec -> advisorSpec.param("chat_memory_conversation_id", conversationId))
+                    .advisors(advisorSpec -> advisorSpec.param(ChatMemory.CONVERSATION_ID, conversationId))
+                    .options(OpenAiChatOptions.builder().model(chosenModel))
                     .call()
                     .content();
         } catch (Exception ex) {
-            log.error("[CHATBOT_ERROR] Lỗi kết nối hoặc xử lý từ OpenAI: {}", ex.getMessage(), ex);
-            throw new IllegalStateException("Không thể kết nối đến dịch vụ AI lúc này: " + ex.getMessage(), ex);
+            log.error("[CHATBOT_ERROR] Lỗi kết nối hoặc xử lý từ {}: {}", providerName, ex.getMessage(), ex);
+            throw new BadRequestException("Không thể kết nối đến dịch vụ AI lúc này: " + ex.getMessage());
         }
 
         log.info("[CHATBOT] Đã nhận câu trả lời phân tích thành công cho familyId={}", familyId);
 
         return ChatMessageResponse.builder()
                 .familyId(familyId)
-                .provider("OpenAI")
+                .provider(providerName)
                 .model(chosenModel)
                 .startDate(effectiveStart)
                 .endDate(effectiveEnd)
                 .answer(answer)
                 .build();
+    }
+
+    private boolean isOpenRouter() {
+        return aiBaseUrl != null && aiBaseUrl.contains("openrouter.ai");
     }
 
     /**
@@ -285,29 +296,26 @@ public class ChatbotServiceImpl implements ChatbotService {
      * Xây dựng System Prompt chuẩn mực cho AI với đầy đủ quy tắc Read-Only và định hướng phân tích.
      */
     private String buildSystemPrompt(String financialContext, LocalDate startDate, LocalDate endDate) {
-        return """
-                Bạn là FinHome AI - Cố vấn tài chính gia đình thông minh và tận tâm của ứng dụng Quản lý tài chính cá nhân & gia đình.
-                
-                QUY TẮC CỐT LÕI (BẮT BUỘC TUÂN THỦ):
-                1. CHẾ ĐỘ CHỈ ĐỌC (READ-ONLY): Bạn chỉ có quyền đọc và phân tích dữ liệu được cung cấp dưới đây. Bạn KHÔNG THỂ và KHÔNG ĐƯỢC thêm, sửa, xóa bất kỳ dữ liệu tài chính nào. Nếu người dùng yêu cầu thay đổi dữ liệu, hãy lịch sự từ chối và hướng dẫn họ dùng các chức năng tương ứng trên giao diện ứng dụng.
-                2. BẢO MẬT & PHÂN QUYỀN: Dữ liệu dưới đây là dữ liệu duy nhất của gia đình mà người dùng đang là thành viên. Không suy đoán hay tiết lộ dữ liệu của gia đình khác.
-                3. NGÔN NGỮ & ĐỊNH DẠNG:
-                   - Trả lời bằng tiếng Việt, giọng điệu thân thiện, thấu hiểu, mang tính động viên và chuyên môn cao.
-                   - Định dạng câu trả lời bằng Markdown rõ ràng (tiêu đề, gạch đầu dòng, in đậm các con số quan trọng).
-                
-                DỮ LIỆU TÀI CHÍNH THỰC TẾ ĐƯỢC CUNG CẤP TRONG KỲ (%s ĐẾN %s):
-                %s
-                
-                CẤU TRÚC PHÂN TÍCH VÀ TRẢ LỜI MONG ĐỢI:
-                1. Đánh giá tổng quan: Nhận xét dòng tiền (thu so với chi, thặng dư hay thâm hụt ra sao).
-                2. Phân tích chi tiết:
-                   - Danh mục nào đang ngốn nhiều tiền nhất và chiếm bao nhiêu phần trăm?
-                   - Có khoản chi tiêu bất thường hay khoản chi lớn nào đáng lưu ý không?
-                3. Đánh giá rủi ro & Ngân sách:
-                   - Tình hình ngân sách tổng và các ngân sách hạng mục con (hạng mục nào đang vượt hoặc có nguy cơ vượt hạn mức >= 80%).
-                4. Đưa ra gợi ý chi tiêu & Kế hoạch hành động cụ thể:
-                   - Đề xuất 3-4 lời khuyên thiết thực, dễ thực hiện để gia đình tối ưu hóa chi tiêu, cắt giảm khoản chưa cần thiết và gia tăng số tiền tích lũy cho các mục tiêu tiết kiệm.
-                """.formatted(startDate, endDate, financialContext);
+        StringBuilder sb = new StringBuilder();
+        sb.append("Bạn là FinHome AI - Cố vấn tài chính gia đình thông minh và tận tâm của ứng dụng Quản lý tài chính cá nhân & gia đình.\n\n");
+        sb.append("QUY TẮC CỐT LÕI (BẮT BUỘC TUÂN THỦ):\n");
+        sb.append("1. CHẾ ĐỘ CHỈ ĐỌC (READ-ONLY): Bạn chỉ có quyền đọc và phân tích dữ liệu được cung cấp dưới đây. Bạn KHÔNG THỂ và KHÔNG ĐƯỢC thêm, sửa, xóa bất kỳ dữ liệu tài chính nào. Nếu người dùng yêu cầu thay đổi dữ liệu, hãy lịch sự từ chối và hướng dẫn họ dùng các chức năng tương ứng trên giao diện ứng dụng.\n");
+        sb.append("2. BẢO MẬT & PHÂN QUYỀN: Dữ liệu dưới đây là dữ liệu duy nhất của gia đình mà người dùng đang là thành viên. Không suy đoán hay tiết lộ dữ liệu của gia đình khác.\n");
+        sb.append("3. NGÔN NGỮ & ĐỊNH DẠNG:\n");
+        sb.append("   - Trả lời bằng tiếng Việt, giọng điệu thân thiện, thấu hiểu, mang tính động viên và chuyên môn cao.\n");
+        sb.append("   - Định dạng câu trả lời bằng Markdown rõ ràng (tiêu đề, gạch đầu dòng, in đậm các con số quan trọng).\n\n");
+        sb.append("DỮ LIỆU TÀI CHÍNH THỰC TẾ ĐƯỢC CUNG CẤP TRONG KỲ (").append(startDate).append(" ĐẾN ").append(endDate).append("):\n");
+        sb.append(financialContext).append("\n");
+        sb.append("CẤU TRÚC PHÂN TÍCH VÀ TRẢ LỜI MONG ĐỢI:\n");
+        sb.append("1. Đánh giá tổng quan: Nhận xét dòng tiền (thu so với chi, thặng dư hay thâm hụt ra sao).\n");
+        sb.append("2. Phân tích chi tiết:\n");
+        sb.append("   - Danh mục nào đang ngốn nhiều tiền nhất và chiếm bao nhiêu phần trăm?\n");
+        sb.append("   - Có khoản chi tiêu bất thường hay khoản chi lớn nào đáng lưu ý không?\n");
+        sb.append("3. Đánh giá rủi ro & Ngân sách:\n");
+        sb.append("   - Tình hình ngân sách tổng và các ngân sách hạng mục con (hạng mục nào đang vượt hoặc có nguy cơ vượt hạn mức >= 80%).\n");
+        sb.append("4. Đưa ra gợi ý chi tiêu & Kế hoạch hành động cụ thể:\n");
+        sb.append("   - Đề xuất 3-4 lời khuyên thiết thực, dễ thực hiện để gia đình tối ưu hóa chi tiêu, cắt giảm khoản chưa cần thiết và gia tăng số tiền tích lũy cho các mục tiêu tiết kiệm.\n");
+        return sb.toString();
     }
 
     private BigDecimal zeroIfNull(BigDecimal val) {
