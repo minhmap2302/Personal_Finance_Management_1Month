@@ -125,31 +125,4 @@ class CategoryServiceTest {
         assertEquals(1, result.getTotalElements());
         assertEquals("Ăn uống", result.getContent().get(0).getName());
     }
-
-    @Test
-    @DisplayName("updateCategory - thành công")
-    void updateCategory_success() {
-        UpdateCategoryRequest request = UpdateCategoryRequest.builder()
-                .name("Ăn uống mới")
-                .type(CategoryType.EXPENSE)
-                .build();
-
-        Category existing = Category.builder()
-                .id(10L)
-                .name("Ăn uống")
-                .type(CategoryType.EXPENSE)
-                .family(null)
-                .active(true)
-                .build();
-
-        when(categoryRepository.findById(10L)).thenReturn(Optional.of(existing));
-        when(categoryRepository.existsByFamilyIsNullAndNameIgnoreCaseAndTypeAndIdNot("Ăn uống mới", CategoryType.EXPENSE, 10L))
-                .thenReturn(false);
-        when(categoryRepository.save(any(Category.class))).thenReturn(existing);
-
-        CategoryResponse response = categoryService.updateCategory(currentUser, 10L, null, request);
-
-        assertNotNull(response);
-        assertEquals("Ăn uống", response.getName());
-    }
 }

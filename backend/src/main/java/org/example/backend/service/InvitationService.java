@@ -36,4 +36,17 @@ public interface InvitationService {
     InvitationResponse acceptInvitation(Long userId, Long invitationId);
 
     InvitationResponse declineInvitation(Long userId, Long invitationId);
+
+    /** Lời mời do chính người dùng gửi trong gia đình (OWNER, MANAGER), phân trang, mới nhất trước. */
+    Page<InvitationResponse> getSentInvitations(Long userId, Long familyId, InvitationStatus status, Pageable pageable);
+
+    /** Chi tiết một lời mời do chính người dùng gửi. */
+    InvitationResponse getSentInvitation(Long userId, Long familyId, Long invitationId);
+
+    /** Hủy lời mời đang chờ (PENDING -> CANCELLED). */
+    InvitationResponse cancelInvitation(Long userId, Long familyId, Long invitationId);
+
+    /** Xóa hẳn lời mời đã xử lý hoặc đã hủy. Lời mời đang chờ phải hủy trước. */
+    void deleteSentInvitation(Long userId, Long familyId, Long invitationId);
+
 }

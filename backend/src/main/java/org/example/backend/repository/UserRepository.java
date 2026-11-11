@@ -20,7 +20,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("SELECT u FROM User u WHERE u.username = :identifier OR u.email = :identifier")
     Optional<User> findByUsernameOrEmail(@Param("identifier") String identifier);
 
-    @Query("SELECT u FROM User u WHERE (:keyword IS NULL OR :keyword = '' OR " +
+    @Query("SELECT u FROM User u WHERE u.deletedAt IS NULL AND (:keyword IS NULL OR :keyword = '' OR " +
             "LOWER(u.username) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
             "LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
             "ORDER BY u.createdAt DESC")

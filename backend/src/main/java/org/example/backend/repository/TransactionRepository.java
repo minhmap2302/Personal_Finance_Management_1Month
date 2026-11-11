@@ -45,8 +45,8 @@ public interface TransactionRepository
     @EntityGraph(attributePaths = {"category", "user"})
     @Query("select t from Transaction t where t.family.id = :familyId and t.transactionDate between :startDate and :endDate")
     List<Transaction> findAllByFamilyIdAndDateBetween(@Param("familyId") Long familyId,
-                                                      @Param("startDate") LocalDate startDate,
-                                                      @Param("endDate") LocalDate endDate);
+                                                     @Param("startDate") LocalDate startDate,
+                                                     @Param("endDate") LocalDate endDate);
 
     /** 10 giao dịch gần nhất của gia đình, sắp xếp theo ngày và id giảm dần. */
     @EntityGraph(attributePaths = {"user", "category"})
@@ -56,11 +56,6 @@ public interface TransactionRepository
     default List<Transaction> findTop10ByFamilyIdOrderByTransactionDateDescIdDesc(Long familyId) {
         return findTop10ByFamilyIdOrderByTransactionDateDescIdDesc(familyId, Pageable.ofSize(10));
     }
-
-    /** 10 giao dịch gần nhất trong khoảng thống kê, sắp xếp theo ngày và id giảm dần. */
-    @EntityGraph(attributePaths = {"user", "category"})
-    List<Transaction> findByFamilyIdAndTransactionDateBetweenOrderByTransactionDateDescIdDesc(
-            Long familyId, LocalDate startDate, LocalDate endDate, Pageable pageable);
 
     /**
      * Chỉ đổi đường dẫn ảnh hóa đơn (null nghĩa là bỏ ảnh), không ghi đè các cột khác.

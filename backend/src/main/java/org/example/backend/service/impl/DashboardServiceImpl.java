@@ -4,11 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.backend.exception.BadRequestException;
 import org.example.backend.exception.ForbiddenException;
 import org.example.backend.model.dto.response.DashboardResponse;
-import org.example.backend.model.entity.Budget;
-import org.example.backend.model.entity.Category;
-import org.example.backend.model.entity.FamilyMember;
-import org.example.backend.model.entity.Transaction;
-import org.example.backend.model.entity.SavingGoal;
+import org.example.backend.model.entity.*;
 import org.example.backend.model.enums.CategoryType;
 import org.example.backend.model.projection.CategorySpent;
 import org.example.backend.repository.BudgetRepository;
@@ -86,10 +82,13 @@ public class DashboardServiceImpl implements DashboardService {
 
         List<DashboardResponse.CategoryBreakdown> expenseByCategory = buildExpenseBreakdown(familyId, effectiveStart, effectiveEnd, totalExpense);
         List<DashboardResponse.TrendPoint> trend = buildTrend(familyId, effectiveStart, effectiveEnd);
+
         // Tình hình ngân sách hiện tại lấy theo ngày hiện tại theo múi giờ Việt Nam.
         DashboardResponse.BudgetStatus budget = buildBudgetStatus(familyId, LocalDate.now(ZONE));
         List<DashboardResponse.SavingGoalProgress> savingGoals = buildSavingGoals(familyId);
         List<DashboardResponse.RecentTransaction> recentTransactions = buildRecentTransactions(familyId);
+
+
 
         return DashboardResponse.builder()
                 .overview(DashboardResponse.Overview.builder()
@@ -171,6 +170,7 @@ public class DashboardServiceImpl implements DashboardService {
 
         return new ArrayList<>(map.values());
     }
+
 
     /**
      * Lấy ngân sách hiện tại (ngân sách tổng đang áp dụng cho ngày hiện tại).
@@ -285,6 +285,8 @@ public class DashboardServiceImpl implements DashboardService {
         return "GREEN";
     }
 
+
+
     /**
      * Tính phần trăm, làm tròn 2 chữ số thập phân để hiển thị UI ổn định.
      */
@@ -299,7 +301,7 @@ public class DashboardServiceImpl implements DashboardService {
         return value != null ? value : ZERO;
     }
 
-    private String displayName(org.example.backend.model.entity.User user) {
+    private String displayName(User user) {
         if (user == null) {
             return "Unknown";
         }

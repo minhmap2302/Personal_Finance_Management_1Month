@@ -25,8 +25,8 @@ public interface SavingGoalRepository extends JpaRepository<SavingGoal, Long> {
 
     @Query("select coalesce(sum(c.amount), 0) from SavingContribution c where c.savingGoal.family.id = :familyId and c.contributionDate between :startDate and :endDate")
     BigDecimal sumSavedAmountByFamilyAndDateRange(@Param("familyId") Long familyId,
-                                                 @Param("startDate") LocalDate startDate,
-                                                 @Param("endDate") LocalDate endDate);
+                                                  @Param("startDate") LocalDate startDate,
+                                                  @Param("endDate") LocalDate endDate);
     /** Mục tiêu của gia đình, kèm người tạo. */
     @EntityGraph(attributePaths = "createdBy")
     Optional<SavingGoal> findByIdAndFamilyId(Long id, Long familyId);

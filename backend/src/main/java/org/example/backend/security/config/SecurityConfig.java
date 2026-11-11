@@ -1,14 +1,17 @@
+
 package org.example.backend.security.config;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 
 import lombok.RequiredArgsConstructor;
 import org.example.backend.security.jwt.JwtAuthenticationFilter;
 import org.example.backend.security.principal.CustomUserDetailsService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -43,46 +46,84 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final CustomUserDetailsService customUserDetailsService;
 
+    // Danh sách Frontend Origin, cấu hình qua biến môi trường.
+    // Nếu chưa cấu hình, sử dụng các địa chỉ phát triển local.
+    @Value("${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:3000,http://localhost:80,http://localhost}")
+    private String corsAllowedOrigins;
+
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http)
+            throws Exception {
+
         http
                 .cors(cors -> {})
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                        session.sessionCreationPolicy(
+                                SessionCreationPolicy.STATELESS
+                        )
+                )
                 .exceptionHandling(exception -> exception
-                        .authenticationEntryPoint(new AuthenticationEntryPoint() {
-                            @Override
-                            public void commence(HttpServletRequest request, HttpServletResponse response,
-                                                 AuthenticationException authException) throws IOException {
-                                response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-                                response.setCharacterEncoding("UTF-8");
-                                response.setStatus(HttpStatus.UNAUTHORIZED.value());
-                                response.getWriter().write(String.format(
-                                        "{\"timestamp\":\"%s\",\"status\":%d,\"error\":\"%s\",\"message\":\"%s\",\"path\":\"%s\"}",
-                                        LocalDateTime.now(), HttpStatus.UNAUTHORIZED.value(),
-                                        HttpStatus.UNAUTHORIZED.getReasonPhrase(),
-                                        "Yêu cầu xác thực để truy cập tài nguyên này",
-                                        request.getRequestURI()
-                                ));
-                            }
-                        })
-                        .accessDeniedHandler(new AccessDeniedHandler() {
-                            @Override
-                            public void handle(HttpServletRequest request, HttpServletResponse response,
-                                               org.springframework.security.access.AccessDeniedException accessDeniedException) throws IOException {
-                                response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-                                response.setCharacterEncoding("UTF-8");
-                                response.setStatus(HttpStatus.FORBIDDEN.value());
-                                response.getWriter().write(String.format(
-                                        "{\"timestamp\":\"%s\",\"status\":%d,\"error\":\"%s\",\"message\":\"%s\",\"path\":\"%s\"}",
-                                        LocalDateTime.now(), HttpStatus.FORBIDDEN.value(),
-                                        HttpStatus.FORBIDDEN.getReasonPhrase(),
-                                        "Bạn không có quyền truy cập tài nguyên này",
-                                        request.getRequestURI()
-                                ));
-                            }
-                        })
+                        .authenticationEntryPoint(
+                                new AuthenticationEntryPoint() {
+                                    @Override
+                                    public void commence(
+                                            HttpServletRequest request,
+                                            HttpServletResponse response,
+                                            AuthenticationException authException
+                                    ) throws IOException {
+
+                                        response.setContentType(
+                                                MediaType.APPLICATION_JSON_VALUE
+                                        );
+                                        response.setCharacterEncoding("UTF-8");
+                                        response.setStatus(
+                                                HttpStatus.UNAUTHORIZED.value()
+                                        );
+
+                                        response.getWriter().write(
+                                                String.format(
+                                                        "{\"timestamp\":\"%s\",\"status\":%d,\"error\":\"%s\",\"message\":\"%s\",\"path\":\"%s\"}",
+                                                        LocalDateTime.now(),
+                                                        HttpStatus.UNAUTHORIZED.value(),
+                                                        HttpStatus.UNAUTHORIZED.getReasonPhrase(),
+                                                        "Yêu cầu xác thực để truy cập tài nguyên này",
+                                                        request.getRequestURI()
+                                                )
+                                        );
+                                    }
+                                }
+                        )
+                        .accessDeniedHandler(
+                                new AccessDeniedHandler() {
+                                    @Override
+                                    public void handle(
+                                            HttpServletRequest request,
+                                            HttpServletResponse response,
+                                            org.springframework.security.access.AccessDeniedException accessDeniedException
+                                    ) throws IOException {
+
+                                        response.setContentType(
+                                                MediaType.APPLICATION_JSON_VALUE
+                                        );
+                                        response.setCharacterEncoding("UTF-8");
+                                        response.setStatus(
+                                                HttpStatus.FORBIDDEN.value()
+                                        );
+
+                                        response.getWriter().write(
+                                                String.format(
+                                                        "{\"timestamp\":\"%s\",\"status\":%d,\"error\":\"%s\",\"message\":\"%s\",\"path\":\"%s\"}",
+                                                        LocalDateTime.now(),
+                                                        HttpStatus.FORBIDDEN.value(),
+                                                        HttpStatus.FORBIDDEN.getReasonPhrase(),
+                                                        "Bạn không có quyền truy cập tài nguyên này",
+                                                        request.getRequestURI()
+                                                )
+                                        );
+                                    }
+                                }
+                        )
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
@@ -93,8 +134,10 @@ public class SecurityConfig {
                                 "/swagger-ui.html",
                                 "/error"
                         ).permitAll()
-                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
-                        .anyRequest().authenticated()
+                        .requestMatchers("/api/v1/admin/**")
+                        .hasRole("ADMIN")
+                        .anyRequest()
+                        .authenticated()
                 )
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(
@@ -107,18 +150,39 @@ public class SecurityConfig {
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
+
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOrigins(
-                List.of("http://localhost:5173")
-        );
+        // Đọc danh sách Origin, phân cách bằng dấu phẩy.
+        // Ví dụ:
+        // CORS_ALLOWED_ORIGINS=http://localhost:3000,https://example.com
+        List<String> allowedOrigins = Arrays.stream(
+                        corsAllowedOrigins.split(",")
+                )
+                .map(String::trim)
+                .filter(origin -> !origin.isEmpty())
+                .toList();
+
+        configuration.setAllowedOrigins(allowedOrigins);
 
         configuration.setAllowedMethods(
-                List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
+                List.of(
+                        "GET",
+                        "POST",
+                        "PUT",
+                        "PATCH",
+                        "DELETE",
+                        "OPTIONS"
+                )
         );
 
         configuration.setAllowedHeaders(
-                List.of("Authorization", "Content-Type", "Accept", "Origin")
+                List.of(
+                        "Authorization",
+                        "Content-Type",
+                        "Accept",
+                        "Origin"
+                )
         );
 
         configuration.setAllowCredentials(true);
@@ -138,10 +202,12 @@ public class SecurityConfig {
 
     @Bean
     public AuthenticationProvider authenticationProvider() {
+
         DaoAuthenticationProvider authProvider =
                 new DaoAuthenticationProvider(userDetailsService());
 
         authProvider.setPasswordEncoder(passwordEncoder());
+
         return authProvider;
     }
 

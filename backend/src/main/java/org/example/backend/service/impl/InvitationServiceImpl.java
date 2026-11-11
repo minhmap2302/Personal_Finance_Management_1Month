@@ -29,7 +29,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * Nghiệp vụ lời mời vào gia đình.
@@ -44,6 +43,9 @@ public class InvitationServiceImpl implements InvitationService {
 
     /** Số kết quả tối đa mỗi trang khi tìm người dùng. */
     private static final int MAX_PAGE_SIZE = 20;
+
+    /** Số kết quả tối đa mỗi trang khi xem lời mời đã gửi. */
+    private static final int MAX_SENT_PAGE_SIZE = 50;
 
     private final InvitationRepository invitationRepository;
     private final FamilyMemberRepository familyMemberRepository;
@@ -92,6 +94,10 @@ public class InvitationServiceImpl implements InvitationService {
         User invited = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng"));
 
+        if (invited.isDeleted()) {
+            throw new ResourceNotFoundException("Không tìm thấy người dùng");
+        }
+
         if (!invited.isEnabled()) {
             throw new BadRequestException("Tài khoản này đã bị khóa");
         }
@@ -116,9 +122,81 @@ public class InvitationServiceImpl implements InvitationService {
         return toResponse(invitation);
     }
 
+    // ---- Phía người gửi ----
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<InvitationResponse> getSentInvitations(Long userId, Long familyId, InvitationStatus status,
+                                                       Pageable pageable) {
+        accessChecker.requireRole(userId, familyId, FamilyRole.MANAGER,
+                "Chỉ chủ gia đình và quản lý mới được xem lời mời đã gửi");
+
+        // Mới nhất trước, thêm id để phân trang ổn định khi nhiều lời mời cùng thời điểm tạo.
+        Pageable safePageable = PageRequest.of(pageable.getPageNumber(),
+                Math.min(pageable.getPageSize(), MAX_SENT_PAGE_SIZE),
+                Sort.by(Sort.Direction.DESC, "createdAt").and(Sort.by(Sort.Direction.DESC, "id")));
+
+        Page<Invitation> page = status == null
+                ? invitationRepository.findByFamilyIdAndInvitedById(familyId, userId, safePageable)
+                : invitationRepository.findByFamilyIdAndInvitedByIdAndStatus(familyId, userId, status, safePageable);
+
+        return page.map(this::toResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public InvitationResponse getSentInvitation(Long userId, Long familyId, Long invitationId) {
+        accessChecker.requireRole(userId, familyId, FamilyRole.MANAGER,
+                "Chỉ chủ gia đình và quản lý mới được xem lời mời đã gửi");
+
+        // Lời mời của người khác hoặc của gia đình khác được coi như không tồn tại.
+        return invitationRepository.findByIdAndFamilyIdAndInvitedById(invitationId, familyId, userId)
+                .map(this::toResponse)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy lời mời"));
+    }
+
+    @Override
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public InvitationResponse cancelInvitation(Long userId, Long familyId, Long invitationId) {
+        accessChecker.requireRole(userId, familyId, FamilyRole.MANAGER,
+                "Chỉ chủ gia đình và quản lý mới được hủy lời mời");
+
+        Invitation invitation = findSentForUpdate(userId, familyId, invitationId);
+        if (invitation.getStatus() != InvitationStatus.PENDING) {
+            throw new ConflictException("Chỉ hủy được lời mời đang chờ phản hồi");
+        }
+        invitation.setStatus(InvitationStatus.CANCELLED);
+        return toResponse(invitation);
+    }
+
+    @Override
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public void deleteSentInvitation(Long userId, Long familyId, Long invitationId) {
+        accessChecker.requireRole(userId, familyId, FamilyRole.MANAGER,
+                "Chỉ chủ gia đình và quản lý mới được xóa lời mời");
+
+        Invitation invitation = findSentForUpdate(userId, familyId, invitationId);
+        if (invitation.getStatus() == InvitationStatus.PENDING) {
+            throw new ConflictException("Hãy hủy lời mời đang chờ trước khi xóa");
+        }
+        invitationRepository.delete(invitation);
+    }
+
+    /** Lời mời phải do chính người dùng này gửi trong gia đình này. Khóa dòng để tránh đụng độ với chấp nhận/từ chối. */
+    private Invitation findSentForUpdate(Long userId, Long familyId, Long invitationId) {
+        return invitationRepository.findSentForUpdate(invitationId, familyId, userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy lời mời"));
+    }
+
+    // ---- Phía người được mời ----
+
     @Override
     @Transactional(readOnly = true)
     public List<InvitationResponse> getMyInvitations(Long userId, InvitationStatus status) {
+        // Lời mời đã bị người gửi hủy thì người được mời không còn thấy.
+        if (status == InvitationStatus.CANCELLED) {
+            return List.of();
+        }
         return invitationRepository.findByInvitedUserIdAndStatusOrderByCreatedAtDesc(userId, status).stream()
                 .map(this::toResponse)
                 .toList();
@@ -127,8 +205,9 @@ public class InvitationServiceImpl implements InvitationService {
     @Override
     @Transactional(readOnly = true)
     public InvitationResponse getMyInvitation(Long userId, Long invitationId) {
-        // Lời mời của người khác được coi như không tồn tại.
+        // Lời mời của người khác, hoặc đã bị hủy, được coi như không tồn tại.
         return invitationRepository.findByIdAndInvitedUserId(invitationId, userId)
+                .filter(i -> i.getStatus() != InvitationStatus.CANCELLED)
                 .map(this::toResponse)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy lời mời"));
     }
@@ -171,6 +250,10 @@ public class InvitationServiceImpl implements InvitationService {
     private Invitation findPendingForUpdate(Long userId, Long invitationId) {
         Invitation invitation = invitationRepository.findForUpdate(invitationId, userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy lời mời"));
+        // Lời mời đã hủy thì người được mời coi như không có.
+        if (invitation.getStatus() == InvitationStatus.CANCELLED) {
+            throw new ResourceNotFoundException("Không tìm thấy lời mời");
+        }
         if (invitation.getStatus() != InvitationStatus.PENDING) {
             throw new ConflictException("Lời mời này đã được xử lý");
         }

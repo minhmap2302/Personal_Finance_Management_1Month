@@ -18,7 +18,7 @@ public class ChatbotAiConfig {
     }
 
     @Bean
-    @ConditionalOnProperty(name = "spring.ai.openai.api-key")
+    @ConditionalOnProperty(name = "spring.ai.openai.api-key", matchIfMissing = false)
     public ChatClient chatClient(ChatModel chatModel, ChatMemory chatMemory) {
         return ChatClient.builder(chatModel)
                 .defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).build())
