@@ -2,10 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useInView, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import {
-  ArrowDown, ArrowRight, ArrowUpRight, BadgeCheck, BellRing, Bot, BrainCircuit,
-  Check, CheckCircle2, ChevronDown, CircleHelp, CreditCard, Eye, Fingerprint,
-  Goal, HandCoins, HeartHandshake, House, LockKeyhole, Menu, MessageCircle,
-  PiggyBank, ScanEye, ShieldCheck, Sparkles, TrendingDown, TrendingUp, Users,
+  ArrowRight, ArrowUpRight, BadgeCheck, BellRing, Bot, BrainCircuit,
+  Check, CheckCircle2, CircleHelp, Eye, Fingerprint,
+  Goal, HeartHandshake, House, LockKeyhole, Menu, MessageCircle,
+  PiggyBank, ScanEye, ShieldCheck, Sparkles, TrendingUp, Users,
   Wallet, WalletCards, X, Zap,
 } from 'lucide-react';
 

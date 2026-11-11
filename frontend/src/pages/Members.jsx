@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   Check,
@@ -9,13 +9,11 @@ import {
   UserMinus,
   Users,
   X,
-  XCircle,
   Crown,
   Mail,
   UserPlus,
   ArrowRight,
   Clock,
-  Sparkles,
   Settings,
   AlertCircle,
 } from 'lucide-react';

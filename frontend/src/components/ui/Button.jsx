@@ -1,19 +1,19 @@
-import React, { forwardRef } from 'react';
+import { forwardRef } from 'react';
 import { Loader2 } from 'lucide-react';
 
 const VARIANTS = {
   primary:
-    'bg-primary hover:bg-primary-hover text-white shadow-sm focus-visible:ring-primary/40 dark:bg-emerald-600 dark:hover:bg-emerald-500',
+    'bg-primary hover:bg-primary-hover text-white shadow-sm focus-visible:ring-primary/40 dark:bg-primary-dark dark:hover:bg-primary-hover-dark',
   secondary:
-    'bg-surface hover:bg-app text-fin-text border border-fin-border dark:bg-surface-dark dark:hover:bg-sidebar-dark dark:text-fin-text-dark dark:border-fin-border-dark',
+    'bg-surface hover:bg-app text-fin-text border border-fin-border dark:bg-surface-dark dark:hover:bg-app-dark dark:text-fin-text-dark dark:border-fin-border-dark',
   outline:
-    'bg-transparent hover:bg-primary/10 text-primary border border-primary/40 focus-visible:ring-primary/30 dark:text-primary-dark dark:border-primary-dark/40',
+    'bg-transparent hover:bg-primary/10 text-primary border border-primary/40 focus-visible:ring-primary/30 dark:text-primary-dark dark:border-primary-dark/40 dark:hover:bg-primary-dark/10',
   ghost:
     'bg-transparent hover:bg-black/5 dark:hover:bg-white/5 text-fin-text dark:text-fin-text-dark',
   danger:
-    'bg-expense hover:bg-red-600 text-white shadow-sm focus-visible:ring-red-400/40',
+    'bg-expense hover:bg-red-600 text-white shadow-sm focus-visible:ring-red-400/40 dark:bg-expense-dark dark:hover:bg-red-500',
   dangerOutline:
-    'bg-transparent hover:bg-red-500/10 text-expense border border-expense/40 focus-visible:ring-red-400/30',
+    'bg-transparent hover:bg-red-500/10 text-expense border border-expense/40 focus-visible:ring-red-400/30 dark:text-expense-dark dark:border-expense-dark/40 dark:hover:bg-expense-dark/10',
 };
 
 const SIZES = {

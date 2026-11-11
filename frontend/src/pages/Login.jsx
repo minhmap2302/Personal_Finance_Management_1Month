@@ -13,6 +13,7 @@ import {
   Wallet,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import BrandLogoMark from '../components/BrandLogoMark';
 import ThemeToggle from '../components/ThemeToggle';
 
@@ -22,18 +23,17 @@ export default function Login() {
   const [show, setShow]             = useState(false);
   const [remember, setRemember]     = useState(true);
   const [busy, setBusy]             = useState(false);
-  const [error, setError]           = useState('');
 
   const { signIn } = useAuth();
+  const showToast = useToast();
   const navigate = useNavigate();
   const location = useLocation();
 
   async function submit(e) {
     e.preventDefault();
-    setError('');
 
     if (!identifier.trim() || !password) {
-      setError('Vui lòng nhập tên đăng nhập/email và mật khẩu.');
+      showToast('Vui lòng nhập tên đăng nhập/email và mật khẩu.', 'error');
       return;
     }
 
@@ -41,12 +41,13 @@ export default function Login() {
 
     try {
       await signIn(identifier.trim(), password, remember);
+      showToast('Đăng nhập thành công!', 'success');
       navigate(
         location.state?.from?.pathname || '/app/dashboard',
         { replace: true }
       );
     } catch (err) {
-      setError(err.message || 'Đăng nhập thất bại. Vui lòng thử lại.');
+      showToast(err.message || 'Đăng nhập thất bại. Vui lòng thử lại.', 'error');
     } finally {
       setBusy(false);
     }
@@ -161,12 +162,6 @@ export default function Login() {
             >
               <CheckCircle2 size={16} className="text-primary shrink-0" aria-hidden="true" />
               <span>Đăng ký thành công! Bạn có thể đăng nhập ngay bây giờ.</span>
-            </div>
-          )}
-
-          {error && (
-            <div className="alert-error" role="alert">
-              {error}
             </div>
           )}
 

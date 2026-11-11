@@ -1,8 +1,8 @@
 import { motion } from 'framer-motion';
-import { ArrowUpRight, Search, Plus, SlidersHorizontal, Wrench, ArrowLeft } from 'lucide-react';
+import { ArrowUpRight, Search, SlidersHorizontal, Wrench, ArrowLeft } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import PageHeader from '../components/PageHeader';
-import { Button, Badge, Card } from '../components/ui';
+import { Badge, Card } from '../components/ui';
 
 export default function ModulePage({ title, description, icon: Icon }) {
   const navigate = useNavigate();

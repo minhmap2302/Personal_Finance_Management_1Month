@@ -1,4 +1,4 @@
-import React, { forwardRef, useId } from 'react';
+import { forwardRef, useId } from 'react';
 import { X } from 'lucide-react';
 
 export const Input = forwardRef(function Input(
@@ -41,7 +41,7 @@ export const Input = forwardRef(function Input(
           error
             ? 'border-expense focus-within:ring-2 focus-within:ring-expense/20'
             : 'border-fin-border dark:border-fin-border-dark focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20'
-        } ${disabled ? 'opacity-55 cursor-not-allowed bg-app dark:bg-sidebar-dark' : ''}`}
+        } ${disabled ? 'opacity-55 cursor-not-allowed bg-app/50 dark:bg-surface-dark/50' : ''}`}
       >
         {Icon && (
           <span className="pl-3 pr-1 text-fin-muted shrink-0 pointer-events-none" aria-hidden="true">

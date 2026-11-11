@@ -1,5 +1,3 @@
-import React from 'react';
-
 const VARIANTS = {
   emerald:
     'bg-emerald-50 text-emerald-800 border-emerald-200/60 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800/40',

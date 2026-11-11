@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   AlertTriangle,
@@ -10,16 +10,12 @@ import {
   Users,
   X,
   Database,
-  ArrowRight,
   Shield,
   Crown,
-  UserCheck,
   Calendar,
-  Sparkles,
-  Info,
 } from 'lucide-react';
 import PageHeader from '../components/PageHeader';
-import { Button, Badge, Card, Input, Modal } from '../components/ui';
+import { Button, Badge, Card, CardHeader, CardTitle, CardDescription, CardContent, Input, Modal } from '../components/ui';
 import { useFamily } from '../context/FamilyContext';
 import { familyApi, getErrorMessage } from '../services/familyFinanceApi';
 import { useToast } from '../context/ToastContext';
@@ -48,10 +44,10 @@ function ImpactRow({ icon: Icon, title, description, retained = false }) {
         <Icon size={16} />
       </div>
       <div>
-        <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+        <p className="text-sm font-semibold text-fin-text dark:text-fin-text-dark">
           {title}
         </p>
-        <p className="mt-0.5 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+        <p className="mt-0.5 text-xs leading-relaxed text-fin-secondary dark:text-fin-muted">
           {description}
         </p>
       </div>
@@ -150,7 +146,6 @@ export default function Family() {
         await familyApi.leave(familyIdToProcess);
       }
 
-      // Clear the deleted/left family before refreshing the remaining list.
       setActiveFamilyId(null);
       setModal('');
       setConfirmName('');
@@ -158,10 +153,8 @@ export default function Family() {
       try {
         await refreshFamilies();
       } catch {
-        // The server action has succeeded; a failed list refresh must not be
-        // reported as a failed deletion.
         toast(
-          'Thao tác đã hoàn tất. Không tải lại được danh sách; hãy bấm “Làm mới danh sách”.',
+          'Thao tác đã hoàn tất. Không tải lại được danh sách; hãy bấm "Làm mới danh sách".',
           'info'
         );
       }
@@ -221,14 +214,12 @@ export default function Family() {
 
       {/* Danh sách không gian gia đình */}
       <Card>
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+        <CardHeader className="flex flex-wrap items-center justify-between gap-3 pb-3">
           <div>
-            <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
-              Không gian gia đình của bạn
-            </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            <CardTitle as="h2" className="text-base">Không gian gia đình của bạn</CardTitle>
+            <CardDescription>
               Chọn một gia đình để làm việc trong các phân hệ quản lý tài chính.
-            </p>
+            </CardDescription>
           </div>
 
           <Button
@@ -246,209 +237,212 @@ export default function Family() {
           >
             Làm mới danh sách
           </Button>
-        </div>
-
-        {familiesLoading ? (
-          <div className="py-12 text-center text-sm text-slate-400">
-            <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent mb-2" />
-            <p>Đang tải danh sách gia đình…</p>
-          </div>
-        ) : families.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 p-8 text-center bg-slate-50/50 dark:bg-slate-900/40">
-            <div className="h-12 w-12 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 grid place-items-center mx-auto mb-3">
-              <Home size={24} />
+        </CardHeader>
+        <CardContent>
+          {familiesLoading ? (
+            <div className="py-12 text-center text-sm text-fin-secondary dark:text-fin-muted">
+              <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent mb-2" />
+              <p>Đang tải danh sách gia đình…</p>
             </div>
-            <h3 className="font-bold text-sm text-slate-800 dark:text-slate-200">
-              Bạn chưa có không gian gia đình
-            </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
-              Hãy tạo một không gian mới hoặc chấp nhận lời mời từ thành viên khác ở trang Thành viên.
-            </p>
-            <div className="mt-4">
-              <Button
-                variant="primary"
-                icon={Plus}
-                size="sm"
-                onClick={() => {
-                  setName('');
-                  setModal('create');
-                }}
-              >
-                Tạo gia đình đầu tiên
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <div className="grid gap-3.5 sm:grid-cols-2">
-            {families.map((family) => {
-              const active = String(family.id) === String(activeFamilyId);
-              const meta = roleMeta[family.myRole] || roleMeta.MEMBER;
-
-              return (
-                <div
-                  key={family.id}
-                  onClick={() => setActiveFamilyId(family.id)}
-                  className={`group relative cursor-pointer rounded-2xl border p-4.5 transition-all text-left ${
-                    active
-                      ? 'border-emerald-500/80 bg-emerald-50/40 dark:bg-emerald-950/20 shadow-sm ring-2 ring-emerald-500/20 dark:ring-emerald-500/30'
-                      : 'border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900/80 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-xs'
-                  }`}
+          ) : families.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 p-8 text-center bg-slate-50/50 dark:bg-slate-900/40">
+              <div className="h-12 w-12 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 grid place-items-center mx-auto mb-3">
+                <Home size={24} />
+              </div>
+              <h3 className="font-bold text-sm text-fin-text dark:text-fin-text-dark">
+                Bạn chưa có không gian gia đình
+              </h3>
+              <p className="text-xs text-fin-secondary dark:text-fin-muted mt-1 max-w-sm mx-auto">
+                Hãy tạo một không gian mới hoặc chấp nhận lời mời từ thành viên khác ở trang Thành viên.
+              </p>
+              <div className="mt-4">
+                <Button
+                  variant="primary"
+                  icon={Plus}
+                  size="sm"
+                  onClick={() => {
+                    setName('');
+                    setModal('create');
+                  }}
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div
-                        className={`h-11 w-11 rounded-xl grid place-items-center shrink-0 transition-colors ${
-                          active
-                            ? 'bg-emerald-500 text-white shadow-xs'
-                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 group-hover:bg-emerald-50 group-hover:text-emerald-700 dark:group-hover:bg-emerald-950/40 dark:group-hover:text-emerald-400'
-                        }`}
-                      >
-                        <Home size={20} />
+                  Tạo gia đình đầu tiên
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="grid gap-3.5 sm:grid-cols-2">
+              {families.map((family) => {
+                const active = String(family.id) === String(activeFamilyId);
+                const meta = roleMeta[family.myRole] || roleMeta.MEMBER;
+
+                return (
+                  <div
+                    key={family.id}
+                    onClick={() => setActiveFamilyId(family.id)}
+                    className={`group relative cursor-pointer rounded-2xl border p-4.5 transition-all text-left ${
+                      active
+                        ? 'border-emerald-500/80 bg-emerald-50/40 dark:bg-emerald-950/20 shadow-sm ring-2 ring-emerald-500/20 dark:ring-emerald-500/30'
+                        : 'border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900/80 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-xs'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div
+                          className={`h-11 w-11 rounded-xl grid place-items-center shrink-0 transition-colors ${
+                            active
+                              ? 'bg-emerald-500 text-white shadow-xs'
+                              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 group-hover:bg-emerald-50 group-hover:text-emerald-700 dark:group-hover:bg-emerald-950/40 dark:group-hover:text-emerald-400'
+                          }`}
+                        >
+                          <Home size={20} />
+                        </div>
+
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-bold text-sm text-fin-text dark:text-fin-text-dark truncate">
+                              {family.name}
+                            </h4>
+                            {active && (
+                              <Badge variant="emerald" size="sm" dot>
+                                Đang hoạt động
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="mt-1">
+                            <Badge
+                              variant={meta.variant}
+                              size="sm"
+                              icon={meta.icon}
+                            >
+                              {meta.label}
+                            </Badge>
+                          </div>
+                        </div>
                       </div>
 
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <h4 className="font-bold text-sm text-slate-900 dark:text-slate-100 truncate">
-                            {family.name}
-                          </h4>
-                          {active && (
-                            <Badge variant="emerald" size="sm" dot>
-                              Đang hoạt động
-                            </Badge>
-                          )}
+                      {active && (
+                        <div className="h-6 w-6 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 grid place-items-center shrink-0 border border-emerald-500/30">
+                          <Check size={14} />
                         </div>
-                        <div className="mt-1">
-                          <Badge
-                            variant={meta.variant}
-                            size="sm"
-                            icon={meta.icon}
-                          >
-                            {meta.label}
-                          </Badge>
-                        </div>
-                      </div>
+                      )}
                     </div>
 
-                    {active && (
-                      <div className="h-6 w-6 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 grid place-items-center shrink-0 border border-emerald-500/30">
-                        <Check size={14} />
-                      </div>
-                    )}
+                    <div className="mt-4 flex items-center justify-between border-t border-slate-100 dark:border-slate-800/80 pt-3 text-xs text-fin-secondary dark:text-fin-muted tabular-nums">
+                      <span className="inline-flex items-center gap-1.5">
+                        <Users size={14} className="text-fin-muted" />
+                        {family.memberCount ?? 0} thành viên
+                      </span>
+                      <span className="inline-flex items-center gap-1.5">
+                        <Calendar size={13} className="text-fin-muted" />
+                        {dateLabel(family.createdAt)}
+                      </span>
+                    </div>
                   </div>
-
-                  <div className="mt-4 flex items-center justify-between border-t border-slate-100 dark:border-slate-800/80 pt-3 text-xs text-slate-500 dark:text-slate-400 tabular-nums">
-                    <span className="inline-flex items-center gap-1.5">
-                      <Users size={14} className="text-slate-400" />
-                      {family.memberCount ?? 0} thành viên
-                    </span>
-                    <span className="inline-flex items-center gap-1.5">
-                      <Calendar size={13} className="text-slate-400" />
-                      {dateLabel(family.createdAt)}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
       </Card>
 
       {/* Chi tiết và Quản trị Gia đình đang hoạt động */}
       {activeFamily && (
-        <Card className="border-emerald-200/60 dark:border-emerald-900/40 bg-gradient-to-br from-white via-emerald-50/15 to-white dark:from-slate-900 dark:via-emerald-950/10 dark:to-slate-900">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
-                  Gia đình đang hoạt động
-                </span>
-                <Badge variant="emerald" size="sm" dot>
-                  Được chọn
-                </Badge>
-              </div>
-              <h3 className="mt-1.5 text-xl font-extrabold text-slate-900 dark:text-slate-100">
-                {activeName}
-              </h3>
-              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                Khởi tạo ngày {createdLabel} • {activeFamily.memberCount ?? 0} thành viên đồng hành
-              </p>
-            </div>
-
-            <Badge
-              variant={
-                roleMeta[activeFamily.myRole]?.variant || 'slate'
-              }
-              size="md"
-              icon={roleMeta[activeFamily.myRole]?.icon}
-            >
-              {roleMeta[activeFamily.myRole]?.label || activeFamily.myRole}
-            </Badge>
-          </div>
-
-          {/* Thiết lập đổi tên (chỉ dành cho OWNER và MANAGER) */}
-          {canManage && (
-            <div className="mt-6 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-800/60 p-4.5">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <h4 className="font-bold text-sm text-slate-900 dark:text-slate-100">
-                    Tên không gian gia đình
-                  </h4>
-                  <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                    Tên hiển thị chung cho tất cả các thành viên trong gia đình.
-                  </p>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setName(activeName);
-                    setModal('edit');
-                  }}
-                >
-                  Đổi tên gia đình
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* Vùng thao tác quan trọng (Danger Zone) */}
-          <div className="mt-6 pt-5 border-t border-slate-200/70 dark:border-slate-800/80">
-            <div className="mb-3">
-              <h4 className="font-bold text-sm text-slate-900 dark:text-slate-100">
-                Vùng thao tác quan trọng
-              </h4>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                {isOwner
-                  ? 'Thao tác giải tán xóa toàn bộ dữ liệu tài chính của gia đình và không thể hoàn tác.'
-                  : 'Rời gia đình sẽ làm bạn mất quyền truy cập vào dữ liệu thu chi chung.'}
-              </p>
-            </div>
-
-            <div className="rounded-xl border border-rose-200/80 dark:border-rose-900/60 bg-rose-50/50 dark:bg-rose-950/25 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <Card className="border-emerald-200/60 dark:border-emerald-900/40 bg-gradient-to-br from-white via-emerald-50/15 to-white dark:from-slate-900 dark:via-emerald-950/10 dark:to-slate-900 noOverflow">
+          <CardContent className="p-6">
+            <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <b className="text-sm font-bold text-rose-800 dark:text-rose-300">
-                  {isOwner ? 'Giải tán gia đình' : 'Rời khỏi gia đình'}
-                </b>
-                <p className="mt-1 text-xs text-rose-700/90 dark:text-rose-300/80 leading-relaxed max-w-xl">
-                  {isOwner
-                    ? 'Giải tán sẽ xóa không gian gia đình và tất cả dữ liệu thu chi, ngân sách, mục tiêu chung. Tài khoản cá nhân của các thành viên được giữ nguyên.'
-                    : 'Bạn sẽ rời khỏi không gian gia đình này và không thể xem lại các giao dịch chung trừ khi được mời lại.'}
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+                    Gia đình đang hoạt động
+                  </span>
+                  <Badge variant="emerald" size="sm" dot>
+                    Được chọn
+                  </Badge>
+                </div>
+                <h3 className="mt-1.5 text-xl font-extrabold text-fin-text dark:text-fin-text-dark">
+                  {activeName}
+                </h3>
+                <p className="mt-1 text-xs text-fin-secondary dark:text-fin-muted">
+                  Khởi tạo ngày {createdLabel} • {activeFamily.memberCount ?? 0} thành viên đồng hành
                 </p>
               </div>
 
-              <Button
-                variant="danger"
-                size="sm"
-                icon={isOwner ? Trash2 : X}
-                onClick={() => {
-                  setConfirmName('');
-                  setModal(isOwner ? 'delete' : 'leave');
-                }}
+              <Badge
+                variant={
+                  roleMeta[activeFamily.myRole]?.variant || 'slate'
+                }
+                size="md"
+                icon={roleMeta[activeFamily.myRole]?.icon}
               >
-                {isOwner ? 'Giải tán gia đình' : 'Rời gia đình'}
-              </Button>
+                {roleMeta[activeFamily.myRole]?.label || activeFamily.myRole}
+              </Badge>
             </div>
-          </div>
+
+            {/* Thiết lập đổi tên (chỉ dành cho OWNER và MANAGER) */}
+            {canManage && (
+              <div className="mt-6 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-800/60 p-4.5">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <h4 className="font-bold text-sm text-fin-text dark:text-fin-text-dark">
+                      Tên không gian gia đình
+                    </h4>
+                    <p className="mt-0.5 text-xs text-fin-secondary dark:text-fin-muted">
+                      Tên hiển thị chung cho tất cả các thành viên trong gia đình.
+                    </p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setName(activeName);
+                      setModal('edit');
+                    }}
+                  >
+                    Đổi tên gia đình
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Vùng thao tác quan trọng (Danger Zone) */}
+            <div className="mt-6 pt-5 border-t border-slate-200/70 dark:border-slate-800/80">
+              <div className="mb-3">
+                <h4 className="font-bold text-sm text-fin-text dark:text-fin-text-dark">
+                  Vùng thao tác quan trọng
+                </h4>
+                <p className="text-xs text-fin-secondary dark:text-fin-muted mt-0.5">
+                  {isOwner
+                    ? 'Thao tác giải tán xóa toàn bộ dữ liệu tài chính của gia đình và không thể hoàn tác.'
+                    : 'Rời gia đình sẽ làm bạn mất quyền truy cập vào dữ liệu thu chi chung.'}
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-rose-200/80 dark:border-rose-900/60 bg-rose-50/50 dark:bg-rose-950/25 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <b className="text-sm font-bold text-rose-800 dark:text-rose-300">
+                    {isOwner ? 'Giải tán gia đình' : 'Rời khỏi gia đình'}
+                  </b>
+                  <p className="mt-1 text-xs text-rose-700/90 dark:text-rose-300/80 leading-relaxed max-w-xl">
+                    {isOwner
+                      ? 'Giải tán sẽ xóa không gian gia đình và tất cả dữ liệu thu chi, ngân sách, mục tiêu chung. Tài khoản cá nhân của các thành viên được giữ nguyên.'
+                      : 'Bạn sẽ rời khỏi không gian gia đình này và không thể xem lại các giao dịch chung trừ khi được mời lại.'}
+                  </p>
+                </div>
+
+                <Button
+                  variant="danger"
+                  size="sm"
+                  icon={isOwner ? Trash2 : X}
+                  onClick={() => {
+                    setConfirmName('');
+                    setModal(isOwner ? 'delete' : 'leave');
+                  }}
+                >
+                  {isOwner ? 'Giải tán gia đình' : 'Rời gia đình'}
+                </Button>
+              </div>
+            </div>
+          </CardContent>
         </Card>
       )}
 
@@ -462,10 +456,8 @@ export default function Family() {
       >
         <form onSubmit={createFamily} className="space-y-4">
           <div>
-            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-              Tên gia đình <span className="text-rose-500">*</span>
-            </label>
             <Input
+              label="Tên gia đình <span className='text-rose-500'>*</span>"
               autoFocus
               required
               maxLength={100}
@@ -476,7 +468,7 @@ export default function Family() {
             />
           </div>
 
-          <div className="rounded-xl bg-slate-50 dark:bg-slate-800/60 p-3 text-xs leading-relaxed text-slate-500 dark:text-slate-400 border border-slate-200/50 dark:border-slate-700/50">
+          <div className="rounded-xl bg-slate-50 dark:bg-slate-800/60 p-3 text-xs leading-relaxed text-fin-secondary dark:text-fin-muted border border-slate-200/50 dark:border-slate-700/50">
             💡 Sau khi tạo thành công, hệ thống sẽ tự động gán bạn làm <strong>Chủ gia đình (OWNER)</strong> để bạn có toàn quyền quản trị và mời thành viên.
           </div>
 
@@ -513,10 +505,8 @@ export default function Family() {
       >
         <form onSubmit={saveFamily} className="space-y-4">
           <div>
-            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-              Tên mới của gia đình <span className="text-rose-500">*</span>
-            </label>
             <Input
+              label="Tên mới của gia đình <span className='text-rose-500'>*</span>"
               autoFocus
               required
               maxLength={100}
@@ -577,7 +567,7 @@ export default function Family() {
               </div>
 
               <div>
-                <p className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                <p className="mb-2 text-xs font-bold uppercase tracking-wider text-fin-secondary dark:text-fin-muted">
                   Dữ liệu bị xóa cùng gia đình
                 </p>
                 <div className="space-y-2.5 rounded-xl border border-slate-200 dark:border-slate-800 p-3 bg-slate-50/50 dark:bg-slate-900/50">
@@ -604,7 +594,7 @@ export default function Family() {
           )}
 
           <div>
-            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+            <label className="block text-xs font-bold text-fin-text dark:text-fin-text-dark mb-1.5">
               Để xác nhận, vui lòng nhập chính xác tên gia đình:{' '}
               <span className="font-extrabold text-rose-600 dark:text-rose-400">
                 {activeName}

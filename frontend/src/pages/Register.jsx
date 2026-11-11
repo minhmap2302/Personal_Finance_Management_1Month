@@ -12,6 +12,7 @@ import {
   UserRound,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import BrandLogoMark from '../components/BrandLogoMark';
 import ThemeToggle from '../components/ThemeToggle';
 
@@ -27,10 +28,10 @@ export default function Register() {
   const [show, setShow]     = useState(false);
   const [terms, setTerms]   = useState(false);
   const [busy, setBusy]     = useState(false);
-  const [error, setError]   = useState('');
 
   const navigate = useNavigate();
   const { register } = useAuth();
+  const showToast = useToast();
 
   const set = (key, value) => {
     setForm((old) => ({
@@ -61,47 +62,47 @@ export default function Register() {
 
   async function submit(e) {
     e.preventDefault();
-    setError('');
 
     // Validate username
     if (!/^[a-zA-Z0-9._-]{3,50}$/.test(form.username)) {
-      setError(
-        'Tên đăng nhập cần 3–50 ký tự, chỉ gồm chữ, số, dấu chấm, gạch dưới hoặc gạch ngang.'
+      showToast(
+        'Tên đăng nhập cần 3–50 ký tự, chỉ gồm chữ, số, dấu chấm, gạch dưới hoặc gạch ngang.',
+        'error'
       );
       return;
     }
 
     // Validate full name
     if (!form.fullName.trim()) {
-      setError('Vui lòng nhập họ và tên.');
+      showToast('Vui lòng nhập họ và tên.', 'error');
       return;
     }
 
     if (form.fullName.trim().length < 2) {
-      setError('Họ và tên phải có ít nhất 2 ký tự.');
+      showToast('Họ và tên phải có ít nhất 2 ký tự.', 'error');
       return;
     }
 
     // Validate email
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
-      setError('Email chưa đúng định dạng.');
+      showToast('Email chưa đúng định dạng.', 'error');
       return;
     }
 
     // Validate password
     if (form.password.length < 6) {
-      setError('Mật khẩu cần tối thiểu 6 ký tự.');
+      showToast('Mật khẩu cần tối thiểu 6 ký tự.', 'error');
       return;
     }
 
     if (form.password !== form.confirm) {
-      setError('Mật khẩu xác nhận chưa khớp.');
+      showToast('Mật khẩu xác nhận chưa khớp.', 'error');
       return;
     }
 
     // Validate terms
     if (!terms) {
-      setError('Vui lòng đồng ý với điều khoản sử dụng.');
+      showToast('Vui lòng đồng ý với điều khoản sử dụng.', 'error');
       return;
     }
 
@@ -115,12 +116,13 @@ export default function Register() {
         fullName: form.fullName.trim(),
       });
 
+      showToast('Đăng ký thành công!', 'success');
       navigate('/login', {
         replace: true,
         state: { registered: true },
       });
     } catch (err) {
-      setError(err.message || 'Không thể tạo tài khoản.');
+      showToast(err.message || 'Không thể tạo tài khoản.', 'error');
     } finally {
       setBusy(false);
     }
@@ -211,12 +213,6 @@ export default function Register() {
           <p className="form-subtitle">
             Chỉ mất một phút để bắt đầu quản lý tài chính cùng gia đình.
           </p>
-
-          {error && (
-            <div className="alert-error" role="alert">
-              {error}
-            </div>
-          )}
 
           <form className="auth-form" onSubmit={submit} aria-label="Form đăng ký tài khoản">
             {/* Username */}
@@ -374,8 +370,9 @@ export default function Register() {
                   href="#terms"
                   onClick={(e) => {
                     e.preventDefault();
-                    setError(
-                      'Điều khoản sử dụng: Sử dụng tài khoản đúng mục đích và chỉ nhập dữ liệu tài chính mà bạn có quyền quản lý.'
+                    showToast(
+                      'Điều khoản sử dụng: Sử dụng tài khoản đúng mục đích và chỉ nhập dữ liệu tài chính mà bạn có quyền quản lý.',
+                      'info'
                     );
                   }}
                 >

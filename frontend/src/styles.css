@@ -47,9 +47,9 @@
   --border-sidebar: rgba(255,255,255,0.08);
 
   /* Radius */
-  --radius-card:   12px;
+  --radius-card:   18px;
   --radius-button: 8px;
-  --radius-input:  8px;
+  --radius-input:  10px;
   --radius-badge:  20px;
 
   /* Shadows */
@@ -2164,9 +2164,9 @@ html.dark .fixed.inset-0.z-50 {
 }
 [data-theme="dark"] .recharts-default-tooltip,
 html.dark .recharts-default-tooltip {
-  background: #1E2D45 !important;
-  border-color: #273449 !important;
-  color: #F1F5F9 !important;
+  background: var(--bg-surface) !important;
+  border-color: var(--border-default) !important;
+  color: var(--text-primary) !important;
 }
 
 /* Grid lines in dark mode */

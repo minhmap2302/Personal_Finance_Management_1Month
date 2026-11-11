@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   BadgeCheck,
@@ -19,11 +19,10 @@ import {
   Home,
   Crown,
   Shield,
-  Sparkles,
 } from 'lucide-react';
 import PageHeader from '../components/PageHeader';
 import UserAvatar from '../components/UserAvatar';
-import { Button, Badge, Card, Input } from '../components/ui';
+import { Button, Badge, Card, CardHeader, CardTitle, CardDescription, CardContent, Input } from '../components/ui';
 import { useAuth } from '../context/AuthContext';
 import { useFamily } from '../context/FamilyContext';
 import { getErrorMessage, profileApi } from '../services/familyFinanceApi';
@@ -58,7 +57,7 @@ function PasswordField({
 }) {
   return (
     <div>
-      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+      <label className="block text-xs font-bold text-fin-text dark:text-fin-text-dark mb-1.5">
         {label}
       </label>
       <div className="relative">
@@ -74,7 +73,7 @@ function PasswordField({
         <button
           type="button"
           onClick={onToggle}
-          className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 focus:outline-none transition-colors"
+          className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-fin-muted hover:text-fin-text dark:hover:text-fin-text-dark focus:outline-none transition-colors"
           aria-label={visible ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
         >
           {visible ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -174,7 +173,6 @@ export default function Profile() {
       };
       setProfile(updated);
 
-      // Đồng bộ thông tin user trong context để Header/Avatar cập nhật ngay
       if (user) {
         const storedToken =
           localStorage.getItem('pfm.accessToken') ||
@@ -222,7 +220,7 @@ export default function Profile() {
 
   if (profileLoading) {
     return (
-      <div className="flex min-h-[400px] flex-col items-center justify-center gap-3 text-sm text-slate-500 dark:text-slate-400">
+      <div className="flex min-h-[400px] flex-col items-center justify-center gap-3 text-sm text-fin-secondary dark:text-fin-muted">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
         <p>Đang tải dữ liệu hồ sơ cá nhân…</p>
       </div>
@@ -245,266 +243,264 @@ export default function Profile() {
       />
 
       {/* Hero Profile Banner */}
-      <Card className="border-emerald-200/70 dark:border-emerald-900/50 bg-gradient-to-br from-white via-emerald-50/25 to-white dark:from-slate-900 dark:via-emerald-950/15 dark:to-slate-900">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
-          <div className="relative">
-            <UserAvatar
-              name={profile.fullName || profile.username}
-              size="xl"
-              className="ring-4 ring-emerald-500/20 dark:ring-emerald-500/30"
-            />
-            <div className="absolute -bottom-1 -right-1 h-6 w-6 rounded-full bg-emerald-500 text-white grid place-items-center ring-2 ring-white dark:ring-slate-900">
-              <ShieldCheck size={14} />
+      <Card className="border-emerald-200/70 dark:border-emerald-900/50 bg-gradient-to-br from-white via-emerald-50/25 to-white dark:from-slate-900 dark:via-emerald-950/15 dark:to-slate-900 noOverflow">
+        <CardContent className="p-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
+            <div className="relative">
+              <UserAvatar
+                name={profile.fullName || profile.username}
+                size="xl"
+                className="ring-4 ring-emerald-500/20 dark:ring-emerald-500/30"
+              />
+              <div className="absolute -bottom-1 -right-1 h-6 w-6 rounded-full bg-emerald-500 text-white grid place-items-center ring-2 ring-white dark:ring-slate-900">
+                <ShieldCheck size={14} />
+              </div>
+            </div>
+
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2.5">
+                <h2 className="text-xl sm:text-2xl font-extrabold text-fin-text dark:text-fin-text-dark">
+                  {profile.fullName || 'Chưa cập nhật họ tên'}
+                </h2>
+                <Badge variant="emerald" size="sm" icon={BadgeCheck} dot>
+                  {roleName(profile.role)}
+                </Badge>
+              </div>
+
+              <p className="mt-1 text-xs sm:text-sm text-fin-secondary dark:text-fin-muted font-mono">
+                @{profile.username || 'unknown'} •{' '}
+                <span className="font-sans text-fin-secondary dark:text-fin-muted">
+                  {profile.email || 'Chưa có email'}
+                </span>
+              </p>
+
+              <div className="mt-3.5 flex flex-wrap items-center gap-4 text-xs text-fin-secondary dark:text-fin-muted tabular-nums">
+                <span className="inline-flex items-center gap-1.5">
+                  <CalendarDays size={14} className="text-fin-muted" />
+                  Tham gia: {formatDate(profile.createdAt)}
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <ShieldCheck size={14} className="text-emerald-600 dark:text-emerald-400" />
+                  Bảo vệ bởi FinHome Security
+                </span>
+              </div>
             </div>
           </div>
-
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2.5">
-              <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-slate-100">
-                {profile.fullName || 'Chưa cập nhật họ tên'}
-              </h2>
-              <Badge variant="emerald" size="sm" icon={BadgeCheck} dot>
-                {roleName(profile.role)}
-              </Badge>
-            </div>
-
-            <p className="mt-1 text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-mono">
-              @{profile.username || 'unknown'} •{' '}
-              <span className="font-sans text-slate-600 dark:text-slate-300">
-                {profile.email || 'Chưa có email'}
-              </span>
-            </p>
-
-            <div className="mt-3.5 flex flex-wrap items-center gap-4 text-xs text-slate-500 dark:text-slate-400 tabular-nums">
-              <span className="inline-flex items-center gap-1.5">
-                <CalendarDays size={14} className="text-slate-400" />
-                Tham gia: {formatDate(profile.createdAt)}
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <ShieldCheck size={14} className="text-emerald-600 dark:text-emerald-400" />
-                Bảo vệ bởi FinHome Security
-              </span>
-            </div>
-          </div>
-        </div>
+        </CardContent>
       </Card>
 
       {/* Grid 2 cột: Cập nhật thông tin & Đổi mật khẩu */}
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Cột 1: Thông tin tài khoản */}
         <Card>
-          <div className="flex items-center gap-3 mb-5">
-            <div className="h-10 w-10 rounded-xl bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 grid place-items-center shrink-0 border border-emerald-200/50 dark:border-emerald-800/40">
-              <UserRound size={18} />
-            </div>
-            <div>
-              <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
-                Thông tin cá nhân
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Cập nhật họ tên hiển thị và địa chỉ email nhận thông báo.
-              </p>
-            </div>
-          </div>
-
-          <form onSubmit={saveProfile} className="space-y-4">
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                  Tên đăng nhập
-                </label>
-                <Badge variant="slate" size="sm" icon={Lock}>
-                  Cố định
-                </Badge>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 grid place-items-center shrink-0 border border-emerald-200/50 dark:border-emerald-800/40">
+                <UserRound size={18} />
               </div>
-              <Input
-                value={profile.username}
-                readOnly
-                disabled
-                icon={Lock}
-                className="opacity-75 cursor-not-allowed bg-slate-50 dark:bg-slate-800/70 font-mono"
-              />
-              <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">
-                Tên đăng nhập là định danh cố định trong hệ thống và không thể thay đổi.
-              </p>
+              <div>
+                <CardTitle as="h3" className="text-base">Thông tin cá nhân</CardTitle>
+                <CardDescription>
+                  Cập nhật họ tên hiển thị và địa chỉ email nhận thông báo.
+                </CardDescription>
+              </div>
             </div>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={saveProfile} className="space-y-4">
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-bold text-fin-text dark:text-fin-text-dark">
+                    Tên đăng nhập
+                  </label>
+                  <Badge variant="slate" size="sm" icon={Lock}>
+                    Cố định
+                  </Badge>
+                </div>
+                <Input
+                  value={profile.username}
+                  readOnly
+                  disabled
+                  icon={Lock}
+                  className="opacity-75 cursor-not-allowed bg-slate-50 dark:bg-slate-800/70 font-mono"
+                />
+                <p className="text-[11px] text-fin-muted dark:text-fin-muted mt-1">
+                  Tên đăng nhập là định danh cố định trong hệ thống và không thể thay đổi.
+                </p>
+              </div>
 
-            <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-                Họ và tên hiển thị <span className="text-rose-500">*</span>
-              </label>
-              <Input
-                value={profile.fullName}
-                onChange={(e) =>
-                  setProfile((p) => ({ ...p, fullName: e.target.value }))
-                }
-                maxLength={100}
-                required
-                icon={UserRound}
-                placeholder="Nhập đầy đủ họ và tên…"
-              />
-            </div>
+              <div>
+                <Input
+                  label="Họ và tên hiển thị <span className='text-rose-500'>*</span>"
+                  value={profile.fullName}
+                  onChange={(e) =>
+                    setProfile((p) => ({ ...p, fullName: e.target.value }))
+                  }
+                  maxLength={100}
+                  required
+                  icon={UserRound}
+                  placeholder="Nhập đầy đủ họ và tên…"
+                />
+              </div>
 
-            <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-                Địa chỉ Email <span className="text-rose-500">*</span>
-              </label>
-              <Input
-                type="email"
-                value={profile.email}
-                onChange={(e) =>
-                  setProfile((p) => ({ ...p, email: e.target.value }))
-                }
-                maxLength={100}
-                required
-                icon={Mail}
-                placeholder="user@example.com"
-              />
-            </div>
+              <div>
+                <Input
+                  label="Địa chỉ Email <span className='text-rose-500'>*</span>"
+                  type="email"
+                  value={profile.email}
+                  onChange={(e) =>
+                    setProfile((p) => ({ ...p, email: e.target.value }))
+                  }
+                  maxLength={100}
+                  required
+                  icon={Mail}
+                  placeholder="user@example.com"
+                />
+              </div>
 
-            <div className="pt-2">
-              <Button
-                type="submit"
-                variant="primary"
-                className="w-full"
-                icon={Save}
-                loading={profileSaving}
-                disabled={profileSaving}
-              >
-                {profileSaving ? 'Đang lưu…' : 'Lưu thay đổi'}
-              </Button>
-            </div>
-          </form>
+              <div className="pt-2">
+                <Button
+                  type="submit"
+                  variant="primary"
+                  className="w-full"
+                  icon={Save}
+                  loading={profileSaving}
+                  disabled={profileSaving}
+                >
+                  {profileSaving ? 'Đang lưu…' : 'Lưu thay đổi'}
+                </Button>
+              </div>
+            </form>
+          </CardContent>
         </Card>
 
         {/* Cột 2: Đổi mật khẩu */}
         <Card>
-          <div className="flex items-center gap-3 mb-5">
-            <div className="h-10 w-10 rounded-xl bg-violet-500/10 text-violet-700 dark:text-violet-400 grid place-items-center shrink-0 border border-violet-200/50 dark:border-violet-800/40">
-              <KeyRound size={18} />
-            </div>
-            <div>
-              <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
-                Bảo mật & Đổi mật khẩu
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Tối thiểu 6 ký tự, khuyến nghị kết hợp chữ hoa, chữ thường và số.
-              </p>
-            </div>
-          </div>
-
-          <form onSubmit={changePassword} className="space-y-4">
-            <PasswordField
-              label="Mật khẩu hiện tại"
-              value={password.currentPassword}
-              onChange={(e) =>
-                setPassword((p) => ({ ...p, currentPassword: e.target.value }))
-              }
-              visible={visibility.current}
-              onToggle={() =>
-                setVisibility((v) => ({ ...v, current: !v.current }))
-              }
-              autoComplete="current-password"
-            />
-
-            <PasswordField
-              label="Mật khẩu mới"
-              value={password.newPassword}
-              onChange={(e) =>
-                setPassword((p) => ({ ...p, newPassword: e.target.value }))
-              }
-              visible={visibility.next}
-              onToggle={() =>
-                setVisibility((v) => ({ ...v, next: !v.next }))
-              }
-              autoComplete="new-password"
-            />
-
-            {/* Thước đo độ mạnh mật khẩu */}
-            {password.newPassword && (
-              <div className="space-y-1.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 p-2.5 border border-slate-100 dark:border-slate-800">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-500 dark:text-slate-400">
-                    Độ an toàn:
-                  </span>
-                  <span className="font-bold text-slate-800 dark:text-slate-200">
-                    {strengthLabels[strength]}
-                  </span>
-                </div>
-                <div className="grid grid-cols-4 gap-1.5">
-                  {[1, 2, 3, 4].map((tier) => (
-                    <div
-                      key={tier}
-                      className={`h-1.5 rounded-full transition-all duration-300 ${
-                        strength >= tier
-                          ? strengthColors[strength]
-                          : 'bg-slate-200 dark:bg-slate-700'
-                      }`}
-                    />
-                  ))}
-                </div>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-violet-500/10 text-violet-700 dark:text-violet-400 grid place-items-center shrink-0 border border-violet-200/50 dark:border-violet-800/40">
+                <KeyRound size={18} />
               </div>
-            )}
-
-            <PasswordField
-              label="Xác nhận mật khẩu mới"
-              value={password.confirmPassword}
-              onChange={(e) =>
-                setPassword((p) => ({ ...p, confirmPassword: e.target.value }))
-              }
-              visible={visibility.confirm}
-              onToggle={() =>
-                setVisibility((v) => ({ ...v, confirm: !v.confirm }))
-              }
-              autoComplete="new-password"
-            />
-
-            {password.confirmPassword && (
-              <div className="text-xs">
-                {password.confirmPassword === password.newPassword ? (
-                  <p className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-medium">
-                    <CheckCircle2 size={14} />
-                    Mật khẩu xác nhận trùng khớp
-                  </p>
-                ) : (
-                  <p className="flex items-center gap-1.5 text-rose-600 dark:text-rose-400 font-medium">
-                    <AlertCircle size={14} />
-                    Mật khẩu xác nhận chưa khớp
-                  </p>
-                )}
+              <div>
+                <CardTitle as="h3" className="text-base">Bảo mật & Đổi mật khẩu</CardTitle>
+                <CardDescription>
+                  Tối thiểu 6 ký tự, khuyến nghị kết hợp chữ hoa, chữ thường và số.
+                </CardDescription>
               </div>
-            )}
-
-            <div className="pt-2">
-              <Button
-                type="submit"
-                variant="outline"
-                className="w-full"
-                icon={KeyRound}
-                loading={passwordSaving}
-                disabled={passwordSaving}
-              >
-                {passwordSaving ? 'Đang cập nhật…' : 'Cập nhật mật khẩu'}
-              </Button>
             </div>
-          </form>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={changePassword} className="space-y-4">
+              <PasswordField
+                label="Mật khẩu hiện tại"
+                value={password.currentPassword}
+                onChange={(e) =>
+                  setPassword((p) => ({ ...p, currentPassword: e.target.value }))
+                }
+                visible={visibility.current}
+                onToggle={() =>
+                  setVisibility((v) => ({ ...v, current: !v.current }))
+                }
+                autoComplete="current-password"
+              />
+
+              <PasswordField
+                label="Mật khẩu mới"
+                value={password.newPassword}
+                onChange={(e) =>
+                  setPassword((p) => ({ ...p, newPassword: e.target.value }))
+                }
+                visible={visibility.next}
+                onToggle={() =>
+                  setVisibility((v) => ({ ...v, next: !v.next }))
+                }
+                autoComplete="new-password"
+              />
+
+              {/* Thước đo độ mạnh mật khẩu */}
+              {password.newPassword && (
+                <div className="space-y-1.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 p-2.5 border border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-fin-secondary dark:text-fin-muted">
+                      Độ an toàn:
+                    </span>
+                    <span className="font-bold text-fin-text dark:text-fin-text-dark">
+                      {strengthLabels[strength]}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-4 gap-1.5">
+                    {[1, 2, 3, 4].map((tier) => (
+                      <div
+                        key={tier}
+                        className={`h-1.5 rounded-full transition-all duration-300 ${
+                          strength >= tier
+                            ? strengthColors[strength]
+                            : 'bg-slate-200 dark:bg-slate-700'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <PasswordField
+                label="Xác nhận mật khẩu mới"
+                value={password.confirmPassword}
+                onChange={(e) =>
+                  setPassword((p) => ({ ...p, confirmPassword: e.target.value }))
+                }
+                visible={visibility.confirm}
+                onToggle={() =>
+                  setVisibility((v) => ({ ...v, confirm: !v.confirm }))
+                }
+                autoComplete="new-password"
+              />
+
+              {password.confirmPassword && (
+                <div className="text-xs">
+                  {password.confirmPassword === password.newPassword ? (
+                    <p className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-medium">
+                      <CheckCircle2 size={14} />
+                      Mật khẩu xác nhận trùng khớp
+                    </p>
+                  ) : (
+                    <p className="flex items-center gap-1.5 text-rose-600 dark:text-rose-400 font-medium">
+                      <AlertCircle size={14} />
+                      Mật khẩu xác nhận chưa khớp
+                    </p>
+                  )}
+                </div>
+              )}
+
+              <div className="pt-2">
+                <Button
+                  type="submit"
+                  variant="outline"
+                  className="w-full"
+                  icon={KeyRound}
+                  loading={passwordSaving}
+                  disabled={passwordSaving}
+                >
+                  {passwordSaving ? 'Đang cập nhật…' : 'Cập nhật mật khẩu'}
+                </Button>
+              </div>
+            </form>
+          </CardContent>
         </Card>
       </div>
 
       {/* Card: Các không gian gia đình đang tham gia */}
       <Card>
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <CardHeader className="flex flex-wrap items-center justify-between gap-3 pb-3">
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-xl bg-sky-500/10 text-sky-700 dark:text-sky-400 grid place-items-center shrink-0 border border-sky-200/50 dark:border-sky-800/40">
               <Users size={18} />
             </div>
             <div>
-              <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
-                Không gian gia đình đang tham gia
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              <CardTitle as="h3" className="text-base">Không gian gia đình đang tham gia</CardTitle>
+              <CardDescription>
                 Các gia đình bạn đang góp mặt và vai trò của bạn trong từng không gian.
-              </p>
+              </CardDescription>
             </div>
           </div>
 
@@ -521,69 +517,70 @@ export default function Profile() {
               Làm mới
             </Button>
           </div>
-        </div>
-
-        {familiesLoading ? (
-          <div className="py-8 text-center text-sm text-slate-400">
-            <div className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-sky-500 border-t-transparent mb-2" />
-            <p>Đang tải danh sách gia đình…</p>
-          </div>
-        ) : families.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-slate-200 dark:border-slate-800 py-8 text-center text-sm text-slate-500 dark:text-slate-400 bg-slate-50/50 dark:bg-slate-900/40">
-            <Home size={24} className="mx-auto text-slate-400 mb-2" />
-            <p className="font-medium text-slate-700 dark:text-slate-300">
-              Bạn chưa tham gia không gian gia đình nào
-            </p>
-            <div className="mt-3">
-              <Button
-                variant="outline"
-                size="sm"
-                icon={ArrowRight}
-                onClick={() => {
-                  window.location.href = '/app/family';
-                }}
-              >
-                Tạo hoặc tham gia gia đình
-              </Button>
+        </CardHeader>
+        <CardContent>
+          {familiesLoading ? (
+            <div className="py-8 text-center text-sm text-fin-secondary dark:text-fin-muted">
+              <div className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent mb-2" />
+              <p>Đang tải danh sách gia đình…</p>
             </div>
-          </div>
-        ) : (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {families.map((family) => {
-              const meta =
-                familyRoleMeta[family.myRole] || familyRoleMeta.MEMBER;
-
-              return (
-                <div
-                  key={family.id}
-                  className="flex items-center justify-between gap-3 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-3.5 hover:border-slate-300 dark:hover:border-slate-700 transition-colors shadow-xs"
+          ) : families.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-slate-200 dark:border-slate-800 py-8 text-center text-sm text-fin-secondary dark:text-fin-muted bg-slate-50/50 dark:bg-slate-900/40">
+              <Home size={24} className="mx-auto text-fin-muted mb-2" />
+              <p className="font-medium text-fin-text dark:text-fin-text-dark">
+                Bạn chưa tham gia không gian gia đình nào
+              </p>
+              <div className="mt-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  icon={ArrowRight}
+                  onClick={() => {
+                    window.location.href = '/app/family';
+                  }}
                 >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="h-9 w-9 rounded-lg bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 grid place-items-center shrink-0 border border-emerald-200/50 dark:border-emerald-800/40">
-                      <Home size={16} />
-                    </div>
-                    <div className="min-w-0">
-                      <h5 className="font-bold text-sm text-slate-900 dark:text-slate-100 truncate">
-                        {family.name}
-                      </h5>
-                      <span className="text-[11px] text-slate-400 dark:text-slate-500">
-                        {family.memberCount ?? 0} thành viên
-                      </span>
-                    </div>
-                  </div>
+                  Tạo hoặc tham gia gia đình
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {families.map((family) => {
+                const meta =
+                  familyRoleMeta[family.myRole] || familyRoleMeta.MEMBER;
 
-                  <Badge
-                    variant={meta.variant}
-                    size="sm"
-                    icon={meta.icon}
+                return (
+                  <div
+                    key={family.id}
+                    className="flex items-center justify-between gap-3 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-3.5 hover:border-slate-300 dark:hover:border-slate-700 transition-colors shadow-xs"
                   >
-                    {meta.label}
-                  </Badge>
-                </div>
-              );
-            })}
-          </div>
-        )}
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="h-9 w-9 rounded-lg bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 grid place-items-center shrink-0 border border-emerald-200/50 dark:border-emerald-800/40">
+                        <Home size={16} />
+                      </div>
+                      <div className="min-w-0">
+                        <h5 className="font-bold text-sm text-fin-text dark:text-fin-text-dark truncate">
+                          {family.name}
+                        </h5>
+                        <span className="text-[11px] text-fin-secondary dark:text-fin-muted">
+                          {family.memberCount ?? 0} thành viên
+                        </span>
+                      </div>
+                    </div>
+
+                    <Badge
+                      variant={meta.variant}
+                      size="sm"
+                      icon={meta.icon}
+                    >
+                      {meta.label}
+                    </Badge>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
       </Card>
     </motion.div>
   );

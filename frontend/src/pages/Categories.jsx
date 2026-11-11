@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import {
   Archive, BriefcaseBusiness, Bus, Coffee, GraduationCap,
   HeartPulse, Home, Lightbulb, Pencil, Plus, Search,
-  ShoppingBag, ShoppingCart, Tag, Trash2, Wallet, X,
+  ShoppingBag, ShoppingCart, Tag, Trash2, Wallet,
 } from 'lucide-react';
 import { useFamily } from '../context/FamilyContext';
 import { useToast } from '../context/ToastContext';

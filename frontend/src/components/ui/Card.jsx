@@ -1,9 +1,7 @@
-import React from 'react';
-
-export function Card({ children, className = '', ...props }) {
+export function Card({ children, className = '', padded = false, noOverflow = false, ...props }) {
   return (
     <div
-      className={`rounded-card bg-surface dark:bg-surface-dark border border-fin-border dark:border-fin-border-dark shadow-card dark:shadow-card-dark transition-colors duration-200 ${className}`}
+      className={`rounded-card bg-surface dark:bg-surface-dark border border-fin-border dark:border-fin-border-dark shadow-card dark:shadow-card-dark transition-colors duration-200 ${padded ? 'p-5' : ''} ${noOverflow ? 'overflow-hidden' : ''} ${className}`}
       {...props}
     >
       {children}
@@ -55,7 +53,7 @@ export function CardContent({ children, className = '', ...props }) {
 export function CardFooter({ children, className = '', ...props }) {
   return (
     <div
-      className={`p-4 pt-3 border-t border-fin-border/60 dark:border-fin-border-dark/60 bg-black/[0.015] dark:bg-white/[0.015] flex items-center justify-between gap-3 ${className}`}
+      className={`p-4 pt-3 border-t border-fin-border/60 dark:border-fin-border-dark/60 bg-app/50 dark:bg-app-dark/50 flex items-center justify-between gap-3 ${className}`}
       {...props}
     >
       {children}

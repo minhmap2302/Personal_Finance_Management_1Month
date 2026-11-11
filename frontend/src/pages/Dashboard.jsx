@@ -64,21 +64,12 @@ const shortMoney = (n) => {
 function ChartTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
   return (
-    <div
-      style={{
-        background: 'var(--bg-surface)',
-        border: '1px solid var(--border-default)',
-        borderRadius: 10,
-        padding: '10px 14px',
-        boxShadow: 'var(--shadow-dropdown)',
-        fontSize: 12,
-      }}
-    >
-      <p style={{ margin: '0 0 6px', fontWeight: 700, color: 'var(--text-primary)' }}>
+    <div className="bg-surface dark:bg-surface-dark border border-fin-border dark:border-fin-border-dark rounded-lg p-3 shadow-lg text-xs">
+      <p className="mb-1.5 font-bold text-fin-text dark:text-fin-text-dark">
         {label}
       </p>
       {payload.map((p) => (
-        <p key={p.name} style={{ margin: '2px 0', color: p.fill, display: 'flex', alignItems: 'center', gap: 6 }}>
+        <p key={p.name} className="my-0.5 flex items-center gap-1.5" style={{ color: p.fill }}>
           <span>{p.name}:</span>
           <strong className="font-tabular">{p.value} tr ₫</strong>
         </p>
@@ -90,21 +81,9 @@ function ChartTooltip({ active, payload, label }) {
 function PieTooltip({ active, payload }) {
   if (!active || !payload?.length) return null;
   return (
-    <div
-      style={{
-        background: 'var(--bg-surface)',
-        border: '1px solid var(--border-default)',
-        borderRadius: 10,
-        padding: '8px 12px',
-        boxShadow: 'var(--shadow-dropdown)',
-        fontSize: 12,
-        display: 'flex',
-        alignItems: 'center',
-        gap: 8,
-      }}
-    >
-      <b style={{ color: 'var(--text-primary)' }}>{payload[0].name}:</b>
-      <span style={{ color: payload[0].payload.color, fontWeight: 700 }}>
+    <div className="bg-surface dark:bg-surface-dark border border-fin-border dark:border-fin-border-dark rounded-lg p-2.5 shadow-lg text-xs flex items-center gap-2">
+      <b className="text-fin-text dark:text-fin-text-dark">{payload[0].name}:</b>
+      <span className="font-bold" style={{ color: payload[0].payload.color }}>
         {payload[0].value}%
       </span>
     </div>
