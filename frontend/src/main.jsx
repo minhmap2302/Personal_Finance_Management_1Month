@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
+import { ThemeProvider } from './context/ThemeContext';
 import AppRoutes from './routes/AppRoutes';
 import CursorTrail from './components/CursorTrail';
 import './styles.css';
@@ -17,13 +18,15 @@ function RemoveBootScreen() {
 createRoot(document.getElementById('root')).render(
     <React.StrictMode>
         <BrowserRouter>
-            <AuthProvider>
+            <ThemeProvider>
                 <ToastProvider>
-                    <RemoveBootScreen />
-                    <CursorTrail />
-                    <AppRoutes />
+                    <AuthProvider>
+                        <RemoveBootScreen />
+                        <CursorTrail />
+                        <AppRoutes />
+                    </AuthProvider>
                 </ToastProvider>
-            </AuthProvider>
+            </ThemeProvider>
         </BrowserRouter>
     </React.StrictMode>
 );

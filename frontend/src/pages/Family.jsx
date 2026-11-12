@@ -321,7 +321,7 @@ export default function Family() {
                   <h3 className="font-bold text-slate-900">Vùng thao tác quan trọng</h3>
                   <p className="mt-1 text-xs text-slate-500">Thao tác giải tán chỉ dành cho OWNER; thành viên khác chỉ có thể rời gia đình.</p>
                 </div>
-                <div className="flex flex-col justify-between gap-3 rounded-2xl border border-rose-100 bg-rose-50/60 p-4 sm:flex-row sm:items-center">
+                <div className="flex flex-col justify-between gap-3 rounded-2xl border border-rose-200 bg-rose-50/50 p-4 sm:flex-row sm:items-center">
                   <div>
                     <b className="text-sm text-rose-800">{isOwner ? 'Giải tán gia đình' : 'Rời khỏi gia đình'}</b>
                     <p className="mt-1 max-w-xl text-xs leading-5 text-rose-700">

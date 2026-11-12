@@ -1,9 +1,10 @@
 import { useLayoutEffect, useMemo, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Bell, Check, ChevronDown, CircleHelp, FolderKanban, Home, LayoutDashboard, LogOut, Menu, ReceiptText, Search, ShieldCheck, Users, UserCircle, WalletCards, X, Sprout, Plus, Sparkles } from 'lucide-react';
+import { Bell, Check, ChevronDown, CircleHelp, FolderKanban, Home, LayoutDashboard, LogOut, Menu, ReceiptText, Search, ShieldCheck, Users, UserCircle, WalletCards, X, Sprout, Plus, Sparkles, Sun, Moon } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useFamily } from '../context/FamilyContext';
+import { useTheme } from '../context/ThemeContext';
 
 const nav = [
   { to:'/app/dashboard', label:'Tổng quan', icon:LayoutDashboard }, {to:'/app/transactions',label:'Giao dịch',icon:ReceiptText},
@@ -15,6 +16,7 @@ const nav = [
 export default function MainLayout({ children }) {
   const [drawer,setDrawer] = useState(false); const [confirm,setConfirm] = useState(false); const [profileOpen,setProfileOpen] = useState(false); const [familyMenuOpen,setFamilyMenuOpen] = useState(false); const [familySearch,setFamilySearch] = useState('');
   const { user, logout } = useAuth();
+  const { isDark, toggleTheme } = useTheme();
   const { families, activeFamily, activeFamilyId, setActiveFamilyId, familiesLoading } = useFamily();
   const location = useLocation();
   const name = user?.fullName || user?.username || 'Người dùng';
@@ -32,7 +34,7 @@ export default function MainLayout({ children }) {
     <NavLink to="/app/dashboard" className="brand" onClick={()=>setDrawer(false)}><span className="brand-mark"><Home size={22}/></span><span><b>FinHome</b><small>QUẢN LÝ TÀI CHÍNH GIA ĐÌNH</small></span></NavLink>
     <div className="side-caption">KHÔNG GIAN CỦA BẠN</div>
     <nav className="nav-list">{nav.map(({to,label,icon:Icon})=><NavLink key={to} to={to} onClick={()=>setDrawer(false)} className={({isActive})=>`nav-link ${isActive?'active':''}`}><Icon size={19}/><span>{label}</span>{to==='/app/dashboard'&&<span className="nav-dot"/>}</NavLink>)}</nav>
-    <div className="sidebar-bottom"><div className="help-card"><span className="help-icon"><Sprout size={19}/></span><b>Đang đi đúng hướng!</b><p>Mỗi khoản chi rõ ràng là một bước gần hơn tới mục tiêu.</p><NavLink to="/app/support">Khám phá mẹo hay <span>↗</span></NavLink></div><button className="nav-link logout-link" onClick={()=>setConfirm(true)}><LogOut size={19}/><span>Đăng xuất</span></button><div className="side-foot">FinHome <span>•</span> Phiên bản 1.0</div></div>
+    <div className="sidebar-bottom"><div className="help-card"><span className="help-icon"><Sprout size={19}/></span><b>Đang đi đúng hướng!</b><p>Mỗi khoản chi rõ ràng là một bước gần hơn tới mục tiêu.</p><NavLink to="/app/support">Khám phá mẹo hay <span>↗</span></NavLink></div><button type="button" className="nav-link logout-link" onClick={()=>setConfirm(true)} title="Đăng xuất khỏi FinHome"><LogOut size={19}/><span>Đăng xuất</span></button></div>
   </aside>;
 
   return <div className="app-shell">
@@ -59,6 +61,7 @@ export default function MainLayout({ children }) {
           </motion.div>}
         </AnimatePresence>
       </div>
+      <button type="button" className="icon-button theme-toggle" onClick={toggleTheme} aria-label={isDark ? 'Chuyển sang giao diện sáng' : 'Chuyển sang giao diện tối'} title={isDark ? 'Giao diện sáng' : 'Giao diện tối'}><AnimatePresence mode="wait" initial={false}><motion.span key={isDark ? 'moon' : 'sun'} initial={{opacity:0,rotate:-35,scale:.7}} animate={{opacity:1,rotate:0,scale:1}} exit={{opacity:0,rotate:35,scale:.7}} transition={{duration:.16}}>{isDark ? <Sun size={19}/> : <Moon size={19}/>}</motion.span></AnimatePresence></button>
       <button className="icon-button notification" aria-label="Thông báo"><Bell size={19}/><i/></button><div className="profile-wrap"><button className="profile-button" onClick={()=>setProfileOpen(!profileOpen)}><span className="avatar">{name.trim().charAt(0).toUpperCase()}</span><span className="profile-text"><b>{name}</b><small>{user?.role||'Người dùng'}</small></span><ChevronDown size={15}/></button>{profileOpen&&<div className="profile-menu"><NavLink to="/app/profile" onClick={()=>setProfileOpen(false)}><UserCircle size={16}/> Hồ sơ cá nhân</NavLink><button onClick={()=>{setProfileOpen(false);setConfirm(true)}}><LogOut size={16}/> Đăng xuất</button></div>}</div></div></header><section className="page-content" key={location.pathname}>{showFamilyWaiting ? <motion.div className="family-required-state" initial={{opacity:0,y:12}} animate={{opacity:1,y:0}}>
       <div className="family-required-card"><span className="family-required-icon"><Users size={26}/></span><span className="family-required-kicker">BẮT ĐẦU CÙNG FINHOME</span><h1>Bạn chưa tham gia gia đình nào</h1><p>Để xem và quản lý dữ liệu tài chính, hãy tạo không gian gia đình mới hoặc chờ lời mời tham gia từ người thân.</p><div className="family-required-actions"><Link className="family-required-primary" to="/app/family"><Plus size={17}/> Tạo gia đình mới</Link><Link className="family-required-secondary" to="/app/members"><Users size={16}/> Xem lời mời</Link></div><div className="family-required-foot"><Sparkles size={15}/> Các trang tổng quan và tính năng vẫn được giữ nguyên. Dữ liệu sẽ xuất hiện khi bạn tham gia gia đình.</div></div>
     </motion.div> : children}</section></main>

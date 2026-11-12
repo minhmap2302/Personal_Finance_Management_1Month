@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   ArrowDownRight, ArrowUpRight, CalendarDays, ChevronLeft, ChevronRight,
-  Goal, TrendingUp, Wallet, Users,
+  Goal, TrendingUp, Wallet, Users, PiggyBank,
 } from 'lucide-react';
 import {
   Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer,
@@ -11,7 +11,7 @@ import {
 import { useFamily } from '../context/FamilyContext';
 import { useToast } from '../context/ToastContext';
 import {
-  dashboardApi, categoryApi, transactionApi, asList, money, alertTone,
+  dashboardApi, categoryApi, transactionApi, savingApi, asList, money, alertTone,
 } from '../services/pfmApi';
 import { EmptyState, PageLoading, Progress } from '../components/PfmUI';
 
@@ -115,6 +115,8 @@ export default function Dashboard() {
   const [data, setData] = useState(null);
   const [allCategories, setAllCategories] = useState([]);
   const [expenseTransactions, setExpenseTransactions] = useState([]);
+  const [savingGoals, setSavingGoals] = useState([]);
+  const [recentTransactions, setRecentTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const selected = useMemo(() => {
@@ -134,23 +136,29 @@ export default function Dashboard() {
       setData(null);
       setAllCategories([]);
       setExpenseTransactions([]);
+      setSavingGoals([]);
+      setRecentTransactions([]);
       setLoading(false);
       return;
     }
 
     setLoading(true);
     try {
-      const [dashboardData, categoriesResult, transactionsResult] = await Promise.all([
+      const [dashboardData, categoriesResult, transactionsResult, goalsResult, recentResult] = await Promise.all([
         dashboardApi.get(activeFamilyId, {
           startDate: selected.startDate,
           endDate: selected.endDate,
         }),
         categoryApi.list(activeFamilyId, 'EXPENSE').catch(() => null),
         loadExpenseTransactions(activeFamilyId, selected.startDate, selected.endDate).catch(() => []),
+        savingApi.list(activeFamilyId, { page: 0, size: 50, sort: 'createdAt,desc' }).catch(() => []),
+        transactionApi.list(activeFamilyId, { page: 0, size: 6, sort: 'transactionDate,desc' }).catch(() => []),
       ]);
       setData(dashboardData);
       setAllCategories(asList(categoriesResult).filter(category => category.active !== false));
       setExpenseTransactions(transactionsResult);
+      setSavingGoals(asList(goalsResult).filter(goal => String(goal.status || 'ACTIVE').toUpperCase() === 'ACTIVE'));
+      setRecentTransactions(asList(recentResult).slice(0, 6));
     } catch (error) {
       toast(error?.response?.data?.message || 'Không thể tải dữ liệu tổng quan.', 'error');
       setData(null);
@@ -300,7 +308,7 @@ export default function Dashboard() {
                     <CartesianGrid vertical={false} stroke="#eef2f6" strokeDasharray="4 4" />
                     <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10 }} tickFormatter={value => new Date(`${value}T00:00:00`).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })} dy={9} />
                     <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10 }} tickFormatter={fmtShort} />
-                    <Tooltip content={<DashboardTooltip variant="trend" />} cursor={{ fill: "#f3faf6" }} />
+                    <Tooltip content={<DashboardTooltip variant="trend" />} cursor={{ fill: "var(--pfm-chart-hover, #f3faf6)" }} />
                     <Bar dataKey="income" name="Thu nhập" fill="#10b981" radius={[5, 5, 0, 0]} maxBarSize={22} />
                     <Bar dataKey="expense" name="Chi tiêu" fill="#fda4af" radius={[5, 5, 0, 0]} maxBarSize={22} />
                   </BarChart>
@@ -358,7 +366,7 @@ export default function Dashboard() {
                       <CartesianGrid horizontal={false} stroke="#eef2f6" strokeDasharray="4 4" />
                       <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10 }} tickFormatter={fmtShort} />
                       <YAxis type="category" dataKey="memberName" width={104} axisLine={false} tickLine={false} tick={{ fill: '#60776b', fontSize: 10 }} />
-                      <Tooltip content={<DashboardTooltip variant="member" />} cursor={{ fill: "#f3faf6" }} />
+                      <Tooltip content={<DashboardTooltip variant="member" />} cursor={{ fill: "var(--pfm-chart-hover, #f3faf6)" }} />
                       <Bar dataKey="amount" name="Chi tiêu" fill="#36b98a" radius={[0, 7, 7, 0]} maxBarSize={22} />
                     </BarChart>
                   </ResponsiveContainer>
@@ -397,6 +405,67 @@ export default function Dashboard() {
               ) : <EmptyState title="Chưa có ngân sách hiện tại" description="Tạo ngân sách tổng để theo dõi hạn mức chi tiêu của gia đình." />}
             </section>
           </div>
+          <div className="dashboard-grid pfm-dashboard-extras">
+            <section className="panel category-panel pfm-dashboard-extra-panel">
+              <div className="panel-heading">
+                <div><h3>Tiến độ mục tiêu tiết kiệm</h3><p>Theo dõi số tiền đã tích lũy của gia đình</p></div>
+                <a className="text-link" href="/app/saving-goals">Tất cả mục tiêu <ArrowUpRight size={15}/></a>
+              </div>
+              {savingGoals.length === 0 ? (
+                <EmptyState title="Chưa có mục tiêu đang thực hiện" description="Tạo mục tiêu tiết kiệm để theo dõi tiến độ tại đây."/>
+              ) : (
+                <div className="pfm-dashboard-goals-list">
+                  {savingGoals.slice(0, 4).map(goal => {
+                    const target = Number(goal.targetAmount || 0);
+                    const saved = Number(goal.savedAmount || 0);
+                    const progress = Math.max(0, Math.min(100, Number(goal.progressPercent ?? (target > 0 ? saved / target * 100 : 0))));
+                    return (
+                      <article className="pfm-dashboard-goal-row" key={goal.id}>
+                        <span className="pfm-dashboard-goal-icon"><PiggyBank size={18}/></span>
+                        <div className="pfm-dashboard-goal-main">
+                          <div className="pfm-dashboard-goal-title"><b>{goal.name || 'Mục tiêu tiết kiệm'}</b><strong>{progress.toLocaleString('vi-VN', { maximumFractionDigits: 1 })}%</strong></div>
+                          <div className="pfm-dashboard-goal-track"><span style={{ width: `${progress}%` }}/></div>
+                          <small>{money(saved)} / {money(target)}</small>
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+
+            <section className="panel category-panel pfm-dashboard-extra-panel">
+              <div className="panel-heading">
+                <div><h3>Giao dịch gần đây</h3><p>Các khoản thu chi mới nhất của gia đình</p></div>
+                <a className="text-link" href="/app/transactions">Xem tất cả <ArrowUpRight size={15}/></a>
+              </div>
+              {recentTransactions.length === 0 ? (
+                <EmptyState title="Chưa có giao dịch gần đây" description="Các giao dịch mới sẽ xuất hiện tại đây."/>
+              ) : (
+                <div className="pfm-dashboard-recent-list">
+                  {recentTransactions.map(transaction => {
+                    const type = String(transaction.type || transaction.transactionType || 'EXPENSE').toUpperCase();
+                    const income = type === 'INCOME';
+                    const label = transaction.description || transaction.note || transaction.categoryName || transaction.category?.name || 'Giao dịch';
+                    const date = transaction.transactionDate || transaction.date || transaction.createdAt;
+                    return (
+                      <article className="pfm-dashboard-recent-row" key={transaction.id}>
+                        <span className={`pfm-dashboard-recent-icon ${income ? 'income' : 'expense'}`}>
+                          {income ? <ArrowDownRight size={18}/> : <ArrowUpRight size={18}/>}
+                        </span>
+                        <div className="pfm-dashboard-recent-main">
+                          <b>{label}</b>
+                          <small>{date ? new Date(date).toLocaleDateString('vi-VN') : '—'} · {transaction.categoryName || transaction.category?.name || (income ? 'Thu nhập' : 'Chi tiêu')}</small>
+                        </div>
+                        <strong className={income ? 'income' : 'expense'}>{income ? '+' : '−'}{money(transaction.amount)}</strong>
+                      </article>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+          </div>
+
           <div className="dashboard-bottom-note">
             <span><span className="live-dot" /> Dữ liệu được tải từ backend</span>
             <span>Cập nhật khi chuyển gia đình hoặc kỳ báo cáo</span>
