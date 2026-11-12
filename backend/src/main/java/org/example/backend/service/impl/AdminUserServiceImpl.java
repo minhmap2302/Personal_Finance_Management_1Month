@@ -7,11 +7,9 @@ import org.example.backend.model.entity.User;
 import org.example.backend.repository.RefreshTokenRepository;
 import org.example.backend.repository.UserRepository;
 import org.example.backend.service.AdminUserService;
-import org.example.backend.service.FamilyMemberService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -20,7 +18,6 @@ public class AdminUserServiceImpl implements AdminUserService {
 
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
-    private final FamilyMemberService familyMemberService;
 
     @Override
     @Transactional(readOnly = true)
@@ -37,16 +34,12 @@ public class AdminUserServiceImpl implements AdminUserService {
     }
 
     @Override
-    @Transactional(isolation = Isolation.READ_COMMITTED)
+    @Transactional
     public UserResponse lockUser(Long userId) {
         User user = getUserById(userId);
         if (!user.isEnabled()) {
             return UserResponse.fromEntity(user);
         }
-
-        // Bàn giao quyền chủ gia đình trước. Khóa gia đình giữ đến hết giao dịch, nên các thao tác khác
-        // (ví dụ chuyển quyền cho chính người này) chỉ chạy sau khi enabled = false đã commit và sẽ bị từ chối.
-        familyMemberService.handOverOwnedFamilies(userId);
 
         user.setEnabled(false);
         refreshTokenRepository.revokeAllByUser(user);
