@@ -68,14 +68,4 @@ public class AdminController {
         UserResponse response = adminUserService.unlockUser(userId);
         return ResponseEntity.ok(ApiResponse.success("Mở khóa tài khoản thành công", response));
     }
-
-    /** Các ngân sách tổng giao với một tháng (yyyy-MM), mặc định là tháng hiện tại. */
-    @GetMapping("/by-month")
-    public ResponseEntity<ApiResponse<List<MonthlyBudgetResponse>>> getBudgetsByMonth(
-            @AuthenticationPrincipal User currentUser,
-            @PathVariable Long familyId,
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM") YearMonth month) {
-        List<MonthlyBudgetResponse> data = budgetService.getBudgetsByMonth(currentUser.getId(), familyId, month);
-        return ResponseEntity.ok(ApiResponse.success("Lấy ngân sách theo tháng thành công", data));
-    }
 }
