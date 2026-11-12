@@ -222,4 +222,3 @@ public class AuthServiceImpl implements AuthService {
         return UUID.randomUUID().toString() + "-" + UUID.randomUUID().toString();
     }
 }
-

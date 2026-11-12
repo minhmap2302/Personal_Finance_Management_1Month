@@ -10,6 +10,7 @@ import org.example.backend.model.dto.request.UpdateSubBudgetRequest;
 import org.example.backend.model.dto.request.UpdateTotalBudgetRequest;
 import org.example.backend.model.dto.response.BudgetDetailResponse;
 import org.example.backend.model.dto.response.BudgetSummaryResponse;
+import org.example.backend.model.dto.response.MonthlyBudgetResponse;
 import org.example.backend.model.dto.response.SubBudgetResponse;
 import org.example.backend.model.entity.Budget;
 import org.example.backend.model.entity.Category;
@@ -34,6 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -99,6 +101,18 @@ public class BudgetServiceImpl implements BudgetService {
         return toDetail(total);
     }
 
+    /** Các ngân sách tổng giao với tháng được chọn, mặc định là tháng hiện tại (giờ Việt Nam). */
+    @Transactional(readOnly = true)
+    @Override
+    public Page<MonthlyBudgetResponse> getBudgetsByMonth(Long userId, Long familyId, YearMonth month,
+                                                         Pageable pageable) {
+        accessChecker.requireMember(userId, familyId);
+        YearMonth target = month != null ? month : YearMonth.now(ZoneId.of(timezone));
+        return budgetRepository
+                .findTotalsOverlapping(familyId, target.atDay(1), target.atEndOfMonth(), pageable)
+                .map(this::toMonthly);
+    }
+    
     // =====================================================================
     // Ngân sách tổng (chủ gia đình và quản lý)
     // =====================================================================
@@ -389,6 +403,25 @@ public class BudgetServiceImpl implements BudgetService {
                 .usedPercent(percent(spent, sub.getAmount()))
                 .overBudget(spent.compareTo(sub.getAmount()) > 0)
                 .status(statusOf(spent, sub.getAmount()))
+                .build();
+    }
+
+    private MonthlyBudgetResponse toMonthly(Budget total) {
+        BigDecimal spent = spentOf(total);
+        BigDecimal saved = savedOf(total);
+        BigDecimal used = spent.add(saved);
+        return MonthlyBudgetResponse.builder()
+                .id(total.getId())
+                .startDate(total.getStartDate())
+                .endDate(total.getEndDate())
+                .amount(total.getAmount())
+                .spent(spent)
+                .saved(saved)
+                .used(used)
+                .remaining(total.getAmount().subtract(used))
+                .usedPercent(percent(used, total.getAmount()))
+                .overBudget(used.compareTo(total.getAmount()) > 0)
+                .status(statusOf(used, total.getAmount()))
                 .build();
     }
 

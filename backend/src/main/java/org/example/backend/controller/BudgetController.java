@@ -6,10 +6,7 @@ import org.example.backend.model.dto.request.CreateSubBudgetRequest;
 import org.example.backend.model.dto.request.CreateTotalBudgetRequest;
 import org.example.backend.model.dto.request.UpdateSubBudgetRequest;
 import org.example.backend.model.dto.request.UpdateTotalBudgetRequest;
-import org.example.backend.model.dto.response.ApiResponse;
-import org.example.backend.model.dto.response.BudgetDetailResponse;
-import org.example.backend.model.dto.response.BudgetSummaryResponse;
-import org.example.backend.model.dto.response.SubBudgetResponse;
+import org.example.backend.model.dto.response.*;
 import org.example.backend.model.entity.User;
 import org.example.backend.service.BudgetService;
 import org.springframework.data.domain.Page;
@@ -31,6 +28,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
 
 /**
  * API ngân sách của gia đình.
@@ -72,6 +70,18 @@ public class BudgetController {
             @PathVariable Long budgetId) {
         BudgetDetailResponse data = budgetService.getBudget(currentUser.getId(), familyId, budgetId);
         return ResponseEntity.ok(ApiResponse.success("Lấy thông tin ngân sách thành công", data));
+    }
+
+    /** Các ngân sách tổng giao với một tháng (yyyy-MM), mặc định là tháng hiện tại. Có phân trang. */
+    @GetMapping("/by-month")
+    public ResponseEntity<ApiResponse<Page<MonthlyBudgetResponse>>> getBudgetsByMonth(
+            @AuthenticationPrincipal User currentUser,
+            @PathVariable Long familyId,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM") YearMonth month,
+            @PageableDefault(size = 12, sort = "startDate", direction = Sort.Direction.ASC) Pageable pageable) {
+        Page<MonthlyBudgetResponse> data =
+                budgetService.getBudgetsByMonth(currentUser.getId(), familyId, month, pageable);
+        return ResponseEntity.ok(ApiResponse.success("Lấy ngân sách theo tháng thành công", data));
     }
 
     @PostMapping
