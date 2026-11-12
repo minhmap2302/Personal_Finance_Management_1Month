@@ -41,3 +41,13 @@ export const categoryApi = {
 export function getErrorMessage(error, fallback = 'Đã xảy ra lỗi. Vui lòng thử lại.') {
   return error?.response?.data?.message || error?.message || fallback;
 }
+
+
+// Administrative APIs. Access is enforced by Spring Security (ROLE_ADMIN).
+export const adminApi = {
+  dashboard: () => unwrap(api.get('/api/v1/admin/dashboard')),
+  users: (params = {}) => unwrap(api.get('/api/v1/admin/users', { params })),
+  user: (userId) => unwrap(api.get(`/api/v1/admin/users/${userId}`)),
+  lock: (userId) => unwrap(api.patch(`/api/v1/admin/users/${userId}/lock`)),
+  unlock: (userId) => unwrap(api.patch(`/api/v1/admin/users/${userId}/unlock`)),
+};

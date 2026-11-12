@@ -13,12 +13,15 @@ import org.example.backend.repository.FamilyMemberRepository;
 import org.example.backend.service.FamilyAccessChecker;
 import org.example.backend.service.FamilyMemberService;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 
 /**
  * Nghiệp vụ thành viên trong gia đình.
@@ -116,13 +119,53 @@ public class FamilyMemberServiceImpl implements FamilyMemberService {
             throw new BadRequestException("Không thể chuyển quyền cho người dùng đang bị khóa");
         }
 
-        newOwner.setRole(FamilyRole.OWNER);
-        owner.setRole(FamilyRole.MANAGER);
+        swapOwnership(owner, newOwner);
     }
 
     private FamilyMember findMember(Long familyId, Long targetUserId) {
         return familyMemberRepository.findByUserIdAndFamilyId(targetUserId, familyId)
                 .orElseThrow(() -> new ResourceNotFoundException("Người này không phải thành viên của gia đình"));
+    }
+
+    @Override
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public void handOverOwnedFamilies(Long userId) {
+        // Id tăng dần để hai thao tác khóa cùng lúc không khóa chéo nhau (giống deleteAccount).
+        for (Long familyId : familyMemberRepository.findFamilyIdsByUserId(userId)) {
+            FamilyMember member;
+            try {
+                member = accessChecker.requireRoleWithLock(userId, familyId, FamilyRole.MEMBER,
+                        "Bạn không thuộc gia đình này");
+            } catch (ResourceNotFoundException e) {
+                // Người này đã rời hoặc bị xóa khỏi gia đình giữa lúc lấy danh sách và lúc khóa: không còn gì để bàn giao.
+                continue;
+            }
+
+            // Vai trò đọc sau khi khóa nên là vai trò mới nhất.
+            if (member.getRole() != FamilyRole.OWNER) {
+                continue;
+            }
+            findSuccessor(familyId).ifPresent(successor -> swapOwnership(member, successor));
+            // Không có ai thì giữ nguyên chủ cũ: gia đình vẫn có đúng một chủ, mở khóa lại là dùng tiếp.
+        }
+    }
+
+    /** Quản lý đang hoạt động tham gia sớm nhất, không có thì thành viên đang hoạt động tham gia sớm nhất. */
+    private Optional<FamilyMember> findSuccessor(Long familyId) {
+        for (FamilyRole role : List.of(FamilyRole.MANAGER, FamilyRole.MEMBER)) {
+            List<FamilyMember> candidates =
+                    familyMemberRepository.findEnabledByRole(familyId, role, PageRequest.of(0, 1));
+            if (!candidates.isEmpty()) {
+                return Optional.of(candidates.getFirst());
+            }
+        }
+        return Optional.empty();
+    }
+
+    /** Quy tắc đổi chủ ở một chỗ: người mới làm chủ, chủ cũ xuống làm quản lý. */
+    private void swapOwnership(FamilyMember oldOwner, FamilyMember newOwner) {
+        newOwner.setRole(FamilyRole.OWNER);
+        oldOwner.setRole(FamilyRole.MANAGER);
     }
 
     private FamilyMemberResponse toResponse(FamilyMember member) {

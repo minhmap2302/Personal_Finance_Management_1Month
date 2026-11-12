@@ -1,9 +1,8 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import AppLoadingScreen from './AppLoadingScreen';
-
 export default function PublicRoute({ children }) {
-  const { loading, isAuthenticated } = useAuth();
-  if (loading) return <AppLoadingScreen />;
-  return isAuthenticated ? <Navigate to="/app/dashboard" replace /> : children;
+  const { loading, isAuthenticated, user } = useAuth();
+  if (loading) return <div className="loading-screen">Đang tải…</div>;
+  if (!isAuthenticated) return children;
+  return <Navigate to={user?.role === 'ADMIN' ? '/admin/users' : '/app/dashboard'} replace />;
 }

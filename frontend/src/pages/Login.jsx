@@ -39,12 +39,10 @@ export default function Login() {
     setBusy(true);
 
     try {
-      await signIn(identifier.trim(), password, remember);
-
-      navigate(
-          location.state?.from?.pathname || '/app/dashboard',
-          { replace: true }
-      );
+      const data = await signIn(identifier.trim(), password, remember);
+      const defaultPath = data?.user?.role === 'ADMIN' ? '/admin/users' : '/app/dashboard';
+      const requestedPath = location.state?.from?.pathname;
+      navigate(requestedPath || defaultPath, { replace: true });
     } catch (err) {
       setError(
           err.message || 'Đăng nhập thất bại. Vui lòng thử lại.'
