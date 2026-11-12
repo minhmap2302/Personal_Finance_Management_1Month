@@ -2,16 +2,13 @@ package org.example.backend.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.example.backend.model.dto.response.ApiResponse;
-import org.example.backend.model.dto.response.MonthlyBudgetResponse;
 import org.example.backend.model.dto.response.UserResponse;
 import org.example.backend.model.entity.User;
 import org.example.backend.service.AdminUserService;
-import org.example.backend.service.BudgetService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -22,16 +19,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.time.YearMonth;
-import java.util.List;
-
 @RestController
 @RequestMapping("/api/v1/admin")
 @RequiredArgsConstructor
 public class AdminController {
 
     private final AdminUserService adminUserService;
-    private final BudgetService budgetService;
 
     @GetMapping("/dashboard")
     @PreAuthorize("hasRole('ADMIN')")
