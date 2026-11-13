@@ -303,7 +303,7 @@ export default function Dashboard() {
     { title: 'Số dư ròng', value: money(summary.netBalance), icon: Wallet, theme: 'blue', sub: 'Thu nhập trừ chi tiêu' },
     { title: 'Ngân sách đã dùng', value: `${allBudgetPct.toLocaleString('vi-VN', { maximumFractionDigits: 1 })}%`, icon: Goal, theme: 'gold', sub: monthlyBudgets.length ? `${money(allBudgetUsed)} / ${money(allBudgetTotal)}` : 'Chưa có ngân sách', progress: allBudgetPct },
   ];
-
+  const budgetRingColor = pct > 100 ? '#ef4444' : '#10b981';
   return (
     <motion.div className="dashboard-page"
        initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
@@ -435,10 +435,53 @@ export default function Dashboard() {
                       <strong>{money(budgetTotal)}</strong>
                       <span className={`pfm-budget-state ${tone}`}>{tone === 'danger' ? 'Vượt ngân sách' : tone === 'warning' ? 'Sắp chạm hạn mức' : 'Trong hạn mức'}</span>
                     </div>
-                    <div className="pfm-budget-percent" style={{ background: `conic-gradient(#10b981 ${Math.min(100, Math.max(0, pct)) * 3.6}deg, #e5f3e9 0deg)` }}>
+
+                    <motion.div
+                        className={`pfm-budget-percent ${pct > 100 ? 'over-budget' : ''}`}
+                        animate={{
+                          '--budget-progress': `${Math.min(100, Math.max(0, pct)) * 3.6}deg`,
+                          scale: pct > 100
+                              ? [1, 1.10, 1, 1.06, 1]
+                              : [1, 1.07, 1, 1.04, 1],
+                          boxShadow: pct > 100
+                              ? [
+                                '0 0 0 0 rgba(239,68,68,0)',
+                                '0 0 0 9px rgba(239,68,68,0.22)',
+                                '0 0 0 0 rgba(239,68,68,0)',
+                              ]
+                              : [
+                                '0 0 0 0 rgba(16,185,129,0)',
+                                '0 0 0 8px rgba(16,185,129,0.20)',
+                                '0 0 0 0 rgba(16,185,129,0)',
+                              ],
+                        }}
+                        transition={{
+                          '--budget-progress': {
+                            duration: 1.2,
+                            ease: 'easeOut',
+                          },
+                          scale: {
+                            duration: pct > 100 ? 1.1 : 1.5,
+                            repeat: Infinity,
+                            ease: 'easeInOut',
+                          },
+                          boxShadow: {
+                            duration: pct > 100 ? 1.1 : 1.5,
+                            repeat: Infinity,
+                            ease: 'easeInOut',
+                          },
+                        }}
+                        style={{
+                          background: `conic-gradient(
+            ${budgetRingColor} var(--budget-progress),
+            #e5f3e9 0deg
+        )`,
+                        }}
+                    >
                       <b>{pct.toLocaleString('vi-VN', { maximumFractionDigits: 1 })}%</b>
                       <small>đã sử dụng</small>
-                    </div>
+                    </motion.div>
+
                   </div>
                   <Progress value={pct} status={tone} />
                   <div className="pfm-budget-stats">
