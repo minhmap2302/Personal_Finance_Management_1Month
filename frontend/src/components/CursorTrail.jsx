@@ -1,168 +1,92 @@
-
 import { useEffect, useRef } from 'react';
 
 export default function CursorTrail() {
   const canvasRef = useRef(null);
 
   useEffect(() => {
-    const finePointer = window.matchMedia('(pointer: fine)');
-    const reducedMotion = window.matchMedia(
-        '(prefers-reduced-motion: reduce)'
-    );
-
-    if (!finePointer.matches || reducedMotion.matches) return;
-
+    if (!window.matchMedia('(pointer: fine)').matches) return;
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext('2d');
-
     if (!canvas || !ctx) return;
 
     let particles = [];
-    let animationFrame = null;
+    let frame = 0;
     let width = window.innerWidth;
     let height = window.innerHeight;
-    let lastX = null;
-    let lastY = null;
+    let previous = null;
 
     const resize = () => {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
-
       width = window.innerWidth;
       height = window.innerHeight;
-
-      canvas.width = width * dpr;
-      canvas.height = height * dpr;
+      canvas.width = Math.round(width * dpr);
+      canvas.height = Math.round(height * dpr);
       canvas.style.width = `${width}px`;
       canvas.style.height = `${height}px`;
-
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
 
-    const createParticle = (x, y) => {
+    const addParticle = (x, y) => {
       particles.push({
-        x,
-        y,
-        radius: Math.random() * 2 + 1,
-        alpha: 1,
-        decay: Math.random() * 0.025 + 0.02,
-        vx: (Math.random() - 0.5) * 0.6,
-        vy: (Math.random() - 0.5) * 0.6,
+        x, y,
+        radius: 1.5 + Math.random() * 2.2,
+        alpha: 0.9,
+        life: 1,
+        vx: (Math.random() - 0.5) * 0.45,
+        vy: (Math.random() - 0.5) * 0.45,
       });
-
-      if (particles.length > 100) {
-        particles.shift();
-      }
+      if (particles.length > 65) particles.splice(0, particles.length - 65);
     };
 
     const animate = () => {
       ctx.clearRect(0, 0, width, height);
-
-      particles = particles.filter((p) => p.alpha > 0);
-
-      particles.forEach((p) => {
+      particles = particles.filter(p => p.life > 0.02);
+      for (const p of particles) {
         p.x += p.vx;
         p.y += p.vy;
-        p.alpha -= p.decay;
-
-        ctx.save();
-        ctx.globalAlpha = Math.max(0, p.alpha);
-        // Respect current theme color via CSS variable
-        const primaryColor = getComputedStyle(document.documentElement)
-          .getPropertyValue('--color-primary').trim() || '#059669';
-        ctx.fillStyle = primaryColor;
-        ctx.shadowColor = primaryColor;
-        ctx.shadowBlur = 10;
-
+        p.life -= 0.035;
         ctx.beginPath();
-        ctx.arc(
-            p.x,
-            p.y,
-            p.radius * Math.max(0, p.alpha),
-            0,
-            Math.PI * 2
-        );
+        ctx.arc(p.x, p.y, p.radius * p.life, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(16, 185, 129, ${p.life * 0.7})`;
+        ctx.shadowColor = '#10b981';
+        ctx.shadowBlur = 9;
         ctx.fill();
-        ctx.restore();
-      });
-
-      if (particles.length > 0) {
-        animationFrame = requestAnimationFrame(animate);
-      } else {
-        animationFrame = null;
       }
+      ctx.shadowBlur = 0;
+      if (particles.length) frame = requestAnimationFrame(animate);
+      else frame = 0;
     };
 
-    const startAnimation = () => {
-      if (animationFrame === null) {
-        animationFrame = requestAnimationFrame(animate);
-      }
-    };
-
-    const handleMove = (event) => {
-      const x = event.clientX;
-      const y = event.clientY;
-
-      if (lastX === null || lastY === null) {
-        createParticle(x, y);
-      } else {
-        const distance = Math.hypot(x - lastX, y - lastY);
-        const steps = Math.max(1, Math.floor(distance / 6));
-
-        for (let i = 1; i <= steps; i++) {
-          const t = i / steps;
-
-          createParticle(
-              lastX + (x - lastX) * t,
-              lastY + (y - lastY) * t
+    const onMove = event => {
+      const point = { x: event.clientX, y: event.clientY };
+      if (previous) {
+        const distance = Math.hypot(point.x - previous.x, point.y - previous.y);
+        const count = Math.min(10, Math.max(1, Math.ceil(distance / 8)));
+        for (let i = 1; i <= count; i++) {
+          const t = i / count;
+          addParticle(
+            previous.x + (point.x - previous.x) * t,
+            previous.y + (point.y - previous.y) * t
           );
         }
-      }
-
-      lastX = x;
-      lastY = y;
-
-      startAnimation();
+      } else addParticle(point.x, point.y);
+      previous = point;
+      if (!frame) frame = requestAnimationFrame(animate);
     };
 
-    const handleLeave = () => {
-      lastX = null;
-      lastY = null;
-    };
-
+    const onLeave = () => { previous = null; };
     resize();
-
     window.addEventListener('resize', resize);
-    document.addEventListener('pointermove', handleMove, {
-      passive: true,
-    });
-    document.documentElement.addEventListener('pointerleave', handleLeave);
-
+    window.addEventListener('mousemove', onMove, { passive: true });
+    window.addEventListener('blur', onLeave);
     return () => {
       window.removeEventListener('resize', resize);
-      document.removeEventListener('pointermove', handleMove);
-      document.documentElement.removeEventListener(
-          'pointerleave',
-          handleLeave
-      );
-
-      if (animationFrame !== null) {
-        cancelAnimationFrame(animationFrame);
-      }
-
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('blur', onLeave);
+      if (frame) cancelAnimationFrame(frame);
       particles = [];
     };
   }, []);
 
-  return (
-      <canvas
-          ref={canvasRef}
-          aria-hidden="true"
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 9999,
-            pointerEvents: 'none',
-          }}
-      />
-  );
+  return <canvas ref={canvasRef} className="pfm-cursor-trail" aria-hidden="true" />;
 }
