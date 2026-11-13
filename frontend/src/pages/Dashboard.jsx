@@ -1,3 +1,4 @@
+
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
@@ -9,6 +10,7 @@ import {
   Tooltip, XAxis, YAxis,
 } from 'recharts';
 import { useFamily } from '../context/FamilyContext';
+import api, { responseData } from '../lib/api';
 import { useToast } from '../context/ToastContext';
 import {
   dashboardApi, categoryApi, transactionApi, savingApi, asList, money, alertTone,
@@ -27,6 +29,29 @@ const toLocalDateString = date => {
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 };
+
+async function loadMonthlyBudgets(familyId, month) {
+  const pageSize = 50;
+  const firstResponse = await api.get(`/api/v1/families/${familyId}/budgets/by-month`, {
+    params: { month, page: 0, size: pageSize, sort: 'startDate,asc' },
+  });
+  const firstPage = responseData(firstResponse);
+  const budgets = asList(firstPage);
+  const totalPages = Math.max(1, Number(firstPage?.totalPages || 1));
+
+  if (totalPages > 1) {
+    const otherPages = await Promise.all(
+      Array.from({ length: totalPages - 1 }, (_, index) =>
+        api.get(`/api/v1/families/${familyId}/budgets/by-month`, {
+          params: { month, page: index + 1, size: pageSize, sort: 'startDate,asc' },
+        }).then(response => asList(responseData(response)))
+      )
+    );
+    otherPages.forEach(page => budgets.push(...page));
+  }
+
+  return budgets;
+}
 
 async function loadExpenseTransactions(familyId, startDate, endDate) {
   const pageSize = 100;
@@ -117,6 +142,8 @@ export default function Dashboard() {
   const [expenseTransactions, setExpenseTransactions] = useState([]);
   const [savingGoals, setSavingGoals] = useState([]);
   const [recentTransactions, setRecentTransactions] = useState([]);
+  const [monthlyBudgets, setMonthlyBudgets] = useState([]);
+  const [budgetPage, setBudgetPage] = useState(0);
   const [loading, setLoading] = useState(true);
 
   const selected = useMemo(() => {
@@ -125,6 +152,7 @@ export default function Dashboard() {
     date.setMonth(date.getMonth() + monthOffset);
     const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
     return {
+      month: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`,
       startDate: toLocalDateString(new Date(date.getFullYear(), date.getMonth(), 1)),
       endDate: toLocalDateString(new Date(Math.min(lastDay.getTime(), Date.now()))),
       label: `Tháng ${date.getMonth() + 1}, ${date.getFullYear()}`,
@@ -138,13 +166,14 @@ export default function Dashboard() {
       setExpenseTransactions([]);
       setSavingGoals([]);
       setRecentTransactions([]);
+      setMonthlyBudgets([]);
       setLoading(false);
       return;
     }
 
     setLoading(true);
     try {
-      const [dashboardData, categoriesResult, transactionsResult, goalsResult, recentResult] = await Promise.all([
+      const [dashboardData, categoriesResult, transactionsResult, goalsResult, recentResult, budgetsResult] = await Promise.all([
         dashboardApi.get(activeFamilyId, {
           startDate: selected.startDate,
           endDate: selected.endDate,
@@ -152,13 +181,15 @@ export default function Dashboard() {
         categoryApi.list(activeFamilyId, 'EXPENSE').catch(() => null),
         loadExpenseTransactions(activeFamilyId, selected.startDate, selected.endDate).catch(() => []),
         savingApi.list(activeFamilyId, { page: 0, size: 50, sort: 'createdAt,desc' }).catch(() => []),
-        transactionApi.list(activeFamilyId, { page: 0, size: 6, sort: 'transactionDate,desc' }).catch(() => []),
+        transactionApi.list(activeFamilyId, { startDate: selected.startDate, endDate: selected.endDate, page: 0, size: 6, sort: 'transactionDate,desc' }).catch(() => []),
+        loadMonthlyBudgets(activeFamilyId, selected.month).catch(() => []),
       ]);
       setData(dashboardData);
       setAllCategories(asList(categoriesResult).filter(category => category.active !== false));
       setExpenseTransactions(transactionsResult);
       setSavingGoals(asList(goalsResult).filter(goal => String(goal.status || 'ACTIVE').toUpperCase() === 'ACTIVE'));
       setRecentTransactions(asList(recentResult).slice(0, 6));
+      setMonthlyBudgets(asList(budgetsResult));
     } catch (error) {
       toast(error?.response?.data?.message || 'Không thể tải dữ liệu tổng quan.', 'error');
       setData(null);
@@ -168,6 +199,11 @@ export default function Dashboard() {
   }, [activeFamilyId, selected, toast]);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => { setBudgetPage(0); }, [activeFamilyId, selected.month]);
+  useEffect(() => {
+    setBudgetPage(current => Math.min(current, Math.max(0, monthlyBudgets.length - 1)));
+  }, [monthlyBudgets.length]);
 
   const overview = data?.overview || {};
   const rawSummary = overview.summary || data?.summary || {};
@@ -190,15 +226,21 @@ export default function Dashboard() {
     netBalance: Number(rawSummary.netBalance ?? rawSummary.balance ?? incomeValue - expenseValue),
   };
 
-  const budget = data?.budgetAndSavings?.budget || data?.budget || null;
   const rawCategories = overview.expenseByCategory || data?.expenseByCategory || [];
-  const budgetTotal = Number(budget?.totalAmount ?? budget?.amount ?? budget?.limitAmount ?? 0);
-  const budgetUsed = Number(budget?.used ?? budget?.spent ?? budget?.spentAmount ?? budget?.usedAmount ?? 0);
-  const pct = Number(budget?.usedPercent ?? budget?.usagePercent ?? (budgetTotal > 0 ? budgetUsed / budgetTotal * 100 : 0));
-  const budgetSaved = Number(budget?.saved ?? budget?.savedAmount ?? 0);
-  const budgetSpent = Number(budget?.spent ?? budget?.spentAmount ?? budget?.expenseAmount ?? 0);
-  const budgetRemaining = Number(budget?.remaining ?? budget?.remainingAmount ?? budgetTotal - budgetUsed);
-  const tone = alertTone(budget?.alertLevel, pct);
+  // Các chỉ số tổng hợp dùng cho thẻ thống kê phía trên.
+  const allBudgetTotal = monthlyBudgets.reduce((total, item) => total + Number(item.amount || 0), 0);
+  const allBudgetUsed = monthlyBudgets.reduce((total, item) => total + Number(item.used ?? item.spent ?? 0), 0);
+  const allBudgetPct = allBudgetTotal > 0 ? allBudgetUsed / allBudgetTotal * 100 : 0;
+  // Thẻ ngân sách bên dưới chỉ hiển thị một ngân sách tại một thời điểm.
+  const currentBudget = monthlyBudgets[budgetPage] || null;
+  const budgetTotal = Number(currentBudget?.amount ?? 0);
+  const budgetUsed = Number(currentBudget?.used ?? currentBudget?.spent ?? 0);
+  const pct = Number(currentBudget?.usedPercent ?? (budgetTotal > 0 ? budgetUsed / budgetTotal * 100 : 0));
+  const budgetSaved = Number(currentBudget?.saved ?? 0);
+  const budgetSpent = Number(currentBudget?.spent ?? currentBudget?.used ?? 0);
+  const budgetRemaining = Number(currentBudget?.remaining ?? budgetTotal - budgetUsed);
+  const tone = currentBudget?.overBudget || String(currentBudget?.status || '').toUpperCase() === 'EXCEEDED'
+    ? 'danger' : alertTone(currentBudget?.status, pct);
   const roleCode = String(activeFamily?.myRole ?? activeFamily?.role ?? 'MEMBER').toUpperCase();
   const role = familyRoleLabels[roleCode] || 'Thành viên';
 
@@ -252,15 +294,19 @@ export default function Dashboard() {
     return [...grouped.values()].sort((a, b) => b.amount - a.amount);
   }, [expenseTransactions]);
 
+  // Điều hướng từng ngân sách: mỗi lượt chỉ hiển thị một ngân sách.
+  const budgetTotalPages = monthlyBudgets.length;
+
   const cards = [
     { title: 'Tổng thu nhập', value: money(summary.totalIncome), icon: ArrowDownRight, theme: 'green', sub: 'Trong kỳ đã chọn' },
     { title: 'Tổng chi tiêu', value: money(summary.totalExpense), icon: ArrowUpRight, theme: 'coral', sub: 'Trong kỳ đã chọn' },
     { title: 'Số dư ròng', value: money(summary.netBalance), icon: Wallet, theme: 'blue', sub: 'Thu nhập trừ chi tiêu' },
-    { title: 'Ngân sách đã dùng', value: `${pct.toLocaleString('vi-VN', { maximumFractionDigits: 1 })}%`, icon: Goal, theme: 'gold', sub: budget ? `${money(budgetUsed)} / ${money(budgetTotal)}` : 'Chưa có ngân sách', progress: pct },
+    { title: 'Ngân sách đã dùng', value: `${allBudgetPct.toLocaleString('vi-VN', { maximumFractionDigits: 1 })}%`, icon: Goal, theme: 'gold', sub: monthlyBudgets.length ? `${money(allBudgetUsed)} / ${money(allBudgetTotal)}` : 'Chưa có ngân sách', progress: allBudgetPct },
   ];
 
   return (
-    <motion.div className="dashboard-page" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+    <motion.div className="dashboard-page"
+       initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
       <div className="page-heading">
         <div>
           <div className="greeting-line">TỔNG QUAN TÀI CHÍNH <span className="live-dot" /></div>
@@ -381,11 +427,11 @@ export default function Dashboard() {
                 <div><h3>Ngân sách hiện tại</h3><p>Theo dõi hạn mức gia đình đang áp dụng</p></div>
                 <a className="text-link" href="/app/budgets">Chi tiết <ArrowUpRight size={15} /></a>
               </div>
-              {budget ? (
+              {currentBudget ? (
                 <>
                   <div className="pfm-budget-hero">
                     <div>
-                      <small>TỔNG HẠN MỨC</small>
+                      <small>NGÂN SÁCH {budgetPage + 1}/{budgetTotalPages}</small>
                       <strong>{money(budgetTotal)}</strong>
                       <span className={`pfm-budget-state ${tone}`}>{tone === 'danger' ? 'Vượt ngân sách' : tone === 'warning' ? 'Sắp chạm hạn mức' : 'Trong hạn mức'}</span>
                     </div>
@@ -400,9 +446,26 @@ export default function Dashboard() {
                     <div><small><i className="saved-dot" /> Đã tiết kiệm</small><b>{money(budgetSaved)}</b></div>
                     <div><small><i className="remaining-dot" /> Còn lại</small><b className={budgetRemaining < 0 ? 'pfm-negative' : ''}>{money(budgetRemaining)}</b></div>
                   </div>
-                  <p className="pfm-budget-caption">Ngân sách đã dùng bao gồm chi tiêu và các khoản đóng góp tiết kiệm. Ngân sách con chỉ tính chi tiêu theo danh mục.</p>
+                  <p className="pfm-budget-caption">
+                    {currentBudget.startDate || '—'} – {currentBudget.endDate || '—'} · Số liệu sử dụng theo dữ liệu backend của ngân sách này.
+                  </p>
+                  {monthlyBudgets.length > 1 && (
+                    <div className="pfm-budget-pagination" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginTop: 18, paddingTop: 14, borderTop: '1px solid var(--pfm-border, #e8eeeb)' }}>
+                      <small style={{ color: 'var(--pfm-muted, #82938b)' }}>
+                        Ngân sách {budgetPage + 1}/{budgetTotalPages}
+                      </small>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <button type="button" onClick={() => setBudgetPage(page => Math.max(0, page - 1))} disabled={budgetPage === 0} aria-label="Ngân sách trước" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 34, height: 34, borderRadius: 9, border: '1px solid var(--pfm-border, #e8eeeb)', background: 'var(--pfm-card, #fff)', color: 'var(--pfm-text, #17352c)', cursor: budgetPage === 0 ? 'not-allowed' : 'pointer', opacity: budgetPage === 0 ? 0.45 : 1 }}>
+                          <ChevronLeft size={16} />
+                        </button>
+                        <button type="button" onClick={() => setBudgetPage(page => Math.min(budgetTotalPages - 1, page + 1))} disabled={budgetPage >= budgetTotalPages - 1} aria-label="Ngân sách tiếp theo" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 34, height: 34, borderRadius: 9, border: '1px solid var(--pfm-border, #e8eeeb)', background: 'var(--pfm-card, #fff)', color: 'var(--pfm-text, #17352c)', cursor: budgetPage >= budgetTotalPages - 1 ? 'not-allowed' : 'pointer', opacity: budgetPage >= budgetTotalPages - 1 ? 0.45 : 1 }}>
+                          <ChevronRight size={16} />
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </>
-              ) : <EmptyState title="Chưa có ngân sách hiện tại" description="Tạo ngân sách tổng để theo dõi hạn mức chi tiêu của gia đình." />}
+              ) : <EmptyState title={`Không có ngân sách áp dụng trong ${selected.label}`} description="Hãy tạo ngân sách có thời gian hiệu lực giao với tháng đang chọn." />}
             </section>
           </div>
           <div className="dashboard-grid pfm-dashboard-extras">
@@ -436,7 +499,7 @@ export default function Dashboard() {
 
             <section className="panel category-panel pfm-dashboard-extra-panel">
               <div className="panel-heading">
-                <div><h3>Giao dịch gần đây</h3><p>Các khoản thu chi mới nhất của gia đình</p></div>
+                <div><h3>Giao dịch gần đây</h3><p>6 khoản thu chi mới nhất trong {selected.label}</p></div>
                 <a className="text-link" href="/app/transactions">Xem tất cả <ArrowUpRight size={15}/></a>
               </div>
               {recentTransactions.length === 0 ? (
@@ -444,7 +507,7 @@ export default function Dashboard() {
               ) : (
                 <div className="pfm-dashboard-recent-list">
                   {recentTransactions.map(transaction => {
-                    const type = String(transaction.type || transaction.transactionType || 'EXPENSE').toUpperCase();
+                    const type = String(transaction.type || transaction.transactionType || transaction.categoryType || 'EXPENSE').toUpperCase();
                     const income = type === 'INCOME';
                     const label = transaction.description || transaction.note || transaction.categoryName || transaction.category?.name || 'Giao dịch';
                     const date = transaction.transactionDate || transaction.date || transaction.createdAt;
@@ -475,3 +538,4 @@ export default function Dashboard() {
     </motion.div>
   );
 }
+

@@ -36,50 +36,50 @@ function RootRedirect() {
     return <Navigate to="/app/dashboard" replace />;
 }
 export default function AppRoutes() {
-  return (
-    <Routes>
-      <Route path="/" element={<RootRedirect />} />
+    return (
+        <Routes>
+            <Route path="/" element={<RootRedirect />} />
 
-      <Route
-        path="/login"
-        element={
-          <PublicRoute>
-            <Login />
-          </PublicRoute>
-        }
-      />
-      <Route
-        path="/register"
-        element={
-          <PublicRoute>
-            <Register />
-          </PublicRoute>
-        }
-      />
+            <Route
+                path="/login"
+                element={
+                    <PublicRoute>
+                        <Login />
+                    </PublicRoute>
+                }
+            />
+            <Route
+                path="/register"
+                element={
+                    <PublicRoute>
+                        <Register />
+                    </PublicRoute>
+                }
+            />
 
-      {/* Khu vực ADMIN: chỉ ADMIN được truy cập. */}
-      <Route path="/admin" element={<AdminRoute />}>
-        <Route index element={<Navigate to="users" replace />} />
-        <Route path="users" element={<AdminPage />} />
-      </Route>
+            {/* Khu vực ADMIN: chỉ ADMIN được truy cập. */}
+            <Route path="/admin" element={<AdminRoute />}>
+                <Route index element={<Navigate to="users" replace />} />
+                <Route path="users" element={<AdminPage />} />
+            </Route>
 
-      {/* Khu vực USER: UserRoute kiểm tra role, ProtectedRoute giữ FamilyProvider + MainLayout. */}
-      <Route element={<UserRoute />}>
-        <Route path="/app" element={<ProtectedRoute />}>
-          <Route index element={<Navigate to="dashboard" replace />} />
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="transactions" element={<Transactions />} />
-          <Route path="categories" element={<Categories />} />
-          <Route path="budgets" element={<Budgets />} />
-          <Route path="saving-goals" element={<SavingGoals />} />
-          <Route path="support" element={<Support />} />
-          <Route path="members" element={<Members />} />
-          <Route path="family" element={<Family />} />
-          <Route path="profile" element={<Profile />} />
-        </Route>
-      </Route>
+            {/* Khu vực USER: UserRoute kiểm tra role, ProtectedRoute giữ FamilyProvider + MainLayout. */}
+            <Route element={<UserRoute />}>
+                <Route path="/app" element={<ProtectedRoute />}>
+                    <Route index element={<Navigate to="dashboard" replace />} />
+                    <Route path="dashboard" element={<Dashboard />} />
+                    <Route path="transactions" element={<Transactions />} />
+                    <Route path="categories" element={<Categories />} />
+                    <Route path="budgets" element={<Budgets />} />
+                    <Route path="saving-goals" element={<SavingGoals />} />
+                    <Route path="support" element={<Support />} />
+                    <Route path="members" element={<Members />} />
+                    <Route path="family" element={<Family />} />
+                    <Route path="profile" element={<Profile />} />
+                </Route>
+            </Route>
 
-      <Route path="*" element={<NotFound404 />} />
-    </Routes>
-  );
+            <Route path="*" element={<NotFound404 />} />
+        </Routes>
+    );
 }
