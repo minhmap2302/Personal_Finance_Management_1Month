@@ -15,7 +15,7 @@ export function ToastProvider({ children }) {
   }, []);
   const showToast = useCallback((message, type = 'success', duration = 3200) => {
     if (timer.current) clearTimeout(timer.current);
-    setToast({ id: Date.now(), message, type });
+    setToast({ id: Date.now(), message, type, duration });
     timer.current = setTimeout(() => setToast(null), duration);
   }, []);
   useEffect(() => () => timer.current && clearTimeout(timer.current), []);
@@ -29,7 +29,7 @@ export function ToastProvider({ children }) {
           <span className="app-toast-icon"><Icon size={19}/></span>
           <span className="app-toast-message">{toast.message}</span>
           <button type="button" className="app-toast-close" onClick={hide} aria-label="Đóng thông báo"><X size={16}/></button>
-          <span className="app-toast-progress" key={toast.id}/>
+          <span className="app-toast-progress" key={toast.id} style={{ animationDuration: `${toast.duration || 3200}ms` }}/>
         </motion.div>}
       </AnimatePresence>
     </div>
