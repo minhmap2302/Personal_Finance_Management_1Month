@@ -112,34 +112,49 @@ export default function Profile() {
     <section className="overflow-hidden rounded-3xl border border-emerald-100 bg-gradient-to-br from-white via-white to-emerald-50 p-6 shadow-sm sm:p-8">
       <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
         <UserAvatar name={profile.fullName || profile.username} size="xl" className="rounded-3xl shadow-sm"/>
-        <div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><h2 className="text-2xl font-extrabold text-slate-900">{profile.fullName || 'Chưa cập nhật họ tên'}</h2><span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800"><BadgeCheck size={13} className="mr-1 inline"/>{roleName(profile.role)}</span></div>
+        <div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><h2 className="text-2xl font-extrabold text-slate-900">{profile.fullName || 'Chưa cập nhật họ tên'}</h2><span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-600"><BadgeCheck size={13} className="mr-1 inline"/>{roleName(profile.role)}</span></div>
           <p className="mt-1 text-sm text-slate-500">@{profile.username || 'unknown'} · {profile.email || 'Chưa có email'}</p>
           <div className="mt-4 flex flex-wrap gap-4 text-xs text-slate-500"><span className="inline-flex items-center gap-1.5"><CalendarDays size={14}/>Tham gia: {formatDate(profile.createdAt)}</span><span className="inline-flex items-center gap-1.5"><ShieldCheck size={14}/>Tài khoản FinHome</span></div>
         </div>
       </div>
     </section>
 
-    <div className="grid gap-6 lg:grid-cols-2">
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-        <div className="mb-5 flex items-center gap-3"><span className="grid h-10 w-10 place-items-center rounded-xl bg-emerald-50 text-emerald-700"><UserRound size={19}/></span><div><h3 className="font-bold text-slate-900">Thông tin tài khoản</h3><p className="text-xs text-slate-500">Username không thể thay đổi.</p></div></div>
-        <form onSubmit={saveProfile} className="space-y-4">
+    <div className="grid items-stretch gap-6 lg:grid-cols-2 lg:auto-rows-fr">
+      <section className="flex flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">        <div className="mb-5 flex items-center gap-3"><span className="grid h-10 w-10 place-items-center rounded-xl bg-emerald-50 text-emerald-700"><UserRound size={19}/></span><div><h3 className="font-bold text-slate-900">Thông tin tài khoản</h3><p className="text-xs text-slate-500">Username không thể thay đổi.</p></div></div>
+        <form
+            onSubmit={saveProfile}
+            className="flex flex-1 flex-col gap-4"
+        >
           <label className="block"><span className="mb-2 flex items-center justify-between text-sm font-semibold text-slate-700">Tên đăng nhập <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-1 text-[10px] font-bold text-slate-500"><Lock size={11}/>Đã khóa</span></span><input value={profile.username} readOnly disabled className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-500"/></label>
           <label className="block"><span className="mb-2 block text-sm font-semibold text-slate-700">Họ và tên</span><input value={profile.fullName} onChange={(e) => setProfile((p) => ({ ...p, fullName: e.target.value }))} maxLength={100} required className="h-12 w-full rounded-xl border border-slate-200 px-4 text-sm outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-50"/></label>
           <label className="block"><span className="mb-2 block text-sm font-semibold text-slate-700">Email</span><span className="relative block"><Mail size={17} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"/><input type="email" value={profile.email} onChange={(e) => setProfile((p) => ({ ...p, email: e.target.value }))} maxLength={100} required className="h-12 w-full rounded-xl border border-slate-200 pl-11 pr-4 text-sm outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-50"/></span></label>
-          <button disabled={profileSaving} className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-emerald-700 px-4 text-sm font-bold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-60"><Save size={16}/>{profileSaving ? 'Đang lưu…' : 'Lưu thay đổi'}</button>
+          <button
+              disabled={profileSaving}
+              className="mt-auto inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-emerald-700 px-4 text-sm font-bold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <Save size={16}/>
+            {profileSaving ? 'Đang lưu…' : 'Lưu thay đổi'}
+          </button>
         </form>
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-        <div className="mb-5 flex items-center gap-3"><span className="grid h-10 w-10 place-items-center rounded-xl bg-violet-50 text-violet-700"><KeyRound size={19}/></span><div><h3 className="font-bold text-slate-900">Đổi mật khẩu</h3><p className="text-xs text-slate-500">Dùng mật khẩu mạnh và không trùng mật khẩu cũ.</p></div></div>
-        <form onSubmit={changePassword} className="space-y-4">
+      <section className="flex flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">        <div className="mb-5 flex items-center gap-3"><span className="grid h-10 w-10 place-items-center rounded-xl bg-violet-50 text-violet-700"><KeyRound size={19}/></span><div><h3 className="font-bold text-slate-900">Đổi mật khẩu</h3><p className="text-xs text-slate-500">Dùng mật khẩu mạnh và không trùng mật khẩu cũ.</p></div></div>
+        <form
+            onSubmit={changePassword}
+            className="flex flex-1 flex-col gap-4"
+        >
           <PasswordField label="Mật khẩu hiện tại" value={password.currentPassword} onChange={(e) => setPassword((p) => ({ ...p, currentPassword: e.target.value }))} visible={visibility.current} onToggle={() => setVisibility((v) => ({ ...v, current: !v.current }))} autoComplete="current-password"/>
           <PasswordField label="Mật khẩu mới" value={password.newPassword} onChange={(e) => setPassword((p) => ({ ...p, newPassword: e.target.value }))} visible={visibility.next} onToggle={() => setVisibility((v) => ({ ...v, next: !v.next }))} autoComplete="new-password"/>
           <div><div className="mb-2 flex items-center justify-between text-xs text-slate-500"><span>Độ mạnh mật khẩu</span><b className="text-slate-700">{strengthLabel}</b></div><div className="grid grid-cols-4 gap-1.5">{[1,2,3,4].map((n) => <span key={n} className={`h-1.5 rounded-full ${strength >= n ? 'bg-emerald-500' : 'bg-slate-100'}`}/>)}</div></div>
           <PasswordField label="Xác nhận mật khẩu mới" value={password.confirmPassword} onChange={(e) => setPassword((p) => ({ ...p, confirmPassword: e.target.value }))} visible={visibility.confirm} onToggle={() => setVisibility((v) => ({ ...v, confirm: !v.confirm }))} autoComplete="new-password"/>
           {password.confirmPassword && <p className={`text-xs ${password.confirmPassword === password.newPassword ? 'text-emerald-700' : 'text-rose-600'}`}>{password.confirmPassword === password.newPassword ? 'Hai mật khẩu khớp nhau.' : 'Mật khẩu xác nhận chưa khớp.'}</p>}
-          <button disabled={passwordSaving} className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-emerald-700 bg-white px-4 text-sm font-bold text-emerald-800 transition hover:bg-emerald-50 disabled:opacity-60"><KeyRound size={16}/>{passwordSaving ? 'Đang cập nhật…' : 'Cập nhật mật khẩu'}</button>
-        </form>
+          <button
+              disabled={passwordSaving}
+              className="mt-auto inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-emerald-700 bg-white px-4 text-sm font-bold text-emerald-800 transition hover:bg-emerald-50 disabled:opacity-60"
+          >
+            <KeyRound size={16}/>
+            {passwordSaving ? 'Đang cập nhật…' : 'Cập nhật mật khẩu'}
+          </button>        </form>
       </section>
     </div>
 

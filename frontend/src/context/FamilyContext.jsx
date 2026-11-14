@@ -1,23 +1,46 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import api, { responseData } from '../lib/api';
+import { useAuth } from './AuthContext';
 
 const FamilyContext = createContext(null);
-const ACTIVE_FAMILY_KEY = 'pfm.activeFamilyId';
 
 export function FamilyProvider({ children }) {
+  const { user, token } = useAuth();
+
+  // Lưu gia đình đang chọn riêng theo từng tài khoản.
+  const accountId = user?.id ?? user?.userId ?? user?.username ?? user?.email ?? 'unknown';
+  const activeFamilyKey = `pfm.activeFamilyId:${String(accountId)}`;
+
   const [families, setFamilies] = useState([]);
-  const [activeFamilyId, setActiveFamilyIdState] = useState(() => localStorage.getItem(ACTIVE_FAMILY_KEY) || '');
+  const [activeFamilyId, setActiveFamilyIdState] = useState(
+    () => localStorage.getItem(activeFamilyKey) || ''
+  );
   const [familiesLoading, setFamiliesLoading] = useState(true);
   const [familiesError, setFamiliesError] = useState('');
 
   const setActiveFamilyId = useCallback((id) => {
     const value = id == null ? '' : String(id);
     setActiveFamilyIdState(value);
-    if (value) localStorage.setItem(ACTIVE_FAMILY_KEY, value);
-    else localStorage.removeItem(ACTIVE_FAMILY_KEY);
-  }, []);
+    if (value) localStorage.setItem(activeFamilyKey, value);
+    else localStorage.removeItem(activeFamilyKey);
+  }, [activeFamilyKey]);
+
+  // Xóa dữ liệu gia đình trong bộ nhớ khi tài khoản/token thay đổi.
+  useEffect(() => {
+    setFamilies([]);
+    setActiveFamilyIdState(localStorage.getItem(activeFamilyKey) || '');
+    setFamiliesError('');
+    setFamiliesLoading(true);
+  }, [activeFamilyKey, token]);
 
   const refreshFamilies = useCallback(async () => {
+    if (!token) {
+      setFamilies([]);
+      setActiveFamilyId('');
+      setFamiliesLoading(false);
+      return [];
+    }
+
     setFamiliesLoading(true);
     setFamiliesError('');
     try {
@@ -25,23 +48,34 @@ export function FamilyProvider({ children }) {
       const list = Array.isArray(data) ? data : data?.content || [];
       setFamilies(list);
 
-      // Keep the selected family when it still belongs to the user.
-      // Otherwise select the first available family, or clear the selection.
-      const storedId = localStorage.getItem(ACTIVE_FAMILY_KEY) || '';
-      const currentId = activeFamilyId || storedId;
-      const currentExists = list.some((family) => String(family.id) === String(currentId));
-      if (!currentExists) setActiveFamilyId(list[0]?.id ?? '');
+      // Chỉ giữ gia đình được API xác nhận thuộc tài khoản hiện tại.
+      const storedId = localStorage.getItem(activeFamilyKey) || '';
+      const storedFamilyExists = list.some(
+        (family) => String(family.id) === String(storedId)
+      );
+
+      if (!storedFamilyExists) {
+        setActiveFamilyId(list[0]?.id ?? '');
+      } else {
+        setActiveFamilyIdState(String(storedId));
+      }
+
       return list;
     } catch (error) {
+      // Không giữ dữ liệu gia đình cũ nếu tải dữ liệu tài khoản hiện tại thất bại.
+      setFamilies([]);
+      setActiveFamilyId('');
       const message = error?.response?.data?.message || 'Không thể tải danh sách gia đình.';
       setFamiliesError(message);
       throw error;
     } finally {
       setFamiliesLoading(false);
     }
-  }, [activeFamilyId, setActiveFamilyId]);
+  }, [activeFamilyKey, setActiveFamilyId, token]);
 
-  useEffect(() => { refreshFamilies().catch(() => {}); }, [refreshFamilies]);
+  useEffect(() => {
+    refreshFamilies().catch(() => {});
+  }, [refreshFamilies]);
 
   const activeFamily = useMemo(
     () => families.find((family) => String(family.id) === String(activeFamilyId)) || null,

@@ -2572,26 +2572,73 @@ html[data-theme="dark"] .pfm-budget-page .pfm-budget-overline {
     color: #65ddb0 !important;
 }
 
-html[data-theme="dark"] .pfm-budget-page .pfm-budget-ring {
-    background: conic-gradient(#18b981 0deg, #2a4b4c 360deg) !important;
-    border-color: #2b4b4a !important;
+/* Budget overview - Dark mode: ring + progress theo trạng thái */
+html[data-theme="dark"] .pfm-budget-page .pfm-budget-ring.pfm-overview-success {
+    background: conic-gradient(#34d399 var(--budget-progress), #254b4b 0) !important;
+    border-color: #286c5b !important;
+}
+
+html[data-theme="dark"] .pfm-budget-page .pfm-budget-ring.pfm-overview-warning {
+    background: conic-gradient(#fbbf24 var(--budget-progress), #51452b 0) !important;
+    border-color: #8b6a2c !important;
+}
+
+html[data-theme="dark"] .pfm-budget-page .pfm-budget-ring.pfm-overview-danger {
+    background: conic-gradient(#fb7185 var(--budget-progress), #512f3a 0) !important;
+    border-color: #914454 !important;
 }
 
 html[data-theme="dark"] .pfm-budget-page .pfm-budget-ring::before {
     background: #1a3042 !important;
-    box-shadow: inset 0 1px 5px rgba(0, 0, 0, .2) !important;
+    box-shadow: inset 0 1px 5px rgba(0,0,0,.2) !important;
 }
 
-html[data-theme="dark"] .pfm-budget-page .pfm-budget-ring strong {
-    color: #78e4b8 !important;
+html[data-theme="dark"] .pfm-budget-page .pfm-budget-ring.pfm-overview-success strong {
+    color: #6ee7b7 !important;
 }
 
-html[data-theme="dark"] .pfm-budget-page .pfm-budget-overview-progress {
-    background: #344b5d !important;
+html[data-theme="dark"] .pfm-budget-page .pfm-budget-ring.pfm-overview-warning strong {
+    color: #fcd34d !important;
 }
 
-html[data-theme="dark"] .pfm-budget-page .pfm-budget-overview-progress span {
-    background: linear-gradient(90deg, #39d39a, #0d9b70) !important;
+html[data-theme="dark"] .pfm-budget-page .pfm-budget-ring.pfm-overview-danger strong {
+    color: #fda4af !important;
+}
+
+html[data-theme="dark"] .pfm-budget-page .pfm-budget-ring.pfm-overview-success small {
+    color: #a7f3d0 !important;
+}
+
+html[data-theme="dark"] .pfm-budget-page .pfm-budget-ring.pfm-overview-warning small {
+    color: #fde68a !important;
+}
+
+html[data-theme="dark"] .pfm-budget-page .pfm-budget-ring.pfm-overview-danger small {
+    color: #fecdd3 !important;
+}
+
+html[data-theme="dark"] .pfm-budget-page .pfm-budget-overview-progress.pfm-overview-success {
+    background: #254b4b !important;
+}
+
+html[data-theme="dark"] .pfm-budget-page .pfm-budget-overview-progress.pfm-overview-success > span {
+    background: linear-gradient(90deg, #6ee7b7, #10b981) !important;
+}
+
+html[data-theme="dark"] .pfm-budget-page .pfm-budget-overview-progress.pfm-overview-warning {
+    background: #51452b !important;
+}
+
+html[data-theme="dark"] .pfm-budget-page .pfm-budget-overview-progress.pfm-overview-warning > span {
+    background: linear-gradient(90deg, #fcd34d, #d97706) !important;
+}
+
+html[data-theme="dark"] .pfm-budget-page .pfm-budget-overview-progress.pfm-overview-danger {
+    background: #512f3a !important;
+}
+
+html[data-theme="dark"] .pfm-budget-page .pfm-budget-overview-progress.pfm-overview-danger > span {
+    background: linear-gradient(90deg, #fda4af, #e11d48) !important;
 }
 
 html[data-theme="dark"] .pfm-budget-page .pfm-budget-kpis > div {
@@ -3088,8 +3135,16 @@ html[data-theme="dark"] .pfm-budget-page .pfm-budget-ring {
     background: conic-gradient(#18b981 0deg, #294b4a 360deg) !important;
     box-shadow: 0 8px 20px rgba(0,0,0,.2) !important;
 }
-html[data-theme="dark"] .pfm-budget-page .pfm-budget-ring > div {
+html[data-theme="dark"] .pfm-budget-page .pfm-budget-ring::before {
     background: #1b3547 !important;
+    border-radius: 50% !important;
+}
+
+html[data-theme="dark"] .pfm-budget-page .pfm-budget-ring > div {
+    position: relative;
+    z-index: 1;
+    background: transparent !important;
+    border-radius: 50% !important;
     color: #edf4f8 !important;
 }
 html[data-theme="dark"] .pfm-budget-page .pfm-budget-ring strong { color: #75e4b7 !important; }
@@ -4206,26 +4261,6 @@ html[data-theme="dark"] .profile-menu button:hover svg {
     animation: budget-pulse-fast 1.1s ease-in-out infinite;
 }
 
-/* Chữ khi vượt ngân sách */
-.pfm-budget-percent.over-budget b {
-    color: #991b1b !important;
-}
-
-.pfm-budget-percent.over-budget small {
-    color: #991b1b !important;
-}
-
-/* Light mode */
-html[data-theme="light"] .pfm-budget-percent:not(.over-budget) b,
-html[data-theme="light"] .pfm-budget-percent:not(.over-budget) small {
-    color: #065f46 !important;
-}
-
-/* Dark mode */
-html[data-theme="dark"] .pfm-budget-percent:not(.over-budget) b,
-html[data-theme="dark"] .pfm-budget-percent:not(.over-budget) small {
-    color: #064e3b !important;
-}
 
 html[data-theme="dark"] .pfm-budget-percent.over-budget b,
 html[data-theme="dark"] .pfm-budget-percent.over-budget small {
@@ -4331,4 +4366,838 @@ html[data-theme="dark"] .pfm-budget-percent.over-budget small {
 .notification::before,
 .notification::after {
     display: none !important;
+}
+.pfm-allocation-summary {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    margin-top: 14px;
+}
+
+.pfm-allocation-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    min-width: 0;
+    padding: 18px 20px;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    background: #ffffff;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.pfm-allocation-card:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+}
+
+.pfm-allocation-info {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+}
+
+.pfm-allocation-label {
+    color: #334155;
+    font-size: 14px;
+    font-weight: 650;
+}
+
+.pfm-allocation-info small {
+    color: #94a3b8;
+    font-size: 12px;
+}
+
+.pfm-allocation-card strong {
+    color: #059669;
+    font-size: 19px;
+    font-weight: 750;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.pfm-allocation-card.unallocated strong {
+    color: #d97706;
+}
+
+@media (max-width: 640px) {
+    .pfm-allocation-summary {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .pfm-allocation-card {
+        padding: 15px 16px;
+    }
+
+    .pfm-allocation-card strong {
+        font-size: 16px;
+    }
+}
+.pfm-allocation-label {
+    color: #334155;
+    font-size: 14px;
+    font-weight: 650;
+    transition: color 0.2s ease;
+}
+
+/* Dark mode */
+[data-theme="dark"] .pfm-allocation-label {
+    color: #ffffff;
+}
+/* ==================================
+   DASHBOARD - BUDGET STATUS COLORS
+   ================================== */
+
+/* GREEN - dưới 80% */
+.pfm-budget-percent.success {
+    color: #059669;
+    border: 2px solid rgba(16, 185, 129, 0.25);
+}
+
+.pfm-progress.pfm-success > span {
+    background: linear-gradient(90deg, #34d399, #059669);
+}
+
+/* YELLOW - từ 80% đến dưới 100% */
+.pfm-budget-percent.warning {
+    color: #d97706;
+    border: 2px solid rgba(245, 158, 11, 0.3);
+}
+
+.pfm-progress.pfm-warning > span {
+    background: linear-gradient(90deg, #fbbf24, #d97706);
+}
+
+/* RED - từ 100% trở lên */
+.pfm-budget-percent.danger {
+    color: #dc2626;
+    border: 2px solid rgba(239, 68, 68, 0.3);
+}
+
+.pfm-progress.pfm-danger > span {
+    background: linear-gradient(90deg, #f87171, #dc2626);
+}
+
+/* Không chạy animation khi người dùng yêu cầu giảm chuyển động */
+@media (prefers-reduced-motion: reduce) {
+    .pfm-budget-percent {
+        animation: none !important;
+    }
+}
+/* ===== BUDGET OVERVIEW: TONE-AWARE TEXT + POLISHED HOVER TOOLTIP ===== */
+
+/* Light mode text colors */
+html[data-theme="light"] .pfm-budget-page .pfm-budget-ring.pfm-overview-success strong,
+.pfm-budget-page .pfm-budget-ring.pfm-overview-success strong {
+    color: #047857 !important;
+}
+html[data-theme="light"] .pfm-budget-page .pfm-budget-ring.pfm-overview-warning strong,
+.pfm-budget-page .pfm-budget-ring.pfm-overview-warning strong {
+    color: #b45309 !important;
+}
+html[data-theme="light"] .pfm-budget-page .pfm-budget-ring.pfm-overview-danger strong,
+.pfm-budget-page .pfm-budget-ring.pfm-overview-danger strong {
+    color: #e11d48 !important;
+}
+.pfm-budget-page .pfm-budget-ring.pfm-overview-success small { color: #648477 !important; }
+.pfm-budget-page .pfm-budget-ring.pfm-overview-warning small { color: #a16207 !important; }
+.pfm-budget-page .pfm-budget-ring.pfm-overview-danger small { color: #be123c !important; }
+
+/* Dark mode overrides old selectors that forced all text to emerald */
+html[data-theme="dark"] .pfm-budget-page .pfm-budget-ring.pfm-overview-success strong {
+    color: #6ee7b7 !important;
+}
+html[data-theme="dark"] .pfm-budget-page .pfm-budget-ring.pfm-overview-warning strong {
+    color: #fcd34d !important;
+}
+html[data-theme="dark"] .pfm-budget-page .pfm-budget-ring.pfm-overview-danger strong {
+    color: #fda4af !important;
+}
+html[data-theme="dark"] .pfm-budget-page .pfm-budget-ring.pfm-overview-success small { color: #a7f3d0 !important; }
+html[data-theme="dark"] .pfm-budget-page .pfm-budget-ring.pfm-overview-warning small { color: #fde68a !important; }
+html[data-theme="dark"] .pfm-budget-page .pfm-budget-ring.pfm-overview-danger small { color: #fecdd3 !important; }
+
+/* Inner disc follows theme; avoid a white disk in dark mode */
+html[data-theme="dark"] .pfm-budget-page .pfm-budget-ring::before {
+    background: #172b31 !important;
+    box-shadow: inset 0 1px 6px rgba(0,0,0,.22) !important;
+}
+html[data-theme="light"] .pfm-budget-page .pfm-budget-ring::before {
+    background: #ffffff !important;
+}
+
+
+/* Tooltip vượt ngân sách - gọn, không che nội dung */
+.pfm-budget-page .pfm-budget-percent-tooltip {
+    position: relative;
+    display: inline-flex;
+    justify-content: center;
+    outline: none;
+    cursor: pointer;
+}
+
+/* Hộp thông báo */
+.pfm-budget-page .pfm-budget-percent-tooltip::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    z-index: 100;
+
+    left: 50%;
+    top: calc(100% + 7px);
+    bottom: auto;
+
+    transform: translate(-50%, -4px);
+
+    width: max-content;
+    max-width: 155px;
+
+    padding: 6px 9px;
+    border: 1px solid rgba(148,163,184,.2);
+    border-radius: 9px;
+
+    background: #17352d;
+    color: #ffffff;
+
+    box-shadow: 0 5px 14px rgba(0,0,0,.16);
+
+    font-size: 9px;
+    font-weight: 700;
+    line-height: 1.35;
+    letter-spacing: 0;
+
+    text-align: center;
+    white-space: normal;
+    overflow-wrap: anywhere;
+
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+
+    transition: opacity .16s ease, transform .16s ease;
+}
+
+/* Mũi tên nhỏ hướng lên */
+.pfm-budget-page .pfm-budget-percent-tooltip::before {
+    content: "";
+    position: absolute;
+    z-index: 101;
+
+    left: 50%;
+    top: calc(100% + 1px);
+
+    transform: translateX(-50%);
+
+    border: 6px solid transparent;
+    border-bottom-color: #17352d;
+
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+/* Hover */
+.pfm-budget-page .pfm-budget-percent-tooltip:hover::after,
+.pfm-budget-page .pfm-budget-percent-tooltip:focus-visible::after {
+    opacity: 1;
+    visibility: visible;
+    transform: translate(-50%, 0);
+}
+
+.pfm-budget-page .pfm-budget-percent-tooltip:hover::before,
+.pfm-budget-page .pfm-budget-percent-tooltip:focus-visible::before {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Dark mode */
+html[data-theme="dark"] .pfm-budget-page .pfm-budget-percent-tooltip::after {
+    background: #e2e8f0;
+    color: #17212b;
+    border-color: rgba(255,255,255,.15);
+    box-shadow: 0 5px 16px rgba(0,0,0,.3);
+}
+
+html[data-theme="dark"] .pfm-budget-page .pfm-budget-percent-tooltip::before {
+    border-bottom-color: #e2e8f0;
+    border-top-color: transparent;
+}
+
+/* ==================================================
+   DASHBOARD - CURRENT BUDGET COLOR SYSTEM
+   ================================================== */
+
+/* LIGHT MODE */
+html[data-theme="light"] .dashboard-page .pfm-budget-percent.success {
+    --budget-ring-fill: #10b981;
+    --budget-ring-track: #d1fae5;
+    color: #047857 !important;
+}
+
+html[data-theme="light"] .dashboard-page .pfm-budget-percent.warning {
+    --budget-ring-fill: #f59e0b;
+    --budget-ring-track: #fef3c7;
+    color: #b45309 !important;
+}
+
+html[data-theme="light"] .dashboard-page .pfm-budget-percent.danger {
+    --budget-ring-fill: #f43f5e;
+    --budget-ring-track: #ffe4e6;
+    color: #e11d48 !important;
+}
+
+/* DARK MODE - RING */
+html[data-theme="dark"] .dashboard-page .pfm-budget-percent.success {
+    --budget-ring-fill: #34d399;
+    --budget-ring-track: #254b4b;
+    color: #6ee7b7 !important;
+}
+
+html[data-theme="dark"] .dashboard-page .pfm-budget-percent.warning {
+    --budget-ring-fill: #fbbf24;
+    --budget-ring-track: #51452b;
+    color: #fcd34d !important;
+}
+
+html[data-theme="dark"] .dashboard-page .pfm-budget-percent.danger {
+    --budget-ring-fill: #fb7185;
+    --budget-ring-track: #512f3a;
+    color: #fda4af !important;
+}
+
+/* LIGHT MODE - TEXT */
+html[data-theme="light"] .dashboard-page .pfm-budget-percent.success b,
+html[data-theme="light"] .dashboard-page .pfm-budget-percent.success small {
+    color: #047857 !important;
+}
+
+html[data-theme="light"] .dashboard-page .pfm-budget-percent.warning b,
+html[data-theme="light"] .dashboard-page .pfm-budget-percent.warning small {
+    color: #b45309 !important;
+}
+
+html[data-theme="light"] .dashboard-page .pfm-budget-percent.danger b,
+html[data-theme="light"] .dashboard-page .pfm-budget-percent.danger small {
+    color: #e11d48 !important;
+}
+
+/* DARK MODE - TEXT */
+html[data-theme="dark"] .dashboard-page .pfm-budget-percent.success b,
+html[data-theme="dark"] .dashboard-page .pfm-budget-percent.success small {
+    color: #6ee7b7 !important;
+}
+
+html[data-theme="dark"] .dashboard-page .pfm-budget-percent.warning b,
+html[data-theme="dark"] .dashboard-page .pfm-budget-percent.warning small {
+    color: #fcd34d !important;
+}
+
+html[data-theme="dark"] .dashboard-page .pfm-budget-percent.danger b,
+html[data-theme="dark"] .dashboard-page .pfm-budget-percent.danger small {
+    color: #fda4af !important;
+}
+
+/* PROGRESS BAR - LIGHT MODE */
+html[data-theme="light"] .dashboard-page .pfm-dashboard-budget-card .pfm-progress.pfm-success > span {
+    background: #10b981 !important;
+}
+
+html[data-theme="light"] .dashboard-page .pfm-dashboard-budget-card .pfm-progress.pfm-warning > span {
+    background: #f59e0b !important;
+}
+
+html[data-theme="light"] .dashboard-page .pfm-dashboard-budget-card .pfm-progress.pfm-danger > span {
+    background: #f43f5e !important;
+}
+
+/* PROGRESS BAR - DARK MODE */
+html[data-theme="dark"] .dashboard-page .pfm-dashboard-budget-card .pfm-progress {
+    background: #294354 !important;
+}
+
+html[data-theme="dark"] .dashboard-page .pfm-dashboard-budget-card .pfm-progress.pfm-success > span {
+    background: linear-gradient(90deg, #6ee7b7, #10b981) !important;
+}
+
+html[data-theme="dark"] .dashboard-page .pfm-dashboard-budget-card .pfm-progress.pfm-warning > span {
+    background: linear-gradient(90deg, #fcd34d, #d97706) !important;
+}
+
+html[data-theme="dark"] .dashboard-page .pfm-dashboard-budget-card .pfm-progress.pfm-danger > span {
+    background: linear-gradient(90deg, #fda4af, #e11d48) !important;
+}
+
+/* TOOLTIP - OVER BUDGET */
+.pfm-dashboard-budget-percent-wrap {
+    position: relative;
+    display: inline-flex;
+    flex: 0 0 auto;
+    overflow: visible;
+}
+
+.pfm-dashboard-budget-percent-wrap.has-overrun-tooltip::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    z-index: 100;
+    top: calc(100% + 7px);
+    left: 50%;
+    transform: translate(-50%, -4px);
+    width: max-content;
+    max-width: 145px;
+    padding: 6px 9px;
+    border-radius: 9px;
+    background: #17352d;
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+    line-height: 1.4;
+    text-align: center;
+    white-space: normal;
+    box-shadow: 0 5px 14px rgba(0,0,0,.16);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity .16s ease, transform .16s ease;
+
+}
+
+.pfm-dashboard-budget-percent-wrap.has-overrun-tooltip:hover::after {
+    opacity: 1;
+    visibility: visible;
+    transform: translate(-50%, 0);
+}
+
+/* DARK MODE - TOOLTIP */
+html[data-theme="dark"] .pfm-dashboard-budget-percent-wrap.has-overrun-tooltip::after {
+    background: #e2e8f0;
+    color: #17212b;
+}
+
+/* ================================================
+   DASHBOARD BUDGET RING - FIX TEXT CONTRAST
+   Tách nền chữ khỏi cung màu tiến độ
+   ================================================ */
+
+/* Vòng tròn tiến độ */
+html[data-theme="light"] .dashboard-page .pfm-budget-percent,
+html[data-theme="dark"] .dashboard-page .pfm-budget-percent {
+    position: relative !important;
+    isolation: isolate !important;
+    overflow: visible !important;
+}
+
+/* Tạo nền tròn riêng ở giữa */
+html[data-theme="light"] .dashboard-page .pfm-budget-percent::before {
+    content: "" !important;
+    display: block !important;
+    position: absolute !important;
+    inset: 7px !important;
+    z-index: 0 !important;
+    border-radius: 50% !important;
+    background: #ffffff !important;
+    border: none !important;
+    animation: none !important;
+    pointer-events: none !important;
+}
+
+html[data-theme="dark"] .dashboard-page .pfm-budget-percent::before {
+    content: "" !important;
+    display: block !important;
+    position: absolute !important;
+    inset: 7px !important;
+    z-index: 0 !important;
+    border-radius: 50% !important;
+    background: #172b3b !important;
+    border: none !important;
+    animation: none !important;
+    pointer-events: none !important;
+}
+
+/* Đưa số và nhãn lên trên nền tròn */
+.dashboard-page .pfm-budget-percent b,
+.dashboard-page .pfm-budget-percent small {
+    position: relative !important;
+    z-index: 1 !important;
+    text-shadow: none !important;
+    -webkit-text-stroke: 0 !important;
+    font-weight: 900 !important;
+    opacity: 1 !important;
+}
+
+/* ========== LIGHT MODE ========== */
+
+/* Xanh */
+html[data-theme="light"] .dashboard-page .pfm-budget-percent.success b,
+html[data-theme="light"] .dashboard-page .pfm-budget-percent.success small {
+    color: #047857 !important;
+}
+
+/* Vàng */
+html[data-theme="light"] .dashboard-page .pfm-budget-percent.warning b,
+html[data-theme="light"] .dashboard-page .pfm-budget-percent.warning small {
+    color: #92400e !important;
+}
+
+/* Đỏ - vượt ngân sách */
+html[data-theme="light"] .dashboard-page .pfm-budget-percent.danger b,
+html[data-theme="light"] .dashboard-page .pfm-budget-percent.danger small {
+    color: #be123c !important;
+}
+
+/* ========== DARK MODE ========== */
+
+/* Xanh */
+html[data-theme="dark"] .dashboard-page .pfm-budget-percent.success b,
+html[data-theme="dark"] .dashboard-page .pfm-budget-percent.success small {
+    color: #6ee7b7 !important;
+}
+
+/* Vàng */
+html[data-theme="dark"] .dashboard-page .pfm-budget-percent.warning b,
+html[data-theme="dark"] .dashboard-page .pfm-budget-percent.warning small {
+    color: #fcd34d !important;
+}
+
+/* Đỏ */
+html[data-theme="dark"] .dashboard-page .pfm-budget-percent.danger b,
+html[data-theme="dark"] .dashboard-page .pfm-budget-percent.danger small {
+    color: #fda4af !important;
+}
+
+/* Đảm bảo số phần trăm dễ đọc */
+.dashboard-page .pfm-budget-percent b {
+    font-size: 15px !important;
+    font-weight: 900 !important;
+    line-height: 1.2 !important;
+    letter-spacing: -0.5px !important;
+}
+
+/* Đảm bảo nhãn trạng thái rõ ràng */
+.dashboard-page .pfm-budget-percent small {
+    font-size: 9px !important;
+    font-weight: 850 !important;
+    line-height: 1.3 !important;
+    white-space: nowrap !important;
+}
+
+/* Thu nhỏ nội dung vòng tròn ngân sách Dashboard */
+.dashboard-page .pfm-budget-percent b {
+    font-size: 13px !important;
+    line-height: 1.15 !important;
+    letter-spacing: -0.4px !important;
+    font-weight: 900 !important;
+}
+
+.dashboard-page .pfm-budget-percent small {
+    font-size: 7px !important;
+    line-height: 1.2 !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.2px !important;
+    white-space: nowrap !important;
+}
+
+/* Màn hình nhỏ */
+@media (max-width: 480px) {
+    .dashboard-page .pfm-budget-percent b {
+        font-size: 12px !important;
+    }
+
+    .dashboard-page .pfm-budget-percent small {
+        font-size: 6.5px !important;
+    }
+}
+
+/* ==========================================
+   BUDGET DETAIL - DARK MODE COLOR FIX
+   ========================================== */
+
+/* 1. Các thẻ Đã chi - Đã tiết kiệm - Còn lại */
+html[data-theme="dark"] .pfm-dashboard-budget-card .pfm-budget-stats > div,
+html[data-theme="dark"] .pfm-budget-page .pfm-budget-stats > div {
+    background: #20364a !important;
+    background-image: none !important;
+    border: 1px solid #385166 !important;
+    color: #edf4f8 !important;
+    box-shadow: none !important;
+}
+
+html[data-theme="dark"] .pfm-dashboard-budget-card .pfm-budget-stats small,
+html[data-theme="dark"] .pfm-budget-page .pfm-budget-stats small {
+    color: #a9bac8 !important;
+}
+
+html[data-theme="dark"] .pfm-dashboard-budget-card .pfm-budget-stats b,
+html[data-theme="dark"] .pfm-budget-page .pfm-budget-stats b {
+    color: #edf4f8 !important;
+}
+
+/* Số tiền còn lại âm */
+html[data-theme="dark"] .pfm-budget-stats b.pfm-negative,
+html[data-theme="dark"] .pfm-budget-stats b.negative {
+    color: #ff8d9d !important;
+}
+
+/* 2. Khung tooltip biểu đồ ngày */
+html[data-theme="dark"] .pfm-chart-tooltip,
+html[data-theme="dark"] .recharts-tooltip-wrapper .pfm-chart-tooltip,
+html[data-theme="dark"] .pfm-budget-page .pfm-chart-tooltip {
+    background: #1b3045 !important;
+    background-color: #1b3045 !important;
+    border: 1px solid #466075 !important;
+    color: #edf4f8 !important;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, .35) !important;
+}
+
+/* Nội dung tooltip */
+html[data-theme="dark"] .pfm-chart-tooltip *,
+html[data-theme="dark"] .recharts-tooltip-wrapper .pfm-chart-tooltip * {
+    color: #dce7ef !important;
+    text-shadow: none !important;
+}
+
+/* Tiêu đề và số tiền trong tooltip */
+html[data-theme="dark"] .pfm-chart-tooltip b,
+html[data-theme="dark"] .pfm-chart-tooltip strong,
+html[data-theme="dark"] .pfm-chart-tooltip .pfm-tooltip-amount {
+    color: #6ee7b7 !important;
+}
+
+/* Icon trong tooltip */
+html[data-theme="dark"] .pfm-chart-tooltip svg {
+    color: #6ee7b7 !important;
+}
+
+/* Nền icon */
+html[data-theme="dark"] .pfm-chart-tooltip .pfm-chart-tooltip-icon {
+    background: #1d493d !important;
+    color: #6ee7b7 !important;
+}
+
+/* 3. Màu vùng hover trên biểu đồ */
+html[data-theme="dark"] .recharts-tooltip-cursor {
+    fill: #20384d !important;
+    fill-opacity: 1 !important;
+    stroke: #3b596f !important;
+}
+
+/* ==========================================
+   DASHBOARD - CHART FOOTNOTE DARK MODE
+   Áp dụng đúng div.chart-footnote
+   ========================================== */
+
+html[data-theme="dark"] .chart-footnote {
+    background: #20364a !important;
+    background-color: #20364a !important;
+    background-image: none !important;
+
+    border: 1px solid #385166 !important;
+    border-radius: 12px !important;
+
+    color: #dce7ef !important;
+    box-shadow: 0 5px 18px rgba(0, 0, 0, .18) !important;
+}
+
+/* Icon nền xanh tối */
+html[data-theme="dark"] .chart-footnote .footnote-icon {
+    background: #1d493d !important;
+    color: #6ee7b7 !important;
+    border: 1px solid rgba(110, 231, 183, .12) !important;
+}
+
+/* SVG bên trong icon */
+html[data-theme="dark"] .chart-footnote .footnote-icon svg {
+    color: #6ee7b7 !important;
+    stroke: #6ee7b7 !important;
+}
+
+/* Nội dung Thu nhập và Chi tiêu */
+html[data-theme="dark"] .chart-footnote > span:last-child {
+    color: #c4d2dc !important;
+}
+
+/* Số tiền */
+html[data-theme="dark"] .chart-footnote > span:last-child b {
+    color: #6ee7b7 !important;
+    font-weight: 850 !important;
+}
+
+/* Nếu có số tiền âm */
+html[data-theme="dark"] .chart-footnote b.negative,
+html[data-theme="dark"] .chart-footnote b.pfm-negative {
+    color: #fb7185 !important;
+}
+
+/* ==========================================
+   BUDGET OVERVIEW - LIGHT MODE ALERT COLORS
+   Đổi nền theo ngưỡng cảnh báo
+   ========================================== */
+
+/* An toàn: dưới 80% */
+html[data-theme="light"] .pfm-budget-page
+.pfm-budget-overview.pfm-budget-overview-success {
+    background:
+            radial-gradient(
+                    circle at 92% 4%,
+                    rgba(52, 211, 153, .24),
+                    transparent 30%
+            ),
+            linear-gradient(
+                    125deg,
+                    #eafaf1 0%,
+                    #ffffff 55%,
+                    #f0fbf5 100%
+            ) !important;
+
+    border-color: #c7ead7 !important;
+}
+
+/* Cảnh báo: 80% - 100% */
+html[data-theme="light"] .pfm-budget-page
+.pfm-budget-overview.pfm-budget-overview-warning {
+    background:
+            radial-gradient(
+                    circle at 92% 4%,
+                    rgba(251, 191, 36, .25),
+                    transparent 30%
+            ),
+            linear-gradient(
+                    125deg,
+                    #fff8e7 0%,
+                    #ffffff 55%,
+                    #fffbef 100%
+            ) !important;
+
+    border-color: #f5dfae !important;
+}
+
+/* Vượt ngân sách: trên 100% */
+html[data-theme="light"] .pfm-budget-page
+.pfm-budget-overview.pfm-budget-overview-danger {
+    background:
+            radial-gradient(
+                    circle at 92% 4%,
+                    rgba(251, 113, 133, .23),
+                    transparent 30%
+            ),
+            linear-gradient(
+                    125deg,
+                    #fff0f2 0%,
+                    #ffffff 55%,
+                    #fff5f6 100%
+            ) !important;
+
+    border-color: #f4c6ce !important;
+}
+
+/* Ánh sáng trang trí phía ngoài cũng đổi màu */
+html[data-theme="light"] .pfm-budget-page
+.pfm-budget-overview.pfm-budget-overview-success::after {
+    border-color: rgba(16, 145, 91, .12);
+    box-shadow:
+            0 0 0 24px rgba(16, 185, 129, .035),
+            0 0 0 50px rgba(16, 185, 129, .025);
+}
+
+html[data-theme="light"] .pfm-budget-page
+.pfm-budget-overview.pfm-budget-overview-warning::after {
+    border-color: rgba(217, 119, 6, .16);
+    box-shadow:
+            0 0 0 24px rgba(245, 158, 11, .045),
+            0 0 0 50px rgba(245, 158, 11, .03);
+}
+
+html[data-theme="light"] .pfm-budget-page
+.pfm-budget-overview.pfm-budget-overview-danger::after {
+    border-color: rgba(225, 29, 72, .14);
+    box-shadow:
+            0 0 0 24px rgba(244, 63, 94, .045),
+            0 0 0 50px rgba(244, 63, 94, .03);
+}
+
+/* ==========================================
+   BUDGET OVERVIEW - DARK MODE ALERT COLORS
+   ========================================== */
+
+/* An toàn: dưới 80% - Emerald */
+html[data-theme="dark"] .pfm-budget-page
+.pfm-budget-overview.pfm-budget-overview-success {
+    background:
+            radial-gradient(
+                    circle at 92% 4%,
+                    rgba(52, 211, 153, .16),
+                    transparent 32%
+            ),
+            linear-gradient(
+                    125deg,
+                    #173b38 0%,
+                    #192f40 55%,
+                    #173b38 100%
+            ) !important;
+
+    border-color: #28675a !important;
+}
+
+/* Cảnh báo: 80% - 100% - Amber */
+html[data-theme="dark"] .pfm-budget-page
+.pfm-budget-overview.pfm-budget-overview-warning {
+    background:
+            radial-gradient(
+                    circle at 92% 4%,
+                    rgba(251, 191, 36, .18),
+                    transparent 32%
+            ),
+            linear-gradient(
+                    125deg,
+                    #403923 0%,
+                    #202f40 55%,
+                    #3b3423 100%
+            ) !important;
+
+    border-color: #79602d !important;
+}
+
+/* Vượt ngân sách: trên 100% - Rose */
+html[data-theme="dark"] .pfm-budget-page
+.pfm-budget-overview.pfm-budget-overview-danger {
+    background:
+            radial-gradient(
+                    circle at 92% 4%,
+                    rgba(251, 113, 133, .18),
+                    transparent 32%
+            ),
+            linear-gradient(
+                    125deg,
+                    #472b39 0%,
+                    #202e40 55%,
+                    #402735 100%
+            ) !important;
+
+    border-color: #874456 !important;
+}
+
+/* Vòng trang trí phía ngoài */
+html[data-theme="dark"] .pfm-budget-page
+.pfm-budget-overview.pfm-budget-overview-success::after {
+    border-color: rgba(52, 211, 153, .20);
+    box-shadow:
+            0 0 0 24px rgba(52, 211, 153, .045),
+            0 0 0 50px rgba(52, 211, 153, .025);
+}
+
+html[data-theme="dark"] .pfm-budget-page
+.pfm-budget-overview.pfm-budget-overview-warning::after {
+    border-color: rgba(251, 191, 36, .22);
+    box-shadow:
+            0 0 0 24px rgba(251, 191, 36, .05),
+            0 0 0 50px rgba(251, 191, 36, .03);
+}
+
+html[data-theme="dark"] .pfm-budget-page
+.pfm-budget-overview.pfm-budget-overview-danger::after {
+    border-color: rgba(251, 113, 133, .22);
+    box-shadow:
+            0 0 0 24px rgba(251, 113, 133, .05),
+            0 0 0 50px rgba(251, 113, 133, .03);
 }
