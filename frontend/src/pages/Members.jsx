@@ -97,7 +97,9 @@ export default function Members() {
 
   const currentRole = activeFamily?.myRole;
   const isOwner = currentRole === 'OWNER';
-  const canInvite = isOwner || currentRole === 'MANAGER';
+  const isManager = currentRole === 'MANAGER';
+  const canInvite = isOwner || isManager;
+  const canManageMembers = isOwner || isManager;
   const currentUserId = user?.id ?? user?.userId;
 
   // Tải danh sách thành viên của gia đình đang chọn.
@@ -455,56 +457,56 @@ export default function Members() {
 
         {/* Lịch sử lời mời đã gửi */}
         {activeFamilyId && canInvite && (
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-              <div>
-                <h2 className="font-extrabold text-slate-900">Lịch sử lời mời đã gửi</h2>
-                <p className="mt-1 text-xs text-slate-500">Theo dõi trạng thái và hủy những lời mời chưa được phản hồi.</p>
+            <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <h2 className="font-extrabold text-slate-900">Lịch sử lời mời đã gửi</h2>
+                  <p className="mt-1 text-xs text-slate-500">Theo dõi trạng thái và hủy những lời mời chưa được phản hồi.</p>
+                </div>
+                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">{sent.length} lời mời</span>
               </div>
-              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">{sent.length} lời mời</span>
-            </div>
-            {sentLoading ? (
-              <p className="py-6 text-center text-sm text-slate-400">Đang tải lịch sử lời mời…</p>
-            ) : sent.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-slate-200 py-7 text-center text-sm text-slate-500">
-                Bạn chưa gửi lời mời nào trong gia đình này.
-              </div>
-            ) : (
-              <div className="divide-y divide-slate-100">
-                {sent.map((invitation) => {
-                  const status = String(invitation.status || 'PENDING').toUpperCase();
-                  const statusMeta = {
-                    PENDING: ['Đang chờ', 'bg-amber-50 text-amber-700'],
-                    ACCEPTED: ['Đã chấp nhận', 'bg-emerald-50 text-emerald-700'],
-                    DECLINED: ['Đã từ chối', 'bg-rose-50 text-rose-700'],
-                    CANCELLED: ['Đã hủy', 'bg-slate-100 text-slate-600'],
-                  }[status] || [status, 'bg-slate-100 text-slate-600'];
-                  return (
-                    <div key={invitation.id} className="flex flex-wrap items-center gap-3 py-3">
-                      <UserAvatar name={invitation.invitedUserFullName || invitation.fullName || invitation.username || invitation.invitedUsername || 'Người dùng'} size="sm"/>
-                      <div className="min-w-0 flex-1">
-                        <b className="block truncate text-sm text-slate-800">
-                          {invitation.invitedUserFullName || invitation.fullName || invitation.username || invitation.invitedUsername || 'Người được mời'}
-                        </b>
-                        <small className="text-xs text-slate-400">
-                          @{invitation.invitedUsername || invitation.username || '—'} · {dateLabel(invitation.createdAt)}
-                        </small>
-                      </div>
-                      <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${statusMeta[1]}`}>
+              {sentLoading ? (
+                  <p className="py-6 text-center text-sm text-slate-400">Đang tải lịch sử lời mời…</p>
+              ) : sent.length === 0 ? (
+                  <div className="rounded-xl border border-dashed border-slate-200 py-7 text-center text-sm text-slate-500">
+                    Bạn chưa gửi lời mời nào trong gia đình này.
+                  </div>
+              ) : (
+                  <div className="divide-y divide-slate-100">
+                    {sent.map((invitation) => {
+                      const status = String(invitation.status || 'PENDING').toUpperCase();
+                      const statusMeta = {
+                        PENDING: ['Đang chờ', 'bg-amber-50 text-amber-700'],
+                        ACCEPTED: ['Đã chấp nhận', 'bg-emerald-50 text-emerald-700'],
+                        DECLINED: ['Đã từ chối', 'bg-rose-50 text-rose-700'],
+                        CANCELLED: ['Đã hủy', 'bg-slate-100 text-slate-600'],
+                      }[status] || [status, 'bg-slate-100 text-slate-600'];
+                      return (
+                          <div key={invitation.id} className="flex flex-wrap items-center gap-3 py-3">
+                            <UserAvatar name={invitation.invitedUserFullName || invitation.fullName || invitation.username || invitation.invitedUsername || 'Người dùng'} size="sm"/>
+                            <div className="min-w-0 flex-1">
+                              <b className="block truncate text-sm text-slate-800">
+                                {invitation.invitedUserFullName || invitation.fullName || invitation.username || invitation.invitedUsername || 'Người được mời'}
+                              </b>
+                              <small className="text-xs text-slate-400">
+                                @{invitation.invitedUsername || invitation.username || '—'} · {dateLabel(invitation.createdAt)}
+                              </small>
+                            </div>
+                            <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${statusMeta[1]}`}>
                         {statusMeta[0]}
                       </span>
-                      {status === 'PENDING' && (
-                        <button type="button" onClick={() => setCancelInvitation(invitation)}
-                          className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 px-3 py-2 text-xs font-bold text-rose-600 transition hover:bg-rose-50">
-                          <Ban size={14}/> Hủy lời mời
-                        </button>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </section>
+                            {status === 'PENDING' && (
+                                <button type="button" onClick={() => setCancelInvitation(invitation)}
+                                        className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 px-3 py-2 text-xs font-bold text-rose-600 transition hover:bg-rose-50">
+                                  <Ban size={14}/> Hủy lời mời
+                                </button>
+                            )}
+                          </div>
+                      );
+                    })}
+                  </div>
+              )}
+            </section>
         )}
 
         {/* Nội dung phụ thuộc việc người dùng đã tham gia gia đình hay chưa */}
@@ -562,7 +564,7 @@ export default function Members() {
                           <th className="p-3 font-bold">Thành viên</th>
                           <th className="p-3 font-bold">Vai trò</th>
                           <th className="p-3 font-bold">Ngày tham gia</th>
-                          {isOwner && (
+                          {canManageMembers && (
                               <th className="p-3 text-right font-bold">Thao tác</th>
                           )}
                         </tr>
@@ -611,52 +613,57 @@ export default function Members() {
                                   {dateLabel(member.joinedAt)}
                                 </td>
 
-                                {isOwner && (
+                                {canManageMembers && (
                                     <td className="p-3 text-right">
-                                      {!self && member.role !== 'OWNER' && (
-                                          <div className="inline-flex gap-1">
-                                            <button
-                                                title={
-                                                  member.role === 'MANAGER'
-                                                      ? 'Hạ xuống thành viên'
-                                                      : 'Bổ nhiệm quản lý'
-                                                }
-                                                onClick={() =>
-                                                    setAction({
-                                                      type: 'role',
-                                                      member,
-                                                      role:
-                                                          member.role === 'MANAGER'
-                                                              ? 'MEMBER'
-                                                              : 'MANAGER',
-                                                    })
-                                                }
-                                                className="rounded-lg border border-slate-200 p-2 text-slate-500 hover:bg-slate-50"
-                                            >
-                                              <Shield size={15} />
-                                            </button>
+                                      {!self && member.role !== 'OWNER' &&
+                                          (isOwner || (isManager && member.role === 'MEMBER')) && (
+                                              <div className="inline-flex gap-1">
+                                                {isOwner && (
+                                                    <>
+                                                      <button
+                                                          title={
+                                                            member.role === 'MANAGER'
+                                                                ? 'Hạ xuống thành viên'
+                                                                : 'Bổ nhiệm quản lý'
+                                                          }
+                                                          onClick={() =>
+                                                              setAction({
+                                                                type: 'role',
+                                                                member,
+                                                                role:
+                                                                    member.role === 'MANAGER'
+                                                                        ? 'MEMBER'
+                                                                        : 'MANAGER',
+                                                              })
+                                                          }
+                                                          className="rounded-lg border border-slate-200 p-2 text-slate-500 hover:bg-slate-50"
+                                                      >
+                                                        <Shield size={15} />
+                                                      </button>
 
-                                            <button
-                                                title="Chuyển quyền chủ gia đình"
-                                                onClick={() =>
-                                                    setAction({ type: 'transfer', member })
-                                                }
-                                                className="rounded-lg border border-amber-200 p-2 text-amber-700 hover:bg-amber-50"
-                                            >
-                                              <Crown size={15} />
-                                            </button>
+                                                      <button
+                                                          title="Chuyển quyền chủ gia đình"
+                                                          onClick={() =>
+                                                              setAction({ type: 'transfer', member })
+                                                          }
+                                                          className="rounded-lg border border-amber-200 p-2 text-amber-700 hover:bg-amber-50"
+                                                      >
+                                                        <Crown size={15} />
+                                                      </button>
+                                                    </>
+                                                )}
 
-                                            <button
-                                                title="Xóa khỏi gia đình"
-                                                onClick={() =>
-                                                    setAction({ type: 'remove', member })
-                                                }
-                                                className="rounded-lg border border-rose-100 p-2 text-rose-600 hover:bg-rose-50"
-                                            >
-                                              <UserMinus size={15} />
-                                            </button>
-                                          </div>
-                                      )}
+                                                <button
+                                                    title="Xóa khỏi gia đình"
+                                                    onClick={() =>
+                                                        setAction({ type: 'remove', member })
+                                                    }
+                                                    className="rounded-lg border border-rose-100 p-2 text-rose-600 hover:bg-rose-50"
+                                                >
+                                                  <UserMinus size={15} />
+                                                </button>
+                                              </div>
+                                          )}
                                     </td>
                                 )}
                               </tr>
@@ -772,13 +779,13 @@ export default function Members() {
         )}
 
         {cancelInvitation && (
-          <ConfirmDialog
-            title="Hủy lời mời đã gửi?"
-            description={`Lời mời gửi tới ${cancelInvitation.invitedUserFullName || cancelInvitation.fullName || cancelInvitation.username || cancelInvitation.invitedUsername || 'người dùng'} sẽ chuyển sang trạng thái đã hủy.`}
-            onCancel={() => setCancelInvitation(null)}
-            onConfirm={cancelSentInvite}
-            busy={actionBusy}
-          />
+            <ConfirmDialog
+                title="Hủy lời mời đã gửi?"
+                description={`Lời mời gửi tới ${cancelInvitation.invitedUserFullName || cancelInvitation.fullName || cancelInvitation.username || cancelInvitation.invitedUsername || 'người dùng'} sẽ chuyển sang trạng thái đã hủy.`}
+                onCancel={() => setCancelInvitation(null)}
+                onConfirm={cancelSentInvite}
+                busy={actionBusy}
+            />
         )}
 
         {action && (
