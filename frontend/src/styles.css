@@ -5222,3 +5222,44 @@ html[data-theme="dark"] .pfm-budget-page
     outline: none !important;
     box-shadow: none !important;
 }
+/* ==========================================
+   FAMILY PICKER - MOBILE RESPONSIVE FIX
+   ========================================== */
+
+@media (max-width: 640px) {
+    .family-picker-popover {
+        position: fixed !important;
+
+        top: 84px !important;
+        left: 12px !important;
+        right: 12px !important;
+
+        width: auto !important;
+        max-width: 420px;
+        margin-inline: auto;
+
+        box-sizing: border-box;
+        max-height: calc(100dvh - 100px);
+        overflow-y: auto;
+
+        z-index: 9999;
+    }
+
+    .family-picker-heading,
+    .family-picker-list,
+    .family-picker-footer {
+        width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
+    }
+
+    .family-picker-option {
+        min-width: 0;
+        box-sizing: border-box;
+    }
+
+    .family-option-text {
+        min-width: 0;
+        overflow: hidden;
+    }
+}
