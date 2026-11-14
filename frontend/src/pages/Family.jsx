@@ -205,7 +205,7 @@ export default function Family() {
         <header>
           <p className="text-xs font-bold uppercase tracking-[.18em] text-emerald-700">Không gian chung</p>
           <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-slate-900">Gia đình</h1>
-          <p className="mt-2 text-sm text-slate-500">Chọn không gian làm việc, xem vai trò và quản lý thiết lập gia đình.</p>
+          <p className="mt-2 text-sm text-slate-500">Chuyển đổi không gian gia đình, xem vai trò của bạn và quản lý các thiết lập chung.</p>
         </header>
 
         <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
@@ -298,12 +298,12 @@ export default function Family() {
                   <div className="mt-6 rounded-2xl border border-slate-100 bg-slate-50 p-4 sm:p-5">
                     <div className="mb-4">
                       <h3 className="font-bold text-slate-900">Cài đặt gia đình</h3>
-                      <p className="mt-1 text-xs text-slate-500">Thông tin gia đình hiện chỉ quản lý tên và thành viên.</p>
+                      <p className="mt-1 text-xs text-slate-500">Quản lý thông tin cơ bản và thiết lập chung của không gian gia đình.</p>
                     </div>
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
                         <b className="text-sm text-slate-800">Tên gia đình</b>
-                        <p className="mt-1 text-xs text-slate-500">Chỉ OWNER/MANAGER được thao tác theo phân quyền.</p>
+                        <p className="mt-1 text-xs text-slate-500">Cập nhật tên hiển thị của không gian gia đình này.</p>
                       </div>
                       <button
                           type="button"
@@ -316,17 +316,13 @@ export default function Family() {
                   </div>
               )}
 
-              <div className="mt-6 border-t border-slate-100 pt-5">
-                <div className="mb-3">
-                  <h3 className="font-bold text-slate-900">Vùng thao tác quan trọng</h3>
-                  <p className="mt-1 text-xs text-slate-500">Thao tác giải tán chỉ dành cho OWNER; thành viên khác chỉ có thể rời gia đình.</p>
-                </div>
+              <div className="mt-6 border-slate-100 pt-5">
                 <div className="flex flex-col justify-between gap-3 rounded-2xl border border-rose-200 bg-rose-50/50 p-4 sm:flex-row sm:items-center">
                   <div>
                     <b className="text-sm text-rose-800">{isOwner ? 'Giải tán gia đình' : 'Rời khỏi gia đình'}</b>
                     <p className="mt-1 max-w-xl text-xs leading-5 text-rose-700">
                       {isOwner
-                          ? 'Giải tán sẽ xóa không gian gia đình và dữ liệu nghiệp vụ thuộc gia đình. Tài khoản cá nhân của các thành viên không bị xóa.'
+                          ? 'Xóa vĩnh viễn không gian này cùng toàn bộ dữ liệu giao dịch, ngân sách và mục tiêu chung.'
                           : 'Bạn sẽ mất quyền truy cập vào không gian gia đình này sau khi rời đi.'}
                     </p>
                   </div>
@@ -385,9 +381,9 @@ export default function Family() {
                     <div className="flex items-start gap-3 rounded-xl border border-rose-200 bg-rose-50 p-3">
                       <AlertTriangle size={20} className="mt-0.5 shrink-0 text-rose-600" />
                       <div>
-                        <p className="text-sm font-bold text-rose-800">Đây là thao tác không thể hoàn tác</p>
+                        <p className="text-sm font-bold text-rose-800">Hành động này không thể hoàn tác</p>
                         <p className="mt-1 text-xs leading-5 text-rose-700">
-                          Gia đình <b>{activeName}</b> sẽ bị xóa khỏi hệ thống. Các thành viên sẽ không còn truy cập được không gian này.
+                          Gia đình <b>{activeName}</b> sẽ bị xóa vĩnh viễn. Tất cả thành viên sẽ không còn quyền truy cập vào không gian này nữa.
                         </p>
                       </div>
                     </div>
@@ -395,8 +391,8 @@ export default function Family() {
                     <div>
                       <p className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-500">Dữ liệu bị xóa cùng gia đình</p>
                       <div className="space-y-3 rounded-xl border border-slate-200 p-3">
-                        <ImpactRow icon={Database} title="Dữ liệu tài chính gia đình" description="Giao dịch, ngân sách, danh mục do gia đình tạo, mục tiêu tiết kiệm và các khoản đóng góp." />
-                        <ImpactRow icon={Users} title="Thông tin không gian chung" description="Danh sách thành viên, lời mời và liên kết thành viên với gia đình." />
+                        <ImpactRow icon={Database} title="Dữ liệu tài chính gia đình" description="Toàn bộ giao dịch, ngân sách, danh mục tự tạo, mục tiêu tiết kiệm và các khoản đóng góp." />
+                        <ImpactRow icon={Users} title="Thông tin không gian chung" description="Danh sách thành viên, lời mời tham gia và quyền truy cập của các thành viên trong gia đình." />
                       </div>
                     </div>
                   </div>

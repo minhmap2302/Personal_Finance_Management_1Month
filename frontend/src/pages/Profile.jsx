@@ -168,9 +168,9 @@ export default function Profile() {
         <div className="flex items-start gap-3">
           <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-rose-100 text-rose-600"><AlertTriangle size={19}/></span>
           <div>
-            <h3 className="font-bold text-rose-800">Vùng nguy hiểm</h3>
-            <p className="mt-1 max-w-2xl text-sm text-rose-700/80">Xóa tài khoản sẽ vô hiệu hóa đăng nhập và ẩn danh hóa thông tin cá nhân. Lịch sử giao dịch tài chính đã phát sinh vẫn được giữ lại.</p>
-            {ownedFamilies.length > 0 && <p className="mt-2 text-xs font-semibold text-rose-700">Bạn đang là chủ của: {ownedFamilies.map(f => f.name).join(', ')}. Hãy chuyển quyền hoặc xóa các gia đình này trước.</p>}
+            <h3 className="font-bold text-rose-800">Xóa tài khoản</h3>
+            <p className="mt-1 max-w-2xl text-sm text-rose-700/80">Tài khoản sẽ bị khóa vĩnh viễn và thông tin cá nhân của bạn sẽ được xóa khỏi hệ thống. Các giao dịch đã tạo trong không gian chung vẫn được giữ lại để đảm bảo số liệu cho gia đình.</p>
+            {ownedFamilies.length > 0 && <p className="mt-2 text-xs font-semibold text-rose-700">Bạn hiện là chủ gia đình của: {ownedFamilies.map(f => f.name).join(', ')}. Vui lòng chuyển quyền quản lý hoặc giải tán các gia đình này trước khi xóa tài khoản.</p>}
           </div>
         </div>
         <button type="button" onClick={() => { setDeletePassword(''); setDeleteDialogOpen(true); }}

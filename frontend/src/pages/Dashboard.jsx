@@ -479,7 +479,7 @@ export default function Dashboard() {
               <div className="dashboard-budget-row">
                 <section className="panel category-panel pfm-dashboard-budget-card pfm-dashboard-budget-full">
                   <div className="panel-heading">
-                    <div><h3>Ngân sách hiện tại</h3><p>Theo dõi hạn mức gia đình đang áp dụng</p></div>
+                    <div><h3>Ngân sách sử dụng</h3><p>Theo dõi hạn mức gia đình đang áp dụng</p></div>
                     <a className="text-link" href="/app/budgets">Chi tiết <ArrowUpRight size={15} /></a>
                   </div>
                   {currentBudget ? (
@@ -556,7 +556,7 @@ export default function Dashboard() {
                           <div><small><i className="remaining-dot" /> Còn lại</small><b className={budgetRemaining < 0 ? 'pfm-negative' : ''}>{money(budgetRemaining)}</b></div>
                         </div>
                         <p className="pfm-budget-caption">
-                          {currentBudget.startDate || '—'} – {currentBudget.endDate || '—'} · Số liệu sử dụng theo dữ liệu backend của ngân sách này.
+                          {currentBudget.startDate || '—'} – {currentBudget.endDate || '—'} · Dữ liệu được tính theo chu kỳ của ngân sách này.
                         </p>
                         {monthlyBudgets.length > 1 && (
                             <div className="pfm-budget-pagination" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginTop: 18, paddingTop: 14, borderTop: '1px solid var(--pfm-border, #e8eeeb)' }}>
@@ -636,11 +636,6 @@ export default function Dashboard() {
                       </div>
                   )}
                 </section>
-              </div>
-
-              <div className="dashboard-bottom-note">
-                <span><span className="live-dot" /> Dữ liệu được tải từ backend</span>
-                <span>Cập nhật khi chuyển gia đình hoặc kỳ báo cáo</span>
               </div>
             </>
         )}

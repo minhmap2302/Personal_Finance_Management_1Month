@@ -159,7 +159,7 @@ export default function AdminPage() {
       </div>
     </section>
 
-    <div className="admin-security-note"><ShieldCheck size={18}/><span><b>Kiểm soát an toàn</b> — Khóa tài khoản sẽ thu hồi refresh token hiện tại và chặn đăng nhập mới. Tài khoản ADMIN không thể bị khóa từ màn hình này.</span></div>
+    <div className="admin-security-note"><ShieldCheck size={18}/><span><b>Kiểm soát an toàn</b> — Khóa tài khoản sẽ đăng xuất ngay phiên hoạt động hiện tại và chặn đăng nhập mới.</span></div>
 
     {actionUser && <ConfirmDialog
       onCancel={() => !busy && setActionUser(null)}

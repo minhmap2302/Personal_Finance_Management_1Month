@@ -213,7 +213,7 @@ export default function Support() {
 
         <div className="pfm-chat-notice">
          <ShieldCheck size={15} />
-         AI chỉ đọc và phân tích dữ liệu; không thực hiện thao tác thay đổi dữ liệu tài chính.
+         Trợ lý chỉ xem và phân tích số liệu, không thể thêm, sửa hay xóa giao dịch của gia đình.
         </div>
         <div className="pfm-ai-presence" aria-hidden="true">
           <span className="pfm-ai-wave"><i/><i/><i/><i/><i/><i/><i/></span>
@@ -328,8 +328,7 @@ export default function Support() {
          <div>
           <b>Quyền riêng tư & an toàn</b>
           <p>
-           Không chia sẻ mật khẩu, mã OTP hoặc thông tin bí mật. Luôn kiểm tra
-           số liệu trong hệ thống trước khi đưa ra quyết định tài chính.
+           Không chia sẻ mật khẩu, mã OTP hoặc thông tin bảo mật. Hãy luôn đối chiếu lại số liệu thực tế trước khi đưa ra quyết định tài chính.
           </p>
          </div>
         </section>

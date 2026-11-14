@@ -5201,3 +5201,24 @@ html[data-theme="dark"] .pfm-budget-page
             0 0 0 24px rgba(251, 113, 133, .05),
             0 0 0 50px rgba(251, 113, 133, .03);
 }
+
+/* Bỏ viền xanh bên trong ô chọn ngày */
+.pfm-date-filter input[type="date"] {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* Khi click hoặc focus vào ô ngày */
+.pfm-date-filter input[type="date"]:focus,
+.pfm-date-filter input[type="date"]:focus-visible,
+.pfm-date-filter input[type="date"]:active {
+    outline: none !important;
+    box-shadow: none !important;
+    border-color: transparent !important;
+}
+
+/* Bỏ highlight mặc định bên trong */
+.pfm-date-filter input[type="date"]::-webkit-datetime-edit {
+    outline: none !important;
+    box-shadow: none !important;
+}

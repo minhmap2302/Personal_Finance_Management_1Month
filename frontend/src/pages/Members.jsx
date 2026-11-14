@@ -518,7 +518,7 @@ export default function Members() {
                       Thành viên gia đình
                     </h2>
                     <p className="mt-1 text-xs text-slate-500">
-                      Danh sách thành viên trong không gian hiện tại.
+                      Danh sách thành viên trong gia đình hiện tại.
                     </p>
                   </div>
 
@@ -666,13 +666,6 @@ export default function Members() {
                       </table>
                     </div>
                 )}
-
-                {!isOwner && (
-                    <p className="mt-3 text-xs text-slate-400">
-                      Bạn có quyền xem danh sách thành viên. Chỉ OWNER mới có thể
-                      thay đổi vai trò hoặc xóa thành viên.
-                    </p>
-                )}
               </section>
 
               {/* Chỉ OWNER và MANAGER mới được mời thành viên */}
@@ -759,13 +752,6 @@ export default function Members() {
                         )}
                   </section>
               )}
-
-              {!canInvite && (
-                  <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-500">
-                    Vai trò {roleMeta[currentRole]?.label || currentRole} không có
-                    quyền gửi lời mời thành viên.
-                  </p>
-              )}
             </>
         ) : (
             <section className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-center shadow-sm">
@@ -774,9 +760,7 @@ export default function Members() {
                 Bạn chưa tham gia gia đình nào
               </h2>
               <p className="mt-1 text-sm text-slate-500">
-                Bạn vẫn có thể xem và chấp nhận lời mời ở phía trên. Sau khi tham
-                gia gia đình, danh sách thành viên và chức năng mời người khác sẽ
-                xuất hiện tại đây.
+                Tạo gia đình mới hoặc tham gia qua lời mời để xem danh sách thành viên và mời người thân cùng quản lý chi tiêu.
               </p>
               <a
                   href="/app/family"
