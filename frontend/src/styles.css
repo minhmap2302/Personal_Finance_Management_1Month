@@ -284,7 +284,9 @@ body { min-height:100vh; background:#f5faf7; }
 
 .pfm-date-control{min-height:43px;display:flex;align-items:center;gap:9px;padding:0 12px;border:1px solid #e1eae4;border-radius:13px;background:linear-gradient(180deg,#fff,#fbfdfb);color:#0b8060;box-shadow:0 2px 7px rgba(20,55,39,.035);transition:border-color .2s,box-shadow .2s,background .2s}
 .pfm-date-control:focus-within{border-color:#42ad87;box-shadow:0 0 0 4px rgba(16,185,129,.11);background:#fff}
-.pfm-date-control input{width:100%;min-width:0;border:0!important;outline:0!important;background:transparent!important;color:#314b3e;font:600 12px inherit;padding:0!important;cursor:pointer;color-scheme:light}
+.pfm-date-control input{width:100%;min-width:0;border:0!important;outline:0!important;background:transparent!important;color:#314b3e;font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;padding:0!important;cursor:pointer;color-scheme:light}
 .pfm-date-control input::-webkit-calendar-picker-indicator{cursor:pointer;opacity:.72;filter: sepia(20%) saturate(500%) hue-rotate(105deg)}
 .pfm-date-control-form{width:100%;min-height:44px}
 .pfm-field-error{display:block!important;margin-top:5px;color:#d14355!important;font-size:11px!important;font-weight:650!important;line-height:1.45}
@@ -825,7 +827,9 @@ body { min-height:100vh; background:#f5faf7; }
 /* Transaction date controls: intentional blank until the user chooses a date. */
 .pfm-date-control{min-height:43px;display:flex;align-items:center;gap:9px;padding:0 12px;border:1px solid #e1eae4;border-radius:13px;background:linear-gradient(180deg,#fff,#fbfdfb);color:#0b8060;box-shadow:0 2px 7px rgba(20,55,39,.035);transition:border-color .2s,box-shadow .2s,background .2s}
 .pfm-date-control:focus-within{border-color:#42ad87;box-shadow:0 0 0 4px rgba(16,185,129,.11);background:#fff}
-.pfm-date-control input{width:100%;min-width:0;border:0!important;outline:0!important;background:transparent!important;color:#314b3e;font:600 12px inherit;padding:0!important;cursor:pointer;color-scheme:light}
+.pfm-date-control input{width:100%;min-width:0;border:0!important;outline:0!important;background:transparent!important;color:#314b3e;font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;padding:0!important;cursor:pointer;color-scheme:light}
 .pfm-date-control input::-webkit-calendar-picker-indicator{cursor:pointer;opacity:.72;filter: sepia(20%) saturate(500%) hue-rotate(105deg)}
 .pfm-date-control-form{width:100%;min-height:44px}
 .pfm-field-error{display:block!important;margin-top:5px;color:#d14355!important;font-size:11px!important;font-weight:650!important;line-height:1.45}
@@ -5217,11 +5221,6 @@ html[data-theme="dark"] .pfm-budget-page
     border-color: transparent !important;
 }
 
-/* Bỏ highlight mặc định bên trong */
-.pfm-date-filter input[type="date"]::-webkit-datetime-edit {
-    outline: none !important;
-    box-shadow: none !important;
-}
 /* ==========================================
    FAMILY PICKER - MOBILE RESPONSIVE FIX
    ========================================== */
