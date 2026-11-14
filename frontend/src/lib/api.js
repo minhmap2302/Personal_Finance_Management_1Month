@@ -4,11 +4,6 @@ const ACCESS = 'pfm.accessToken';
 const REFRESH = 'pfm.refreshToken';
 const USER = 'pfm.user';
 const SESSION_EXPIRES_AT = 'pfm.sessionExpiresAt';
-const SESSION_DURATION_DAYS = Number(import.meta.env.VITE_SESSION_DURATION_DAYS ?? 1);
-const SESSION_DURATION_MS =
-  Number.isFinite(SESSION_DURATION_DAYS) && SESSION_DURATION_DAYS > 0
-    ? SESSION_DURATION_DAYS * 24 * 60 * 60 * 1000
-    : 24 * 60 * 60 * 1000;
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '',
