@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { BadgeCheck, CalendarDays, Eye, EyeOff, KeyRound, Lock, Mail, Save, ShieldCheck, UserRound, Users, CheckCircle2 } from 'lucide-react';
+import { BadgeCheck, CalendarDays, Eye, EyeOff, KeyRound, Lock, Mail, Save, ShieldCheck, UserRound, Users, Trash2, AlertTriangle } from 'lucide-react';
 import UserAvatar from '../components/UserAvatar';
 import { useAuth } from '../context/AuthContext';
 import { useFamily } from '../context/FamilyContext';
@@ -17,14 +17,14 @@ function PasswordField({ label, value, onChange, visible, onToggle, autoComplete
     <span className="mb-2 block text-sm font-semibold text-slate-700">{label}</span>
     <span className="pfm-password-field flex h-12 items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 transition focus-within:border-emerald-400 focus-within:ring-4 focus-within:ring-emerald-50">
       <Lock size={17} className="text-slate-400"/>
-      <input className="min-w-0 flex-1 bg-transparent text-sm outline-none" type={visible ? 'text' : 'password'} value={value} onChange={onChange} autoComplete={autoComplete} required/>
+      <input className="pfm-password-input min-w-0 flex-1 bg-transparent text-sm outline-none" type={visible ? 'text' : 'password'} value={value} onChange={onChange} autoComplete={autoComplete} required/>
       <button type="button" onClick={onToggle} className="text-slate-400 hover:text-slate-700" aria-label={visible ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}>{visible ? <EyeOff size={18}/> : <Eye size={18}/>}</button>
     </span>
   </label>;
 }
 
 export default function Profile() {
-  const { user, login } = useAuth();
+  const { user, login, logout } = useAuth();
   const toast = useToast();
   const { families, familiesLoading, refreshFamilies } = useFamily();
   const [profile, setProfile] = useState({ username: '', fullName: '', email: '', role: '', createdAt: '' });
@@ -33,6 +33,9 @@ export default function Profile() {
   const [passwordSaving, setPasswordSaving] = useState(false);
   const [password, setPassword] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [visibility, setVisibility] = useState({ current: false, next: false, confirm: false });
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -40,7 +43,7 @@ export default function Profile() {
       if (!alive) return;
       setProfile({ username: data.username || '', fullName: data.fullName || '', email: data.email || '', role: data.role || user?.role || '', createdAt: data.createdAt || '' });
     }).catch((error) => alive && toast(getErrorMessage(error, 'Không thể tải hồ sơ cá nhân.'), 'error'))
-      .finally(() => alive && setProfileLoading(false));
+        .finally(() => alive && setProfileLoading(false));
     return () => { alive = false; };
   }, [toast]);
 
@@ -83,7 +86,24 @@ export default function Profile() {
     } catch (error) { toast(getErrorMessage(error, 'Không thể đổi mật khẩu.'), 'error'); }
     finally { setPasswordSaving(false); }
   }
+  const ownedFamilies = families.filter((family) => family.myRole === 'OWNER');
 
+  async function deleteAccount(event) {
+    event.preventDefault();
+    if (!deletePassword.trim()) return toast('Vui lòng nhập mật khẩu hiện tại.', 'error');
+    if (ownedFamilies.length) return toast('Hãy chuyển quyền hoặc xóa các gia đình bạn đang làm chủ trước.', 'error');
+    setDeleteBusy(true);
+    try {
+      await profileApi.deleteAccount(deletePassword);
+      toast('Tài khoản đã được xóa và ẩn danh hóa.', 'success');
+      setDeleteDialogOpen(false);
+      await logout();
+    } catch (error) {
+      toast(getErrorMessage(error, 'Không thể xóa tài khoản.'), 'error');
+    } finally {
+      setDeleteBusy(false);
+    }
+  }
   if (profileLoading) return <div className="flex min-h-80 items-center justify-center text-sm text-slate-500"><span className="mr-3 h-5 w-5 animate-spin rounded-full border-2 border-emerald-600 border-t-transparent"/>Đang tải hồ sơ…</div>;
 
   return <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="mx-auto max-w-6xl space-y-6">
@@ -128,5 +148,49 @@ export default function Profile() {
       {familiesLoading ? <p className="py-6 text-center text-sm text-slate-400">Đang tải danh sách gia đình…</p> : families.length === 0 ? <div className="rounded-xl border border-dashed border-slate-200 py-8 text-center text-sm text-slate-500">Bạn chưa tham gia gia đình nào.</div> : <div className="grid gap-3 sm:grid-cols-2">{families.map((family) => <div key={family.id} className="flex items-center gap-3 rounded-xl border border-slate-100 p-3"><span className="grid h-10 w-10 place-items-center rounded-xl bg-emerald-50 text-emerald-700"><Users size={18}/></span><span className="min-w-0 flex-1"><b className="block truncate text-sm text-slate-800">{family.name}</b><small className="text-xs text-slate-500">{familyRoleName(family.myRole)}</small></span></div>)}</div>}
       <button type="button" onClick={() => refreshFamilies().catch(() => {})} className="mt-4 text-xs font-bold text-emerald-700 hover:text-emerald-900">Làm mới danh sách</button>
     </section>
+    <section className="rounded-2xl border border-rose-200 bg-rose-50/50 p-5 shadow-sm sm:p-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-start gap-3">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-rose-100 text-rose-600"><AlertTriangle size={19}/></span>
+          <div>
+            <h3 className="font-bold text-rose-800">Vùng nguy hiểm</h3>
+            <p className="mt-1 max-w-2xl text-sm text-rose-700/80">Xóa tài khoản sẽ vô hiệu hóa đăng nhập và ẩn danh hóa thông tin cá nhân. Lịch sử giao dịch tài chính đã phát sinh vẫn được giữ lại.</p>
+            {ownedFamilies.length > 0 && <p className="mt-2 text-xs font-semibold text-rose-700">Bạn đang là chủ của: {ownedFamilies.map(f => f.name).join(', ')}. Hãy chuyển quyền hoặc xóa các gia đình này trước.</p>}
+          </div>
+        </div>
+        <button type="button" onClick={() => { setDeletePassword(''); setDeleteDialogOpen(true); }}
+                className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-rose-300 bg-white px-4 text-sm font-bold text-rose-700 transition hover:bg-rose-100">
+          <Trash2 size={16}/> Xóa tài khoản
+        </button>
+      </div>
+    </section>
+
+    {deleteDialogOpen && (
+        <div className="modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !deleteBusy) setDeleteDialogOpen(false); }}>
+          <div className="confirm-modal pfm-delete-account-modal" role="dialog" aria-modal="true" aria-labelledby="delete-account-title">
+            <div className="modal-icon" style={{ background: '#fff1f2', color: '#e11d48' }}><Trash2 size={22}/></div>
+            <h3 id="delete-account-title">Xác nhận xóa tài khoản?</h3>
+            <p>Thao tác này không thể hoàn tác. Tài khoản sẽ bị vô hiệu hóa, thông tin định danh được ẩn danh hóa và bạn sẽ bị đăng xuất.</p>
+            {ownedFamilies.length > 0 ? (
+                <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
+                  Bạn chưa thể xóa tài khoản vì đang là OWNER của {ownedFamilies.length} gia đình: {ownedFamilies.map(f => f.name).join(', ')}.
+                </div>
+            ) : (
+                <form onSubmit={deleteAccount} className="mt-4 space-y-4">
+                  <label className="block text-left">
+                    <span className="mb-2 block text-sm font-semibold text-slate-700">Nhập mật khẩu hiện tại để xác nhận</span>
+                    <input type="password" autoComplete="current-password" required value={deletePassword} onChange={(e) => setDeletePassword(e.target.value)}
+                           className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-rose-400 focus:ring-4 focus:ring-rose-100"/>
+                  </label>
+                  <div className="modal-actions">
+                    <button type="button" className="btn-secondary" disabled={deleteBusy} onClick={() => setDeleteDialogOpen(false)}>Hủy</button>
+                    <button type="submit" className="btn-danger" disabled={deleteBusy || !deletePassword.trim()}>{deleteBusy ? 'Đang xóa…' : 'Xác nhận xóa tài khoản'}</button>
+                  </div>
+                </form>
+            )}
+            {ownedFamilies.length > 0 && <div className="modal-actions"><button type="button" className="btn-secondary" onClick={() => setDeleteDialogOpen(false)}>Đóng</button></div>}
+          </div>
+        </div>
+    )}
   </motion.div>;
 }

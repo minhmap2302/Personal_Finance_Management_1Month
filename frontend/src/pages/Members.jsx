@@ -196,6 +196,8 @@ export default function Members() {
     try {
       await familyApi.acceptInvitation(invitationId);
 
+      window.dispatchEvent(new Event('family-invitations-updated'));
+
       setNotice({
         type: 'success',
         text: 'Đã chấp nhận lời mời gia đình.',
@@ -214,6 +216,8 @@ export default function Members() {
   async function declineInvite(invitationId) {
     try {
       await familyApi.declineInvitation(invitationId);
+
+      window.dispatchEvent(new Event('family-invitations-updated'));
 
       setNotice({
         type: 'success',

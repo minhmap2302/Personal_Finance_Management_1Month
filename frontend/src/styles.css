@@ -4306,3 +4306,29 @@ html[data-theme="dark"] .pfm-budget-percent.over-budget small {
         color: #fbbf24 !important;
     }
 }
+
+.notification {
+    position: relative;
+}
+
+.notification-count {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: #ef4444;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    border: 2px solid white;
+}
+.notification::before,
+.notification::after {
+    display: none !important;
+}
