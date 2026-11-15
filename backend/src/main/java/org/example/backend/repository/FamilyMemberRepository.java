@@ -1,6 +1,7 @@
 package org.example.backend.repository;
 
 import org.example.backend.model.entity.FamilyMember;
+import org.example.backend.model.enums.FamilyRole;
 import org.example.backend.model.projection.FamilyMemberCount;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -48,4 +49,15 @@ public interface FamilyMemberRepository extends JpaRepository<FamilyMember, Long
     /** Id các gia đình của người dùng, tăng dần (chỉ lấy id, chưa nạp FamilyMember). Dùng để khóa theo thứ tự cố định. */
     @Query("select m.family.id from FamilyMember m where m.user.id = :userId order by m.family.id")
     List<Long> findFamilyIdsByUserId(@Param("userId") Long userId);
+
+    /**
+     * Thành viên đang hoạt động (chưa bị khóa) của gia đình với một vai trò, người tham gia sớm nhất trước.
+     * Dùng với PageRequest.of(0, 1) để lấy người kế nhiệm khi chủ gia đình bị khóa.
+     */
+    @Query("select m from FamilyMember m join fetch m.user u "
+            + "where m.family.id = :familyId and m.role = :role and u.enabled = true "
+            + "order by m.joinedAt asc, m.id asc")
+    List<FamilyMember> findEnabledByRole(@Param("familyId") Long familyId,
+                                         @Param("role") FamilyRole role,
+                                         Pageable pageable);
 }

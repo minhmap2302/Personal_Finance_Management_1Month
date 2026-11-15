@@ -12,6 +12,7 @@ import org.example.backend.repository.InvalidatedTokenRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
@@ -138,9 +139,12 @@ public class JwtService {
         try {
             Claims claims = extractAllClaims(token);
             String jti = claims.getId();
-            if (jti == null || invalidatedTokenRepository.existsById(jti)) {
+            String tokenId = StringUtils.hasText(jti) ? jti : token;
+
+            if (invalidatedTokenRepository.existsById(tokenId)) {
                 return Optional.empty();
             }
+
             return Optional.of(claims);
         } catch (JwtException | IllegalArgumentException e) {
             log.debug("Token JWT không hợp lệ: {}", e.getMessage());

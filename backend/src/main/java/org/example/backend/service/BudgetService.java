@@ -6,11 +6,14 @@ import org.example.backend.model.dto.request.UpdateSubBudgetRequest;
 import org.example.backend.model.dto.request.UpdateTotalBudgetRequest;
 import org.example.backend.model.dto.response.BudgetDetailResponse;
 import org.example.backend.model.dto.response.BudgetSummaryResponse;
+import org.example.backend.model.dto.response.MonthlyBudgetResponse;
 import org.example.backend.model.dto.response.SubBudgetResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
+import java.util.List;
 
 /**
  * Nghiệp vụ ngân sách của gia đình. Xem: mọi thành viên. Tạo, sửa, xóa: chủ gia đình và quản lý.
@@ -39,4 +42,6 @@ public interface BudgetService {
                                       UpdateSubBudgetRequest request);
 
     void deleteSubBudget(Long userId, Long familyId, Long totalBudgetId, Long subBudgetId);
+
+    Page<MonthlyBudgetResponse> getBudgetsByMonth(Long userId, Long familyId, YearMonth month, Pageable pageable);
 }

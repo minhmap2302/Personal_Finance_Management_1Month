@@ -48,8 +48,8 @@ public class SecurityConfig {
 
     // Danh sách Frontend Origin, cấu hình qua biến môi trường.
     // Nếu chưa cấu hình, sử dụng các địa chỉ phát triển local.
-    @Value("${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:3000,http://localhost:80,http://localhost}")
-    private String corsAllowedOrigins;
+    @Value("${CORS_ALLOWED_ORIGINS:https://finhome-ojt.dynv6.net,http://localhost:5173,http://localhost:3000,http://localhost:80,http://localhost}")
+        private String corsAllowedOrigins;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http)

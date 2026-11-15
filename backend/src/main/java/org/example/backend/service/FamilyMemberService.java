@@ -26,4 +26,10 @@ public interface FamilyMemberService {
 
     /** Chỉ chủ gia đình. Chủ cũ trở thành MANAGER. */
     void transferOwnership(Long userId, Long familyId, TransferOwnershipRequest request);
+
+    /**
+     * Gọi khi khóa người dùng: ở mỗi gia đình mà người này là chủ, chuyển quyền cho quản lý (rồi đến thành viên)
+     * đang hoạt động, người tham gia sớm nhất. Không có ai thì giữ nguyên. Phải gọi trong giao dịch READ_COMMITTED.
+     */
+    void handOverOwnedFamilies(Long userId);
 }
