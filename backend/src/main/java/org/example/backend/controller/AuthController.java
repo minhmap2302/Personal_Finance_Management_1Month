@@ -3,6 +3,7 @@ package org.example.backend.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.backend.model.dto.request.LoginRequest;
+import org.example.backend.model.dto.request.LogoutRequest;
 import org.example.backend.model.dto.request.RefreshTokenRequest;
 import org.example.backend.model.dto.request.RegisterRequest;
 import org.example.backend.model.dto.response.ApiResponse;
@@ -40,9 +41,9 @@ public class AuthController {
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<Void>> logout(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @Valid @RequestBody RefreshTokenRequest request) {
+            @RequestBody(required = false) LogoutRequest request) {
 
-        authService.logout(authHeader, request.getRefreshToken());
+        authService.logout(authHeader, request != null ? request.getRefreshToken() : null);
 
         return ResponseEntity.ok(ApiResponse.success("Đăng xuất thành công"));
     }
