@@ -56,7 +56,7 @@ public class InvitationController {
                 .body(ApiResponse.success("Gửi lời mời thành công", data));
     }
 
-    @GetMapping("/api/v1/families/{familyId}/invitations")
+    @GetMapping("/families/{familyId}/invitations")
     public ResponseEntity<ApiResponse<Page<InvitationResponse>>> getSentInvitations(
             @AuthenticationPrincipal User currentUser,
             @PathVariable Long familyId,
@@ -68,7 +68,7 @@ public class InvitationController {
         return ResponseEntity.ok(ApiResponse.success("Lấy danh sách lời mời đã gửi thành công", result));
     }
 
-    @GetMapping("/api/v1/families/{familyId}/invitations/{invitationId}")
+    @GetMapping("/families/{familyId}/invitations/{invitationId}")
     public ResponseEntity<ApiResponse<InvitationResponse>> getSentInvitation(
             @AuthenticationPrincipal User currentUser,
             @PathVariable Long familyId,
@@ -77,7 +77,7 @@ public class InvitationController {
                 invitationService.getSentInvitation(currentUser.getId(), familyId, invitationId)));
     }
 
-    @PostMapping("/api/v1/families/{familyId}/invitations/{invitationId}/cancel")
+    @PostMapping("/families/{familyId}/invitations/{invitationId}/cancel")
     public ResponseEntity<ApiResponse<InvitationResponse>> cancelInvitation(
             @AuthenticationPrincipal User currentUser,
             @PathVariable Long familyId,
@@ -86,7 +86,7 @@ public class InvitationController {
                 invitationService.cancelInvitation(currentUser.getId(), familyId, invitationId)));
     }
 
-    @DeleteMapping("/api/v1/families/{familyId}/invitations/{invitationId}")
+    @DeleteMapping("/families/{familyId}/invitations/{invitationId}")
     public ResponseEntity<ApiResponse<Void>> deleteSentInvitation(
             @AuthenticationPrincipal User currentUser,
             @PathVariable Long familyId,
