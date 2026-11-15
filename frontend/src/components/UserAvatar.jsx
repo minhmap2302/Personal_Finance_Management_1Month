@@ -1,14 +1,10 @@
 import React, { useMemo } from 'react';
 
 const PALETTES = [
-  'bg-emerald-100 text-emerald-800 border-emerald-200/60 dark:bg-emerald-950/70 dark:text-emerald-300 dark:border-emerald-800/40',
-  'bg-sky-100 text-sky-800 border-sky-200/60 dark:bg-sky-950/70 dark:text-sky-300 dark:border-sky-800/40',
-  'bg-violet-100 text-violet-800 border-violet-200/60 dark:bg-violet-950/70 dark:text-violet-300 dark:border-violet-800/40',
-  'bg-amber-100 text-amber-800 border-amber-200/60 dark:bg-amber-950/70 dark:text-amber-300 dark:border-amber-800/40',
-  'bg-rose-100 text-rose-800 border-rose-200/60 dark:bg-rose-950/70 dark:text-rose-300 dark:border-rose-800/40',
-  'bg-teal-100 text-teal-800 border-teal-200/60 dark:bg-teal-950/70 dark:text-teal-300 dark:border-teal-800/40',
-  'bg-indigo-100 text-indigo-800 border-indigo-200/60 dark:bg-indigo-950/70 dark:text-indigo-300 dark:border-indigo-800/40',
-  'bg-orange-100 text-orange-800 border-orange-200/60 dark:bg-orange-950/70 dark:text-orange-300 dark:border-orange-800/40',
+  'bg-emerald-100 text-emerald-700', 'bg-sky-100 text-sky-700',
+  'bg-violet-100 text-violet-700', 'bg-amber-100 text-amber-700',
+  'bg-rose-100 text-rose-700', 'bg-teal-100 text-teal-700',
+  'bg-indigo-100 text-indigo-700', 'bg-orange-100 text-orange-700',
 ];
 
 function initialsOf(name = '') {
