@@ -135,6 +135,11 @@ public class JwtService {
         return expiration != null ? expiration.toInstant() : Instant.now().plusMillis(jwtExpirationMs);
     }
 
+    public Instant extractIssuedAt(String token) {
+        Date iat = extractClaim(token, Claims::getIssuedAt);
+        return iat == null ? null : iat.toInstant();
+    }
+
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
