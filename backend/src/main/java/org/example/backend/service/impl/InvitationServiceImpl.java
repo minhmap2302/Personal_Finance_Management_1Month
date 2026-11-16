@@ -31,9 +31,6 @@ import java.util.Set;
 /**
  * Nghiệp vụ lời mời vào gia đình.
  * Người được mời phải đồng ý, không ai bị thêm thẳng vào gia đình.
- *
- * Thứ tự khóa khi thay đổi thành viên: dòng gia đình trước, dòng lời mời sau (cùng thứ tự với xóa gia đình),
- * để chấp nhận lời mời và xóa gia đình cùng lúc không bị deadlock.
  */
 @Service
 @RequiredArgsConstructor
@@ -224,16 +221,9 @@ public class InvitationServiceImpl implements InvitationService {
     @Override
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public InvitationResponse acceptInvitation(Long userId, Long invitationId) {
-        // Chấp nhận lời mời thêm một thành viên nên phải khóa gia đình, và khóa gia đình TRƯỚC lời mời
-        // (cùng thứ tự với xóa gia đình) để không bị deadlock.
-        // Người gọi chưa là thành viên nên không dùng requireRoleWithLock; lời mời gửi đúng cho họ chính là
-        // phép xác thực (truy vấn bên dưới chỉ thấy lời mời của chính họ).
-        // Chỉ đọc id gia đình, không nạp lời mời vào bộ nhớ, để câu lệnh khóa sau đó đọc được dữ liệu mới nhất.
-        Long familyId = invitationRepository.findFamilyIdByInvitation(invitationId, userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy lời mời"));
-        accessChecker.lockFamily(familyId);
-
+        // Chỉ khóa dòng lời mời (không khóa gia đình), theo quy ước "thao tác chỉ đụng một bản ghi".
         Invitation invitation = findPendingForUpdate(userId, invitationId);
+        Long familyId = invitation.getFamily().getId();
 
         if (familyMemberRepository.existsByUserIdAndFamilyId(userId, familyId)) {
             throw new ConflictException("Bạn đã là thành viên của gia đình này");

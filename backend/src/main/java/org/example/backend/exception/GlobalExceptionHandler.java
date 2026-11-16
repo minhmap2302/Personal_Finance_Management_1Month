@@ -96,11 +96,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErrorResponse> handleDataIntegrity(DataIntegrityViolationException ex, HttpServletRequest request) {
         log.warn("Vi phạm ràng buộc dữ liệu", ex);
-        return buildError(
-                HttpStatus.CONFLICT,
-                getMessageOrDefault(ex, "Dữ liệu bị xung đột"),
-                request.getRequestURI()
-        );
+        return buildError(HttpStatus.CONFLICT, "Dữ liệu bị xung đột", request.getRequestURI());
     }
 
     @ExceptionHandler(MissingServletRequestParameterException.class)

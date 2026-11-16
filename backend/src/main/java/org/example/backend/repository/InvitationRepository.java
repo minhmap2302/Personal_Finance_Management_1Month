@@ -29,14 +29,6 @@ public interface InvitationRepository extends JpaRepository<Invitation, Long> {
     Page<Invitation> findByInvitedUserIdAndStatus(Long invitedUserId, InvitationStatus status, Pageable pageable);
 
     /**
-     * Chỉ lấy id gia đình của một lời mời gửi cho đúng người dùng này, KHÔNG nạp lời mời vào bộ nhớ.
-     * Dùng để khóa gia đình trước khi khóa lời mời. Nếu nạp cả lời mời ở bước này thì câu lệnh khóa ngay sau đó
-     * có thể trả về bản cũ đã nạp sẵn thay vì dữ liệu mới nhất.
-     */
-    @Query("select i.family.id from Invitation i where i.id = :id and i.invitedUser.id = :userId")
-    Optional<Long> findFamilyIdByInvitation(@Param("id") Long id, @Param("userId") Long userId);
-
-    /**
      * Lấy lời mời của chính người dùng và khóa dòng để chấp nhận/từ chối không bị xử lý hai lần
      * khi bấm liên tiếp. Chỉ trả về lời mời gửi cho đúng người dùng này.
      */

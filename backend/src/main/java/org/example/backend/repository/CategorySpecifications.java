@@ -13,6 +13,9 @@ import java.util.Locale;
  */
 public final class CategorySpecifications {
 
+    /** Ký tự escape cho LIKE, dùng '!' (như TransactionSpecifications) để tránh rắc rối với dấu gạch chéo ngược trong MySQL. */
+    private static final char LIKE_ESCAPE = '!';
+
     private CategorySpecifications() {
     }
 
@@ -32,13 +35,13 @@ public final class CategorySpecifications {
                 cb.equal(root.get("family").get("id"), familyId));
     }
 
-    /** Tên chứa từ khóa, không phân biệt hoa thường. Ký tự %, _ và \ người dùng gõ được hiểu là ký tự thường. */
+    /** Tên chứa từ khóa, không phân biệt hoa thường. Ký tự %, _ và ! người dùng gõ được hiểu là ký tự thường. */
     public static Specification<Category> nameContains(String keyword) {
         if (keyword == null || keyword.isBlank()) {
             return all();
         }
         String pattern = "%" + escapeLike(keyword.toLowerCase(Locale.ROOT)) + "%";
-        return (root, query, cb) -> cb.like(cb.lower(root.get("name")), pattern, '\\');
+        return (root, query, cb) -> cb.like(cb.lower(root.get("name")), pattern, LIKE_ESCAPE);
     }
 
     public static Specification<Category> hasType(CategoryType type) {
@@ -57,6 +60,9 @@ public final class CategorySpecifications {
     }
 
     private static String escapeLike(String value) {
-        return value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
+        return value
+                .replace(String.valueOf(LIKE_ESCAPE), LIKE_ESCAPE + "" + LIKE_ESCAPE)
+                .replace("%", LIKE_ESCAPE + "%")
+                .replace("_", LIKE_ESCAPE + "_");
     }
 }
