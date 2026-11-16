@@ -28,7 +28,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -185,6 +184,7 @@ public class AuthServiceImpl implements AuthService {
         if (refreshToken.isRevoked()) {
             refreshTokenRepository.revokeAllByUser(user);
             log.warn("Cảnh báo an ninh: Phát hiện tái sử dụng Refresh Token cho user ID: {}", user.getId());
+            log.warn("Cảnh báo an ninh: Phát hiện tái sử dụng Refresh Token quá grace period cho user ID: {}", user.getId());
             throw new UnauthorizedException("Refresh token đã bị thu hồi. Toàn bộ phiên đăng nhập đã bị hủy vì lý do an toàn");
         }
 
@@ -194,15 +194,18 @@ public class AuthServiceImpl implements AuthService {
             throw new UnauthorizedException("Refresh token đã hết hạn. Vui lòng đăng nhập lại");
         }
 
+        // Kiểm tra trạng thái tài khoản
         if (!user.isEnabled()) {
             refreshToken.setRevoked(true);
             refreshTokenRepository.save(refreshToken);
             throw new UnauthorizedException("Tài khoản người dùng đã bị vô hiệu hóa");
         }
 
+        // Áp dụng Token Rotation: Thu hồi token hiện tại
         refreshToken.setRevoked(true);
         refreshTokenRepository.save(refreshToken);
 
+        // Cấp Access Token mới và Refresh Token mới
         String newAccessToken = jwtService.generateToken(user);
         String newRawRefreshToken = generateSecureRefreshToken();
         String newHashedToken = JwtService.hashToken(newRawRefreshToken);
