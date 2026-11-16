@@ -35,6 +35,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.NumberFormat;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -92,7 +93,7 @@ public class ChatbotServiceImpl implements ChatbotService {
         // 2. Xác định khoảng thời gian phân tích
         LocalDate effectiveStart = (request.getStartDate() != null)
                 ? request.getStartDate()
-                : LocalDate.now(ZONE).withDayOfMonth(1);
+                : LocalDate.now(ZONE).withDayOfYear(1);
         LocalDate effectiveEnd = (request.getEndDate() != null)
                 ? request.getEndDate()
                 : LocalDate.now(ZONE);
@@ -178,7 +179,25 @@ public class ChatbotServiceImpl implements ChatbotService {
                 .append(netBalance.compareTo(ZERO) >= 0 ? " (Thặng dư dương)\n" : " (CẢNH BÁO: Bị thâm hụt!)\n");
         sb.append("- Số tiền đã đóng góp vào mục tiêu tiết kiệm: ").append(currencyFormat.format(totalSaved)).append("\n\n");
 
-        // 2. Phân bổ chi tiêu theo từng danh mục
+        // 2. Breakdown thu chi theo từng tháng
+        sb.append("--- THU CHI THEO TỪNG THÁNG ---\n");
+        YearMonth startMonth = YearMonth.from(startDate);
+        YearMonth endMonth = YearMonth.from(endDate);
+        for (YearMonth ym = startMonth; !ym.isAfter(endMonth); ym = ym.plusMonths(1)) {
+            LocalDate mStart = ym.atDay(1);
+            LocalDate mEnd = ym.atEndOfMonth();
+            BigDecimal mIncome = zeroIfNull(transactionRepository.sumByType(familyId, CategoryType.INCOME, mStart, mEnd));
+            BigDecimal mExpense = zeroIfNull(transactionRepository.sumByType(familyId, CategoryType.EXPENSE, mStart, mEnd));
+            BigDecimal mNet = mIncome.subtract(mExpense);
+            sb.append("Tháng ").append(String.format("%02d", ym.getMonthValue())).append("/").append(ym.getYear())
+                    .append(": Thu ").append(currencyFormat.format(mIncome))
+                    .append(" | Chi ").append(currencyFormat.format(mExpense))
+                    .append(" | Ròng ").append(mNet.compareTo(ZERO) >= 0 ? "+" : "").append(currencyFormat.format(mNet))
+                    .append("\n");
+        }
+        sb.append("\n");
+
+        // 3. Phân bổ chi tiêu theo từng danh mục
         sb.append("--- CƠ CẤU CHI TIÊU THEO DANH MỤC ---\n");
         List<CategorySpent> entries = budgetRepository.sumExpensesByCategory(familyId, CategoryType.EXPENSE, startDate, endDate);
         if (entries.isEmpty()) {
@@ -201,7 +220,7 @@ public class ChatbotServiceImpl implements ChatbotService {
             sb.append("\n");
         }
 
-        // 3. Tình hình Ngân sách và Nguy cơ vượt hạn mức
+        // 4. Tình hình Ngân sách và Nguy cơ vượt hạn mức
         sb.append("--- TÌNH HÌNH NGÂN SÁCH & CẢNH BÁO VƯỢT HẠN MỨC ---\n");
         Optional<Budget> currentBudget = budgetRepository.findTotalCoveringDate(familyId, endDate);
         if (currentBudget.isEmpty()) {
