@@ -54,6 +54,7 @@ public class ChatbotServiceImpl implements ChatbotService {
     private static final Locale LOCALE_VN = new Locale("vi", "VN");
     private static final BigDecimal HUNDRED = BigDecimal.valueOf(100);
     private static final BigDecimal ZERO = BigDecimal.ZERO;
+    
 
     private final FamilyAccessChecker familyAccessChecker;
     private final UserRepository userRepository;
@@ -65,10 +66,10 @@ public class ChatbotServiceImpl implements ChatbotService {
     @Autowired(required = false)
     private ChatClient chatClient;
 
-    @Value("${OPENROUTER_MODEL:${OPENAI_MODEL:gpt-4o-mini}}")
+    @Value("${OPENAI_MODEL}")
     private String defaultModel;
 
-    @Value("${OPENROUTER_BASE_URL:${OPENAI_BASE_URL:https://openrouter.ai/api/v1}}")
+    @Value("${OPENAI_BASE_URL}")
     private String aiBaseUrl;
 
     @Override
@@ -102,11 +103,18 @@ public class ChatbotServiceImpl implements ChatbotService {
 
         // 3. Kiểm tra cấu hình AI ChatClient
         if (chatClient == null) {
-            log.error("[CHATBOT_ERROR] ChatClient chưa được cấu hình. Hãy kiểm tra OPENROUTER_API_KEY hoặc OPENAI_API_KEY trong .env");
+            log.error("[CHATBOT_ERROR] ChatClient chưa được cấu hình. Hãy kiểm tra AI_API_KEY hoặc OPENAI_API_KEY trong .env");
             throw new BadRequestException("Dịch vụ Chatbot AI chưa được kích hoạt hoặc chưa cấu hình API Key. Vui lòng kiểm tra lại cấu hình hệ thống");
         }
 
-        String chosenModel = StringUtils.hasText(request.getModel()) ? request.getModel().trim() : defaultModel;
+        String sanitizedMessage = StringUtils.trimWhitespace(request.getMessage());
+        if (sanitizedMessage.length() > 2000) {
+            throw new BadRequestException("Nội dung tin nhắn tối đa 2000 ký tự");
+        }
+
+        String chosenModel = StringUtils.hasText(request.getModel())
+                ? request.getModel().trim()
+                : defaultModel;
         String providerName = isOpenRouter() ? "OpenRouter" : "OpenAI";
 
         // 4. Tổng hợp dữ liệu tài chính gia đình (Read-Only)
@@ -123,14 +131,14 @@ public class ChatbotServiceImpl implements ChatbotService {
         try {
             answer = chatClient.prompt()
                     .system(systemPrompt)
-                    .user(request.getMessage())
+                    .user(sanitizedMessage)
+                    .options(OpenAiChatOptions.builder().model(chosenModel).replayReasoningContent(false))
                     .advisors(advisorSpec -> advisorSpec.param(ChatMemory.CONVERSATION_ID, conversationId))
-                    .options(OpenAiChatOptions.builder().model(chosenModel))
                     .call()
                     .content();
         } catch (Exception ex) {
             log.error("[CHATBOT_ERROR] Lỗi kết nối hoặc xử lý từ {}: {}", providerName, ex.getMessage(), ex);
-            throw new BadRequestException("Không thể kết nối đến dịch vụ AI lúc này: " + ex.getMessage());
+            throw new BadRequestException("Dịch vụ AI đang gặp sự cố, vui lòng thử lại sau");
         }
 
         log.info("[CHATBOT] Đã nhận câu trả lời phân tích thành công cho familyId={}", familyId);
