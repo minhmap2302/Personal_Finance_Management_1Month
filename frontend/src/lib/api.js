@@ -3,7 +3,6 @@ import axios from 'axios';
 const ACCESS = 'pfm.accessToken';
 const REFRESH = 'pfm.refreshToken';
 const USER = 'pfm.user';
-const SESSION_EXPIRES_AT = 'pfm.sessionExpiresAt';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '',
@@ -18,7 +17,7 @@ function getStorage() {
 
 function clearStoredSession() {
   [localStorage, sessionStorage].forEach((storage) => {
-    [ACCESS, REFRESH, USER, SESSION_EXPIRES_AT, 'pfm.activeFamilyId'].forEach((key) => {
+    [ACCESS, REFRESH, USER, 'pfm.activeFamilyId'].forEach((key) => {
       storage.removeItem(key);
     });
   });
@@ -28,12 +27,10 @@ function clearStoredSession() {
 async function refreshAccessToken() {
   const storage = getStorage();
   const refreshToken = storage.getItem(REFRESH);
-  const expiresAt = Number(storage.getItem(SESSION_EXPIRES_AT) || 0);
 
-  // Không refresh nếu phiên Frontend đã hết hạn theo cấu hình môi trường.
-  if (!refreshToken || !expiresAt || Date.now() >= expiresAt) {
+  if (!refreshToken) {
     clearStoredSession();
-    throw new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+    throw new Error('Không tìm thấy Refresh Token. Vui lòng đăng nhập lại.');
   }
 
   if (!refreshPromise) {
@@ -48,13 +45,17 @@ async function refreshAccessToken() {
           throw new Error('Phản hồi làm mới phiên đăng nhập không hợp lệ.');
         }
 
-        // Chỉ thay token; tuyệt đối không gia hạn SESSION_EXPIRES_AT.
+        // Backend xoay vòng cả Access Token và Refresh Token.
         storage.setItem(ACCESS, data.accessToken);
         storage.setItem(REFRESH, data.refreshToken);
         return data.accessToken;
       })
       .catch((error) => {
-        clearStoredSession();
+        // Chỉ xóa phiên khi Backend xác nhận Refresh Token không còn hợp lệ.
+        // Lỗi mạng/timeout/5xx không đồng nghĩa với việc phiên đã hết hạn.
+        if (error?.response?.status === 401) {
+          clearStoredSession();
+        }
         throw error;
       })
       .finally(() => {
@@ -67,14 +68,8 @@ async function refreshAccessToken() {
 
 api.interceptors.request.use((config) => {
   const storage = getStorage();
-  const expiresAt = Number(storage.getItem(SESSION_EXPIRES_AT) || 0);
-
-  if (storage.getItem(ACCESS) && (!expiresAt || Date.now() >= expiresAt)) {
-    clearStoredSession();
-    return Promise.reject(new Error('Phiên đăng nhập đã hết hạn.'));
-  }
-
   const token = storage.getItem(ACCESS);
+
   if (token) {
     config.headers = config.headers || {};
     config.headers.Authorization = `Bearer ${token}`;

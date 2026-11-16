@@ -213,15 +213,6 @@ export default function Login() {
                 </button>
               </div>
 
-              <label className="check-row">
-                <input
-                    type="checkbox"
-                    checked={remember}
-                    onChange={(e) => setRemember(e.target.checked)}
-                />
-                <span>Ghi nhớ phiên đăng nhập</span>
-              </label>
-
               <button
                   className="btn-primary auth-submit"
                   disabled={busy}

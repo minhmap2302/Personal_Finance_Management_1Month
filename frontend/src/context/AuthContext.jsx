@@ -7,15 +7,6 @@ const AuthContext = createContext(null);
 const ACCESS = 'pfm.accessToken';
 const REFRESH = 'pfm.refreshToken';
 const USER = 'pfm.user';
-const SESSION_EXPIRES_AT = 'pfm.sessionExpiresAt';
-const SESSION_DURATION_DAYS = Number(
-    import.meta.env.VITE_SESSION_DURATION_DAYS || 1
-);
-
-const SESSION_DURATION_MS =
-    Number.isFinite(SESSION_DURATION_DAYS) && SESSION_DURATION_DAYS > 0
-        ? SESSION_DURATION_DAYS * 24 * 60 * 60 * 1000
-        : 24 * 60 * 60 * 1000;
 const LEGACY_ACTIVE_FAMILY = 'pfm.activeFamilyId';
 
 function getStoredValue(key) {
@@ -24,7 +15,7 @@ function getStoredValue(key) {
 
 function clearStoredSession() {
   [localStorage, sessionStorage].forEach((storage) => {
-    [ACCESS, REFRESH, USER, SESSION_EXPIRES_AT, LEGACY_ACTIVE_FAMILY].forEach((key) => {
+    [ACCESS, REFRESH, USER, LEGACY_ACTIVE_FAMILY].forEach((key) => {
       storage.removeItem(key);
     });
   });
@@ -57,59 +48,34 @@ export function AuthProvider({ children }) {
     navigate('/login', { replace: true });
   }, [navigate, showToast]);
 
-  // Khi tải/reload trang, không khôi phục phiên đã quá hạn.
+  // Khôi phục phiên đã lưu. Backend là nơi quyết định token còn hợp lệ hay không.
   useEffect(() => {
     const storedToken = getStoredValue(ACCESS);
-    const expiresAt = Number(getStoredValue(SESSION_EXPIRES_AT) || 0);
 
-    if (storedToken && (!expiresAt || Date.now() >= expiresAt)) {
-      finishExpiredSession(Boolean(expiresAt));
+    if (!storedToken) {
+      const storedUser = getStoredValue(USER);
+      if (storedUser) clearStoredSession();
+      setToken(null);
+      setUser(null);
     }
 
     setLoading(false);
-  }, [finishExpiredSession]);
+  }, []);
 
-  // Nhận tín hiệu hết phiên từ Axios interceptor.
+  // Nhận tín hiệu hết phiên từ Axios interceptor khi Refresh Token không còn hợp lệ.
   useEffect(() => {
     const handleExpired = () => finishExpiredSession(true);
     window.addEventListener('pfm:auth-expired', handleExpired);
     return () => window.removeEventListener('pfm:auth-expired', handleExpired);
   }, [finishExpiredSession]);
 
-  // Timer tuyệt đối: không bị kéo dài khi Access/Refresh Token được xoay vòng.
-  useEffect(() => {
-    if (!token) return undefined;
-
-    const expiresAt = Number(getStoredValue(SESSION_EXPIRES_AT) || 0);
-    if (!expiresAt) return undefined;
-
-    const remaining = expiresAt - Date.now();
-    if (remaining <= 0) {
-      finishExpiredSession(true);
-      return undefined;
-    }
-
-    const timeoutId = window.setTimeout(
-      () => finishExpiredSession(true),
-      remaining
-    );
-
-    return () => window.clearTimeout(timeoutId);
-  }, [token, finishExpiredSession]);
-
-  // Đồng bộ đăng xuất khi người dùng đăng xuất/hết hạn ở tab khác.
+  // Đồng bộ đăng xuất giữa các tab, không tự đặt thời hạn phiên ở Frontend.
   useEffect(() => {
     const handleStorage = (event) => {
-      if (
-        event.key === ACCESS ||
-        event.key === SESSION_EXPIRES_AT ||
-        event.key === null
-      ) {
+      if (event.key === ACCESS || event.key === null) {
         const currentToken = getStoredValue(ACCESS);
-        const expiresAt = Number(getStoredValue(SESSION_EXPIRES_AT) || 0);
-
-        if (!currentToken || !expiresAt || Date.now() >= expiresAt) {
-          if (token) finishExpiredSession(false);
+        if (!currentToken && token) {
+          finishExpiredSession(false);
         }
       }
     };
@@ -122,12 +88,9 @@ export function AuthProvider({ children }) {
     clearStoredSession();
 
     const storage = remember ? localStorage : sessionStorage;
-    const expiresAt = Date.now() + SESSION_DURATION_MS;
-
     storage.setItem(ACCESS, nextToken);
     if (refreshToken) storage.setItem(REFRESH, refreshToken);
     storage.setItem(USER, JSON.stringify(userData || {}));
-    storage.setItem(SESSION_EXPIRES_AT, String(expiresAt));
 
     setToken(nextToken);
     setUser(userData || {});
