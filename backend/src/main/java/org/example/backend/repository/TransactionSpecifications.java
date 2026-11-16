@@ -13,7 +13,7 @@ import java.util.Locale;
  * (nghĩa là bỏ qua điều kiện đó) để ghép tùy ý bằng Specification.where(...).and(...).
  * Riêng inFamily luôn được áp dụng để mọi truy vấn đều nằm trong phạm vi một gia đình.
  */
-public class TransactionSpecifications {
+public final class TransactionSpecifications {
 
     /** Ký tự escape cho LIKE, dùng '!' để tránh rắc rối với dấu gạch chéo ngược trong MySQL. */
     private static final char LIKE_ESCAPE = '!';

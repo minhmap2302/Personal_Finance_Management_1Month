@@ -24,7 +24,7 @@ public interface InvitationService {
     InvitationResponse sendInvitation(Long userId, Long familyId, SendInvitationRequest request);
 
     /** Lời mời gửi cho chính người dùng, theo trạng thái, mới nhất trước. */
-    List<InvitationResponse> getMyInvitations(Long userId, InvitationStatus status);
+    Page<InvitationResponse> getMyInvitations(Long userId, InvitationStatus status, Pageable pageable);
 
     /** Chi tiết một lời mời gửi cho chính người dùng. */
     InvitationResponse getMyInvitation(Long userId, Long invitationId);

@@ -8,6 +8,7 @@ import org.example.backend.repository.RefreshTokenRepository;
 import org.example.backend.repository.UserRepository;
 import org.example.backend.service.AdminUserService;
 import org.example.backend.service.FamilyMemberService;
+import org.example.backend.service.SessionTerminationService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,7 @@ public class AdminUserServiceImpl implements AdminUserService {
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final FamilyMemberService familyMemberService;
+    private final SessionTerminationService sessionTerminationService;
 
     @Override
     @Transactional(readOnly = true)
@@ -48,8 +50,16 @@ public class AdminUserServiceImpl implements AdminUserService {
         // (ví dụ chuyển quyền cho chính người này) chỉ chạy sau khi enabled = false đã commit và sẽ bị từ chối.
         familyMemberService.handOverOwnedFamilies(userId);
 
+        // Khóa tài khoản thật sự: tài khoản bị vô hiệu hóa, không cho login mới và chặn mọi request
+        // tiếp theo vì JWT filter sẽ kiểm tra user.isEnabled() == false.
         user.setEnabled(false);
-        refreshTokenRepository.revokeAllByUser(user);
+
+        // Thu hồi toàn bộ refresh token để không còn phiên đăng nhập hợp lệ.
+        sessionTerminationService.revokeRefreshTokens(user);
+
+        // Nếu tiến trình hiện có đang dùng access token, cần invalidation theo jti ở tầng request.
+        // Ở đây không có auth header của user đang active, nên phần chặn bắt buộc được thực hiện
+        // bởi JwtAuthenticationFilter khi đọc user bị disabled và bởi refresh-token revocation.
         return UserResponse.fromEntity(userRepository.save(user));
     }
 
