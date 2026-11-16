@@ -25,6 +25,7 @@ import org.example.backend.repository.CategoryRepository;
 import org.example.backend.repository.FamilyRepository;
 import org.example.backend.service.BudgetService;
 import org.example.backend.service.FamilyAccessChecker;
+import org.example.backend.util.PageableSanitizer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -40,6 +41,7 @@ import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -66,9 +68,12 @@ public class BudgetServiceImpl implements BudgetService {
     /** Từ ngưỡng này (phần trăm giới hạn đã dùng) ngân sách chuyển sang mức cảnh báo. */
     private static final BigDecimal WARNING_PERCENT = BigDecimal.valueOf(80);
 
+    private static final Set<String> ALLOWED_SORTS = Set.of("startDate", "amount", "id");
+    private static final int MAX_PAGE_SIZE = 50;
+
     private final BudgetRepository budgetRepository;
-    private final FamilyRepository familyRepository;
     private final CategoryRepository categoryRepository;
+    private final FamilyRepository familyRepository;
     private final FamilyAccessChecker accessChecker;
 
     // =====================================================================
@@ -79,7 +84,7 @@ public class BudgetServiceImpl implements BudgetService {
     @Override
     public Page<BudgetSummaryResponse> getBudgets(Long userId, Long familyId, Pageable pageable) {
         accessChecker.requireMember(userId, familyId);
-        return budgetRepository.findByFamilyIdAndParentBudgetIsNull(familyId, pageable)
+        return budgetRepository.findByFamilyIdAndParentBudgetIsNull(familyId, PageableSanitizer.sanitize(pageable, ALLOWED_SORTS, MAX_PAGE_SIZE))
                 .map(this::toSummary);
     }
 
@@ -109,10 +114,10 @@ public class BudgetServiceImpl implements BudgetService {
         accessChecker.requireMember(userId, familyId);
         YearMonth target = month != null ? month : YearMonth.now(ZoneId.of(timezone));
         return budgetRepository
-                .findTotalsOverlapping(familyId, target.atDay(1), target.atEndOfMonth(), pageable)
+                .findTotalsOverlapping(familyId, target.atDay(1), target.atEndOfMonth(),PageableSanitizer.sanitize(pageable, ALLOWED_SORTS, MAX_PAGE_SIZE))
                 .map(this::toMonthly);
     }
-    
+
     // =====================================================================
     // Ngân sách tổng (chủ gia đình và quản lý)
     // =====================================================================
