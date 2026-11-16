@@ -35,6 +35,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.NumberFormat;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -54,6 +55,7 @@ public class ChatbotServiceImpl implements ChatbotService {
     private static final Locale LOCALE_VN = new Locale("vi", "VN");
     private static final BigDecimal HUNDRED = BigDecimal.valueOf(100);
     private static final BigDecimal ZERO = BigDecimal.ZERO;
+    
 
     private final FamilyAccessChecker familyAccessChecker;
     private final UserRepository userRepository;
@@ -65,10 +67,10 @@ public class ChatbotServiceImpl implements ChatbotService {
     @Autowired(required = false)
     private ChatClient chatClient;
 
-    @Value("${OPENROUTER_MODEL:${OPENAI_MODEL:gpt-4o-mini}}")
+    @Value("${OPENAI_MODEL}")
     private String defaultModel;
 
-    @Value("${OPENROUTER_BASE_URL:${OPENAI_BASE_URL:https://openrouter.ai/api/v1}}")
+    @Value("${OPENAI_BASE_URL}")
     private String aiBaseUrl;
 
     @Override
@@ -91,7 +93,7 @@ public class ChatbotServiceImpl implements ChatbotService {
         // 2. Xác định khoảng thời gian phân tích
         LocalDate effectiveStart = (request.getStartDate() != null)
                 ? request.getStartDate()
-                : LocalDate.now(ZONE).withDayOfMonth(1);
+                : LocalDate.now(ZONE).withDayOfYear(1);
         LocalDate effectiveEnd = (request.getEndDate() != null)
                 ? request.getEndDate()
                 : LocalDate.now(ZONE);
@@ -102,11 +104,18 @@ public class ChatbotServiceImpl implements ChatbotService {
 
         // 3. Kiểm tra cấu hình AI ChatClient
         if (chatClient == null) {
-            log.error("[CHATBOT_ERROR] ChatClient chưa được cấu hình. Hãy kiểm tra OPENROUTER_API_KEY hoặc OPENAI_API_KEY trong .env");
+            log.error("[CHATBOT_ERROR] ChatClient chưa được cấu hình. Hãy kiểm tra AI_API_KEY hoặc OPENAI_API_KEY trong .env");
             throw new BadRequestException("Dịch vụ Chatbot AI chưa được kích hoạt hoặc chưa cấu hình API Key. Vui lòng kiểm tra lại cấu hình hệ thống");
         }
 
-        String chosenModel = StringUtils.hasText(request.getModel()) ? request.getModel().trim() : defaultModel;
+        String sanitizedMessage = StringUtils.trimWhitespace(request.getMessage());
+        if (sanitizedMessage.length() > 2000) {
+            throw new BadRequestException("Nội dung tin nhắn tối đa 2000 ký tự");
+        }
+
+        String chosenModel = StringUtils.hasText(request.getModel())
+                ? request.getModel().trim()
+                : defaultModel;
         String providerName = isOpenRouter() ? "OpenRouter" : "OpenAI";
 
         // 4. Tổng hợp dữ liệu tài chính gia đình (Read-Only)
@@ -123,14 +132,14 @@ public class ChatbotServiceImpl implements ChatbotService {
         try {
             answer = chatClient.prompt()
                     .system(systemPrompt)
-                    .user(request.getMessage())
+                    .user(sanitizedMessage)
+                    .options(OpenAiChatOptions.builder().model(chosenModel).replayReasoningContent(false))
                     .advisors(advisorSpec -> advisorSpec.param(ChatMemory.CONVERSATION_ID, conversationId))
-                    .options(OpenAiChatOptions.builder().model(chosenModel))
                     .call()
                     .content();
         } catch (Exception ex) {
             log.error("[CHATBOT_ERROR] Lỗi kết nối hoặc xử lý từ {}: {}", providerName, ex.getMessage(), ex);
-            throw new BadRequestException("Không thể kết nối đến dịch vụ AI lúc này: " + ex.getMessage());
+            throw new BadRequestException("Dịch vụ AI đang gặp sự cố, vui lòng thử lại sau");
         }
 
         log.info("[CHATBOT] Đã nhận câu trả lời phân tích thành công cho familyId={}", familyId);
@@ -170,7 +179,25 @@ public class ChatbotServiceImpl implements ChatbotService {
                 .append(netBalance.compareTo(ZERO) >= 0 ? " (Thặng dư dương)\n" : " (CẢNH BÁO: Bị thâm hụt!)\n");
         sb.append("- Số tiền đã đóng góp vào mục tiêu tiết kiệm: ").append(currencyFormat.format(totalSaved)).append("\n\n");
 
-        // 2. Phân bổ chi tiêu theo từng danh mục
+        // 2. Breakdown thu chi theo từng tháng
+        sb.append("--- THU CHI THEO TỪNG THÁNG ---\n");
+        YearMonth startMonth = YearMonth.from(startDate);
+        YearMonth endMonth = YearMonth.from(endDate);
+        for (YearMonth ym = startMonth; !ym.isAfter(endMonth); ym = ym.plusMonths(1)) {
+            LocalDate mStart = ym.atDay(1);
+            LocalDate mEnd = ym.atEndOfMonth();
+            BigDecimal mIncome = zeroIfNull(transactionRepository.sumByType(familyId, CategoryType.INCOME, mStart, mEnd));
+            BigDecimal mExpense = zeroIfNull(transactionRepository.sumByType(familyId, CategoryType.EXPENSE, mStart, mEnd));
+            BigDecimal mNet = mIncome.subtract(mExpense);
+            sb.append("Tháng ").append(String.format("%02d", ym.getMonthValue())).append("/").append(ym.getYear())
+                    .append(": Thu ").append(currencyFormat.format(mIncome))
+                    .append(" | Chi ").append(currencyFormat.format(mExpense))
+                    .append(" | Ròng ").append(mNet.compareTo(ZERO) >= 0 ? "+" : "").append(currencyFormat.format(mNet))
+                    .append("\n");
+        }
+        sb.append("\n");
+
+        // 3. Phân bổ chi tiêu theo từng danh mục
         sb.append("--- CƠ CẤU CHI TIÊU THEO DANH MỤC ---\n");
         List<CategorySpent> entries = budgetRepository.sumExpensesByCategory(familyId, CategoryType.EXPENSE, startDate, endDate);
         if (entries.isEmpty()) {
@@ -193,7 +220,7 @@ public class ChatbotServiceImpl implements ChatbotService {
             sb.append("\n");
         }
 
-        // 3. Tình hình Ngân sách và Nguy cơ vượt hạn mức
+        // 4. Tình hình Ngân sách và Nguy cơ vượt hạn mức
         sb.append("--- TÌNH HÌNH NGÂN SÁCH & CẢNH BÁO VƯỢT HẠN MỨC ---\n");
         Optional<Budget> currentBudget = budgetRepository.findTotalCoveringDate(familyId, endDate);
         if (currentBudget.isEmpty()) {
