@@ -80,13 +80,21 @@ export default function Members() {
   const [incoming, setIncoming] = useState([]);
   const [sent, setSent] = useState([]);
   const [sentLoading, setSentLoading] = useState(false);
+  const [sentPage, setSentPage] = useState(0);
+  const [sentTotalPages, setSentTotalPages] = useState(0);
+  const [sentTotalElements, setSentTotalElements] = useState(0);
+
+  const SENT_PAGE_SIZE = 5;
+
   const [cancelInvitation, setCancelInvitation] = useState(null);
   const [loading, setLoading] = useState(false);
   const [incomingLoading, setIncomingLoading] = useState(false);
   const [error, setError] = useState('');
+
   const setNotice = useCallback((notice) => {
     if (notice?.text) toast(notice.text, notice.type || 'info');
   }, [toast]);
+
   const [keyword, setKeyword] = useState('');
   const [inviteQuery, setInviteQuery] = useState('');
   const [matches, setMatches] = useState([]);
@@ -148,12 +156,37 @@ export default function Members() {
   const loadSent = useCallback(async () => {
     if (!activeFamilyId || !canInvite) {
       setSent([]);
+      setSentTotalPages(0);
+      setSentTotalElements(0);
       return;
     }
+
     setSentLoading(true);
+
     try {
-      const data = await familyApi.sentInvitations(activeFamilyId, { page: 0, size: 50 });
-      setSent(getPageRows(data));
+      const data = await familyApi.sentInvitations(activeFamilyId, {
+        page: sentPage,
+        size: SENT_PAGE_SIZE,
+      });
+
+      if (Array.isArray(data)) {
+        setSent(data);
+        setSentTotalElements(data.length);
+        setSentTotalPages(data.length > 0 ? 1 : 0);
+      } else {
+        const rows = data?.content || [];
+        const totalPages = data?.totalPages || 0;
+
+        // Nếu trang hiện tại không còn dữ liệu, quay lại trang trước.
+        if (rows.length === 0 && sentPage > 0 && sentPage >= totalPages) {
+          setSentPage((page) => Math.max(0, page - 1));
+          return;
+        }
+
+        setSent(rows);
+        setSentTotalPages(totalPages);
+        setSentTotalElements(data?.totalElements || 0);
+      }
     } catch (err) {
       setNotice({
         type: 'error',
@@ -162,18 +195,29 @@ export default function Members() {
     } finally {
       setSentLoading(false);
     }
-  }, [activeFamilyId, canInvite, setNotice]);
+  }, [activeFamilyId, canInvite, sentPage, setNotice]);
 
+  // Hủy lời mời đã gửi.
   async function cancelSentInvite() {
     if (!cancelInvitation || !activeFamilyId) return;
+
     setActionBusy(true);
+
     try {
       await familyApi.cancelSentInvitation(activeFamilyId, cancelInvitation.id);
-      setNotice({ type: 'success', text: 'Đã hủy lời mời thành công.' });
+
+      setNotice({
+        type: 'success',
+        text: 'Đã hủy lời mời thành công.',
+      });
+
       setCancelInvitation(null);
       await loadSent();
     } catch (err) {
-      setNotice({ type: 'error', text: getErrorMessage(err, 'Không thể hủy lời mời.') });
+      setNotice({
+        type: 'error',
+        text: getErrorMessage(err, 'Không thể hủy lời mời.'),
+      });
     } finally {
       setActionBusy(false);
     }
@@ -186,6 +230,10 @@ export default function Members() {
   useEffect(() => {
     loadIncoming();
   }, [loadIncoming]);
+
+  useEffect(() => {
+    setSentPage(0);
+  }, [activeFamilyId]);
 
   useEffect(() => {
     loadSent();
@@ -277,6 +325,7 @@ export default function Members() {
       });
 
       await loadSent();
+
       setMatches((rows) =>
           rows.map((row) =>
               row.userId === target.userId
@@ -370,7 +419,6 @@ export default function Members() {
           )}
         </header>
 
-        {/* Thông báo */}
         {/* Lời mời đến - luôn hiển thị dù chưa có gia đình */}
         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
           <div className="mb-4 flex items-center justify-between">
@@ -384,8 +432,8 @@ export default function Members() {
             </div>
 
             <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700">
-            {incoming.length} đang chờ
-          </span>
+              {incoming.length} đang chờ
+            </span>
           </div>
 
           {incomingLoading ? (
@@ -410,9 +458,9 @@ export default function Members() {
                         className="rounded-xl border border-amber-100 bg-amber-50/50 p-4"
                     >
                       <div className="flex items-start gap-3">
-                  <span className="grid h-10 w-10 place-items-center rounded-xl bg-white text-amber-700">
-                    <Users size={18} />
-                  </span>
+                        <span className="grid h-10 w-10 place-items-center rounded-xl bg-white text-amber-700">
+                          <Users size={18} />
+                        </span>
 
                         <div className="min-w-0 flex-1">
                           <b className="block text-sm text-slate-900">
@@ -460,51 +508,110 @@ export default function Members() {
             <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
               <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
                 <div>
-                  <h2 className="font-extrabold text-slate-900">Lịch sử lời mời đã gửi</h2>
-                  <p className="mt-1 text-xs text-slate-500">Theo dõi trạng thái và hủy những lời mời chưa được phản hồi.</p>
+                  <h2 className="font-extrabold text-slate-900">
+                    Lịch sử lời mời đã gửi
+                  </h2>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Theo dõi trạng thái và hủy những lời mời chưa được phản hồi.
+                  </p>
                 </div>
-                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">{sent.length} lời mời</span>
+
+                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">
+                  {sent.length} / {sentTotalElements} lời mời
+                </span>
               </div>
+
               {sentLoading ? (
-                  <p className="py-6 text-center text-sm text-slate-400">Đang tải lịch sử lời mời…</p>
+                  <p className="py-6 text-center text-sm text-slate-400">
+                    Đang tải lịch sử lời mời…
+                  </p>
               ) : sent.length === 0 ? (
                   <div className="rounded-xl border border-dashed border-slate-200 py-7 text-center text-sm text-slate-500">
                     Bạn chưa gửi lời mời nào trong gia đình này.
                   </div>
               ) : (
-                  <div className="divide-y divide-slate-100">
-                    {sent.map((invitation) => {
-                      const status = String(invitation.status || 'PENDING').toUpperCase();
-                      const statusMeta = {
-                        PENDING: ['Đang chờ', 'bg-amber-50 text-amber-700'],
-                        ACCEPTED: ['Đã chấp nhận', 'bg-emerald-50 text-emerald-700'],
-                        DECLINED: ['Đã từ chối', 'bg-rose-50 text-rose-700'],
-                        CANCELLED: ['Đã hủy', 'bg-slate-100 text-slate-600'],
-                      }[status] || [status, 'bg-slate-100 text-slate-600'];
-                      return (
-                          <div key={invitation.id} className="flex flex-wrap items-center gap-3 py-3">
-                            <UserAvatar name={invitation.invitedUserFullName || invitation.fullName || invitation.username || invitation.invitedUsername || 'Người dùng'} size="sm"/>
-                            <div className="min-w-0 flex-1">
-                              <b className="block truncate text-sm text-slate-800">
-                                {invitation.invitedUserFullName || invitation.fullName || invitation.username || invitation.invitedUsername || 'Người được mời'}
-                              </b>
-                              <small className="text-xs text-slate-400">
-                                @{invitation.invitedUsername || invitation.username || '—'} · {dateLabel(invitation.createdAt)}
-                              </small>
+                  <>
+                    <div className="divide-y divide-slate-100">
+                      {sent.map((invitation) => {
+                        const status = String(invitation.status || 'PENDING').toUpperCase();
+
+                        const statusMeta = {
+                          PENDING: ['Đang chờ', 'bg-amber-50 text-amber-700'],
+                          ACCEPTED: ['Đã chấp nhận', 'bg-emerald-50 text-emerald-700'],
+                          DECLINED: ['Đã từ chối', 'bg-rose-50 text-rose-700'],
+                          CANCELLED: ['Đã hủy', 'bg-slate-100 text-slate-600'],
+                        }[status] || [status, 'bg-slate-100 text-slate-600'];
+
+                        return (
+                            <div key={invitation.id} className="flex flex-wrap items-center gap-3 py-3">
+                              <UserAvatar
+                                  name={invitation.invitedUserFullName || invitation.fullName || invitation.username || invitation.invitedUsername || 'Người dùng'}
+                                  size="sm"
+                              />
+
+                              <div className="min-w-0 flex-1">
+                                <b className="block truncate text-sm text-slate-800">
+                                  {invitation.invitedUserFullName || invitation.fullName || invitation.username || invitation.invitedUsername || 'Người được mời'}
+                                </b>
+
+                                <small className="text-xs text-slate-400">
+                                  @{invitation.invitedUsername || invitation.username || '—'} · {dateLabel(invitation.createdAt)}
+                                </small>
+                              </div>
+
+                              <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${statusMeta[1]}`}>
+                                {statusMeta[0]}
+                              </span>
+
+                              {status === 'PENDING' && (
+                                  <button
+                                      type="button"
+                                      onClick={() => setCancelInvitation(invitation)}
+                                      className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 px-3 py-2 text-xs font-bold text-rose-600 transition hover:bg-rose-50"
+                                  >
+                                    <Ban size={14} /> Hủy lời mời
+                                  </button>
+                              )}
                             </div>
-                            <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${statusMeta[1]}`}>
-                        {statusMeta[0]}
-                      </span>
-                            {status === 'PENDING' && (
-                                <button type="button" onClick={() => setCancelInvitation(invitation)}
-                                        className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 px-3 py-2 text-xs font-bold text-rose-600 transition hover:bg-rose-50">
-                                  <Ban size={14}/> Hủy lời mời
-                                </button>
-                            )}
+                        );
+                      })}
+                    </div>
+
+                    {/* Thanh phân trang */}
+                    {sentTotalPages > 1 && (
+                        <div className="mt-4 flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                          <span className="text-sm font-medium text-slate-600">
+                            Tổng số lời mời: {sentTotalElements}
+                          </span>
+
+                          <div className="flex items-center gap-3">
+                            <button
+                                type="button"
+                                disabled={sentPage === 0 || sentLoading}
+                                onClick={() => setSentPage((page) => Math.max(0, page - 1))}
+                                className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-40"
+                            >
+                              Trước
+                            </button>
+
+                            <span className="min-w-[48px] text-center text-sm font-bold text-slate-800">
+                              {sentPage + 1} / {sentTotalPages}
+                            </span>
+
+                            <button
+                                type="button"
+                                disabled={sentPage >= sentTotalPages - 1 || sentLoading}
+                                onClick={() =>
+                                    setSentPage((page) => Math.min(sentTotalPages - 1, page + 1))
+                                }
+                                className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-40"
+                            >
+                              Sau
+                            </button>
                           </div>
-                      );
-                    })}
-                  </div>
+                        </div>
+                    )}
+                  </>
               )}
             </section>
         )}
@@ -525,8 +632,8 @@ export default function Members() {
                   </div>
 
                   <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">
-                {members.length} thành viên
-              </span>
+                    {members.length} thành viên
+                  </span>
                 </div>
 
                 <label className="relative mb-4 block max-w-sm">
@@ -560,7 +667,7 @@ export default function Members() {
                     <div className="overflow-x-auto">
                       <table className="w-full min-w-[620px] text-left rounded-xl overflow-hidden">
                         <thead>
-                        <tr className="border-b border-slate-100 text-[11px] uppercase tracking-wider text-slate-400 ">
+                        <tr className="border-b border-slate-100 text-[11px] uppercase tracking-wider text-slate-400">
                           <th className="p-3 font-bold">Thành viên</th>
                           <th className="p-3 font-bold">Vai trò</th>
                           <th className="p-3 font-bold">Ngày tham gia</th>
@@ -573,6 +680,7 @@ export default function Members() {
                         <tbody className="divide-y divide-slate-100">
                         {visibleMembers.map((member) => {
                           const role = roleMeta[member.role] || roleMeta.MEMBER;
+
                           const self =
                               currentUserId != null &&
                               String(currentUserId) === String(member.userId);
@@ -585,28 +693,29 @@ export default function Members() {
                                         name={member.fullName || member.username}
                                         size="sm"
                                     />
+
                                     <span>
-                                <b className="block text-sm text-slate-800">
-                                  {member.fullName || member.username}
-                                  {self && (
-                                      <small className="ml-2 font-normal text-emerald-700">
-                                        (Bạn)
+                                      <b className="block text-sm text-slate-800">
+                                        {member.fullName || member.username}
+
+                                        {self && (
+                                            <small className="ml-2 font-normal text-emerald-700">
+                                              (Bạn)
+                                            </small>
+                                        )}
+                                      </b>
+
+                                      <small className="text-xs text-slate-400">
+                                        @{member.username}
                                       </small>
-                                  )}
-                                </b>
-                                <small className="text-xs text-slate-400">
-                                  @{member.username}
-                                </small>
-                              </span>
+                                    </span>
                                   </div>
                                 </td>
 
                                 <td className="p-3">
-                            <span
-                                className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${role.className}`}
-                            >
-                              {role.label}
-                            </span>
+                                  <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${role.className}`}>
+                                    {role.label}
+                                  </span>
                                 </td>
 
                                 <td className="p-3 text-xs text-slate-500">
@@ -721,18 +830,18 @@ export default function Members() {
                                 />
 
                                 <span className="min-w-0 flex-1">
-                        <b className="block text-sm text-slate-800">
-                          {target.fullName || target.username}
-                        </b>
-                        <small className="text-xs text-slate-400">
-                          @{target.username}
-                        </small>
-                      </span>
+                                  <b className="block text-sm text-slate-800">
+                                    {target.fullName || target.username}
+                                  </b>
+                                  <small className="text-xs text-slate-400">
+                                    @{target.username}
+                                  </small>
+                                </span>
 
                                 {target.alreadyInvited ? (
                                     <span className="text-xs font-semibold text-amber-700">
-                          Đã gửi lời mời
-                        </span>
+                                      Đã gửi lời mời
+                                    </span>
                                 ) : (
                                     <button
                                         disabled={sendingId === target.userId}
