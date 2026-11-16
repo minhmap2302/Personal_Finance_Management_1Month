@@ -15,6 +15,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+
 @Service
 @RequiredArgsConstructor
 public class AdminUserServiceImpl implements AdminUserService {
@@ -60,6 +62,9 @@ public class AdminUserServiceImpl implements AdminUserService {
         // Nếu tiến trình hiện có đang dùng access token, cần invalidation theo jti ở tầng request.
         // Ở đây không có auth header của user đang active, nên phần chặn bắt buộc được thực hiện
         // bởi JwtAuthenticationFilter khi đọc user bị disabled và bởi refresh-token revocation.
+        // Mọi access token cấp trước thời điểm này mất hiệu lực vĩnh viễn, kể cả sau khi mở khóa.
+        user.setTokensValidFrom(Instant.now());
+        refreshTokenRepository.revokeAllByUser(user);
         return UserResponse.fromEntity(userRepository.save(user));
     }
 
@@ -71,6 +76,7 @@ public class AdminUserServiceImpl implements AdminUserService {
             return UserResponse.fromEntity(user);
         }
 
+        // Không đụng tới tokensValidFrom: token cũ vẫn chết, người dùng phải đăng nhập lại để lấy token mới.
         user.setEnabled(true);
         return UserResponse.fromEntity(userRepository.save(user));
     }
