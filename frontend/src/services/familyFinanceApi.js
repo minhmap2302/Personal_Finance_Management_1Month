@@ -28,6 +28,11 @@ export const familyApi = {
 
   cancelSentInvitation: (familyId, invitationId) =>
       unwrap(api.post(`/api/v1/families/${familyId}/invitations/${invitationId}/cancel`)),
+  // sentInvitations: (familyId, params = {}) =>
+  //     unwrap(api.get(`/api/v1/api/v1/families/${familyId}/invitations`, { params })),
+  //
+  // cancelSentInvitation: (familyId, invitationId) =>
+  //     unwrap(api.post(`/api/v1/api/v1/families/${familyId}/invitations/${invitationId}/cancel`)),
   myInvitations: (status = 'PENDING') => unwrap(api.get('/api/v1/invitations', { params: { status } })),
   acceptInvitation: (id) => unwrap(api.post(`/api/v1/invitations/${id}/accept`)),
   declineInvitation: (id) => unwrap(api.post(`/api/v1/invitations/${id}/decline`)),
