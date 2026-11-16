@@ -1,9 +1,11 @@
 package org.example.backend.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.example.backend.exception.ForbiddenException;
 import org.example.backend.exception.ResourceNotFoundException;
 import org.example.backend.model.dto.response.UserResponse;
 import org.example.backend.model.entity.User;
+import org.example.backend.model.enums.SystemRole;
 import org.example.backend.repository.RefreshTokenRepository;
 import org.example.backend.repository.UserRepository;
 import org.example.backend.service.AdminUserService;
@@ -44,6 +46,12 @@ public class AdminUserServiceImpl implements AdminUserService {
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public UserResponse lockUser(Long userId) {
         User user = getUserById(userId);
+
+        // Tài khoản quản trị không bị khóa, để không có tình huống mọi admin bị khóa hết và không ai mở khóa được.
+        if (user.getRole() == SystemRole.ADMIN) {
+            throw new ForbiddenException("Không thể khóa tài khoản quản trị");
+        }
+
         if (!user.isEnabled()) {
             return UserResponse.fromEntity(user);
         }
@@ -52,19 +60,15 @@ public class AdminUserServiceImpl implements AdminUserService {
         // (ví dụ chuyển quyền cho chính người này) chỉ chạy sau khi enabled = false đã commit và sẽ bị từ chối.
         familyMemberService.handOverOwnedFamilies(userId);
 
-        // Khóa tài khoản thật sự: tài khoản bị vô hiệu hóa, không cho login mới và chặn mọi request
-        // tiếp theo vì JWT filter sẽ kiểm tra user.isEnabled() == false.
+        // Chặn đăng nhập mới. JwtAuthenticationFilter cũng kiểm tra isEnabled() ở mọi request.
         user.setEnabled(false);
+
+        // Mọi access token cấp trước thời điểm này mất hiệu lực vĩnh viễn, kể cả sau khi mở khóa.
+        user.setTokensValidFrom(Instant.now());
 
         // Thu hồi toàn bộ refresh token để không còn phiên đăng nhập hợp lệ.
         sessionTerminationService.revokeRefreshTokens(user);
 
-        // Nếu tiến trình hiện có đang dùng access token, cần invalidation theo jti ở tầng request.
-        // Ở đây không có auth header của user đang active, nên phần chặn bắt buộc được thực hiện
-        // bởi JwtAuthenticationFilter khi đọc user bị disabled và bởi refresh-token revocation.
-        // Mọi access token cấp trước thời điểm này mất hiệu lực vĩnh viễn, kể cả sau khi mở khóa.
-        user.setTokensValidFrom(Instant.now());
-        refreshTokenRepository.revokeAllByUser(user);
         return UserResponse.fromEntity(userRepository.save(user));
     }
 
