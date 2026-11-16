@@ -14,6 +14,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
@@ -61,6 +62,10 @@ public class User implements UserDetails {
     @Column(name = "role", nullable = false, length = 20)
     @Builder.Default
     private SystemRole role = SystemRole.USER;
+
+    /** Access token cấp trước (hoặc cùng giây với) mốc này bị từ chối. Null = chưa thu hồi lần nào. */
+    @Column(name = "tokens_valid_from")
+    private Instant tokensValidFrom;
 
     /** Trạng thái kích hoạt tài khoản (dùng cho Spring Security isEnabled). */
     @Column(name = "enabled", nullable = false)
