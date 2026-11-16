@@ -99,12 +99,12 @@ public class AuthServiceImpl implements AuthService {
             throw new BadCredentialsException("Tên đăng nhập hoặc mật khẩu không chính xác");
         }
 
-        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new BadCredentialsException("Tên đăng nhập hoặc mật khẩu không chính xác");
-        }
-
         if (!user.isEnabled()) {
             throw new DisabledException("Tài khoản của bạn đã bị vô hiệu hóa hoặc bị khóa");
+        }
+
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            throw new BadCredentialsException("Tên đăng nhập hoặc mật khẩu không chính xác");
         }
 
         String accessToken = jwtService.generateToken(user);
@@ -147,6 +147,11 @@ public class AuthServiceImpl implements AuthService {
                             .build();
                     invalidatedTokenRepository.save(invalidatedToken);
                 }
+
+                Long userId = jwtService.extractUserId(token);
+                if (userId != null) {
+                    userRepository.findById(userId).ifPresent(refreshTokenRepository::revokeAllByUser);
+                }
             } catch (Exception e) {
                 log.warn("Không thể lưu token bị thu hồi: {}", e.getMessage());
             }
@@ -178,18 +183,8 @@ public class AuthServiceImpl implements AuthService {
         User user = refreshToken.getUser();
 
         if (refreshToken.isRevoked()) {
-            LocalDateTime updatedAt = refreshToken.getUpdatedAt();
-            Instant lastTouched = updatedAt != null
-                    ? updatedAt.atZone(ZoneId.systemDefault()).toInstant()
-                    : Instant.now();
-            long secondsSinceUpdate = Duration.between(lastTouched, Instant.now()).getSeconds();
-
-            if (secondsSinceUpdate <= reuseGraceSeconds) {
-                throw new UnauthorizedException("Refresh token đã được sử dụng, vui lòng thử lại");
-            }
-
             refreshTokenRepository.revokeAllByUser(user);
-            log.warn("Cảnh báo an ninh: Phát hiện tái sử dụng Refresh Token quá grace period cho user ID: {}", user.getId());
+            log.warn("Cảnh báo an ninh: Phát hiện tái sử dụng Refresh Token cho user ID: {}", user.getId());
             throw new UnauthorizedException("Refresh token đã bị thu hồi. Toàn bộ phiên đăng nhập đã bị hủy vì lý do an toàn");
         }
 
