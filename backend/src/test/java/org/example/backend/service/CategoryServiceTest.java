@@ -1,5 +1,6 @@
 package org.example.backend.service;
 
+import org.example.backend.exception.BadRequestException;
 import org.example.backend.exception.ConflictException;
 import org.example.backend.model.dto.request.CreateCategoryRequest;
 import org.example.backend.model.dto.request.UpdateCategoryRequest;
@@ -16,19 +17,17 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.*;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -112,17 +111,34 @@ class CategoryServiceTest {
 
     @Test
     @DisplayName("getCategories - trả về page danh mục")
+    @SuppressWarnings("unchecked")
     void getCategories_success() {
-        PageRequest pageable = PageRequest.of(0, 10);
-        Page<Category> page = new PageImpl<>(List.of(category), pageable, 1);
+            PageRequest pageable = PageRequest.of(0, 10);
+            Page<Category> page = new PageImpl<>(List.of(category), pageable, 1);
 
-        when(categoryRepository.search(null, "", CategoryType.EXPENSE, false, pageable))
-                .thenReturn(page);
+            // Service tự dựng Pageable mới (giới hạn size, thêm id làm tiêu chí phụ) nên không so khớp đúng đối tượng cũ.
+            when(categoryRepository.findAll(any(Specification.class), any(Pageable.class)))
+                    .thenReturn(page);
 
-        Page<CategoryResponse> result = categoryService.getCategories(currentUser, null, "", CategoryType.EXPENSE, false, pageable);
+            Page<CategoryResponse> result =
+                    categoryService.getCategories(currentUser, null, "", CategoryType.EXPENSE, false, pageable);
 
-        assertNotNull(result);
-        assertEquals(1, result.getTotalElements());
-        assertEquals("Ăn uống", result.getContent().get(0).getName());
+            assertNotNull(result);
+            assertEquals(1, result.getTotalElements());
+            assertEquals("Ăn uống", result.getContent().get(0).getName());
+
+            ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
+            verify(categoryRepository).findAll(any(Specification.class), captor.capture());
+            assertTrue(captor.getValue().getPageSize() <= 50);
+            assertNotNull(captor.getValue().getSort().getOrderFor("id"));
+        }
+
+    @Test
+    @DisplayName("getCategories - sort theo trường không cho phép thì 400")
+    void getCategories_invalidSort() {
+        PageRequest pageable = PageRequest.of(0, 10, Sort.by("password"));
+
+        assertThrows(BadRequestException.class, () ->
+                categoryService.getCategories(currentUser, null, "", null, false, pageable));
     }
-}
+    }

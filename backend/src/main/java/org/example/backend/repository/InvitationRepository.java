@@ -7,7 +7,11 @@ import org.example.backend.model.enums.InvitationStatus;
 import org.example.backend.model.enums.SystemRole;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.*;
+import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.Collection;
@@ -20,8 +24,9 @@ public interface InvitationRepository extends JpaRepository<Invitation, Long> {
 
     long countByInvitedUserIdAndStatus(Long invitedUserId, InvitationStatus status);
 
+    /** Lời mời gửi cho người dùng này theo trạng thái, có phân trang (thứ tự do Pageable quyết định). */
     @EntityGraph(attributePaths = {"family", "invitedUser", "invitedBy"})
-    List<Invitation> findByInvitedUserIdAndStatusOrderByCreatedAtDesc(Long invitedUserId, InvitationStatus status);
+    Page<Invitation> findByInvitedUserIdAndStatus(Long invitedUserId, InvitationStatus status, Pageable pageable);
 
     /**
      * Lấy lời mời của chính người dùng và khóa dòng để chấp nhận/từ chối không bị xử lý hai lần
@@ -40,13 +45,15 @@ public interface InvitationRepository extends JpaRepository<Invitation, Long> {
 
     /**
      * Tìm người dùng có thể mời: đang hoạt động, không phải vai trò excludedRole (admin hệ thống)
-     * và chưa là thành viên của gia đình. keyword đã được chuyển về chữ thường.
+     * và chưa là thành viên của gia đình.
+     * pattern đã ở dạng chữ thường, đã thêm % hai đầu và đã escape %, _ bằng ký tự '!'
+     * (để người dùng gõ % hoặc _ không biến thành ký tự đại diện).
      */
     @Query("select u from User u "
             + "where u.enabled = true and u.role <> :excludedRole "
-            + "and lower(u.username) like concat('%', :keyword, '%') "
+            + "and lower(u.username) like :pattern escape '!' "
             + "and u.id not in (select m.user.id from FamilyMember m where m.family.id = :familyId)")
-    Page<User> searchInvitableUsers(@Param("keyword") String keyword,
+    Page<User> searchInvitableUsers(@Param("pattern") String pattern,
                                     @Param("excludedRole") SystemRole excludedRole,
                                     @Param("familyId") Long familyId,
                                     Pageable pageable);

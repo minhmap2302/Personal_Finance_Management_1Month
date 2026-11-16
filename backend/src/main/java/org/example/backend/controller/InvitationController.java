@@ -10,20 +10,26 @@ import org.example.backend.model.entity.User;
 import org.example.backend.model.enums.InvitationStatus;
 import org.example.backend.service.InvitationService;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * API lời mời vào gia đình.
  * Phía gia đình (tìm người, gửi lời mời) nằm dưới /api/v1/families/{familyId}/invitations,
  * phía người được mời (xem, chấp nhận, từ chối) nằm dưới /api/v1/invitations.
+ * Tham số sort chỉ nhận các trường được phép (sai thì 400), kích thước trang bị giới hạn ở service.
  */
 @RestController
 @RequestMapping("/api/v1")
@@ -40,7 +46,7 @@ public class InvitationController {
             @AuthenticationPrincipal User currentUser,
             @PathVariable Long familyId,
             @RequestParam String username,
-            @PageableDefault(size = 10) Pageable pageable) {
+            @PageableDefault(size = 10, sort = "username") Pageable pageable) {
         Page<UserSearchResponse> data =
                 invitationService.searchUsers(currentUser.getId(), familyId, username, pageable);
         return ResponseEntity.ok(ApiResponse.success("Tìm kiếm người dùng thành công", data));
@@ -61,10 +67,9 @@ public class InvitationController {
             @AuthenticationPrincipal User currentUser,
             @PathVariable Long familyId,
             @RequestParam(required = false) InvitationStatus status,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        Page<InvitationResponse> result = invitationService.getSentInvitations(
-                currentUser.getId(), familyId, status, PageRequest.of(page, size));
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        Page<InvitationResponse> result =
+                invitationService.getSentInvitations(currentUser.getId(), familyId, status, pageable);
         return ResponseEntity.ok(ApiResponse.success("Lấy danh sách lời mời đã gửi thành công", result));
     }
 
@@ -94,14 +99,17 @@ public class InvitationController {
         invitationService.deleteSentInvitation(currentUser.getId(), familyId, invitationId);
         return ResponseEntity.ok(ApiResponse.success("Đã xóa lời mời"));
     }
+
     // ------------------------- Phía người được mời -------------------------
 
-    /** Lời mời gửi cho tôi, mặc định là các lời mời đang chờ. */
+    /** Lời mời gửi cho tôi, mặc định là các lời mời đang chờ, mới nhất trước, có phân trang. */
     @GetMapping("/invitations")
-    public ResponseEntity<ApiResponse<List<InvitationResponse>>> getMyInvitations(
+    public ResponseEntity<ApiResponse<Page<InvitationResponse>>> getMyInvitations(
             @AuthenticationPrincipal User currentUser,
-            @RequestParam(defaultValue = "PENDING") InvitationStatus status) {
-        List<InvitationResponse> data = invitationService.getMyInvitations(currentUser.getId(), status);
+            @RequestParam(defaultValue = "PENDING") InvitationStatus status,
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        Page<InvitationResponse> data =
+                invitationService.getMyInvitations(currentUser.getId(), status, pageable);
         return ResponseEntity.ok(ApiResponse.success("Lấy danh sách lời mời thành công", data));
     }
 
