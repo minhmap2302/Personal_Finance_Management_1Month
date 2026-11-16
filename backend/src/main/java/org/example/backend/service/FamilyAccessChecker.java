@@ -47,8 +47,17 @@ public class FamilyAccessChecker {
         if (!familyMemberRepository.existsByUserIdAndFamilyId(userId, familyId)) {
             throw new ResourceNotFoundException("Gia đình không tồn tại");
         }
+        lockFamily(familyId);
+        return requireRole(userId, familyId, minimum, message);
+    }
+
+    /**
+     * Chỉ khóa dòng gia đình, không kiểm tra người gọi. Dùng khi người gọi chưa là thành viên nhưng đã được xác thực
+     * theo cách khác, ví dụ người được mời chấp nhận lời mời (lời mời gửi đúng cho họ). Người gọi phải tự bảo đảm
+     * quyền trước khi gọi hàm này. Phải gọi trong giao dịch READ_COMMITTED.
+     */
+    public void lockFamily(Long familyId) {
         familyRepository.findByIdForUpdate(familyId)
                 .orElseThrow(() -> new ResourceNotFoundException("Gia đình không tồn tại"));
-        return requireRole(userId, familyId, minimum, message);
     }
 }

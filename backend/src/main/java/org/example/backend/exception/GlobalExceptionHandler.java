@@ -3,6 +3,7 @@ package org.example.backend.exception;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.example.backend.model.dto.response.ErrorResponse;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -88,6 +89,16 @@ public class GlobalExceptionHandler {
         return buildError(
                 HttpStatus.BAD_REQUEST,
                 getMessageOrDefault(ex, "Yêu cầu không hợp lệ"),
+                request.getRequestURI()
+        );
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponse> handleDataIntegrity(DataIntegrityViolationException ex, HttpServletRequest request) {
+        log.warn("Vi phạm ràng buộc dữ liệu", ex);
+        return buildError(
+                HttpStatus.CONFLICT,
+                getMessageOrDefault(ex, "Dữ liệu bị xung đột"),
                 request.getRequestURI()
         );
     }

@@ -9,7 +9,6 @@ import org.example.backend.model.dto.request.CreateCategoryRequest;
 import org.example.backend.model.dto.request.UpdateCategoryRequest;
 import org.example.backend.model.dto.response.CategoryResponse;
 import org.example.backend.model.entity.Category;
-import org.example.backend.model.entity.Family;
 import org.example.backend.model.entity.FamilyMember;
 import org.example.backend.model.entity.User;
 import org.example.backend.model.enums.CategoryType;
@@ -17,25 +16,45 @@ import org.example.backend.model.enums.FamilyRole;
 import org.example.backend.model.enums.SystemRole;
 import org.example.backend.repository.BudgetRepository;
 import org.example.backend.repository.CategoryRepository;
+import org.example.backend.repository.CategorySpecifications;
 import org.example.backend.repository.TransactionRepository;
 import org.example.backend.service.CategoryService;
 import org.example.backend.service.FamilyAccessChecker;
+import org.example.backend.util.PageableSanitizer;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Locale;
-import java.util.Objects;
+import java.util.Set;
 
+/**
+ * Nghiệp vụ danh mục.
+ * - Danh mục hệ thống (family = null): chỉ admin quản lý, không khóa dòng gia đình nào.
+ * - Danh mục tùy chỉnh: OWNER và MANAGER của gia đình quản lý, các thao tác ghi khóa dòng gia đình
+ *   (READ_COMMITTED) để hai yêu cầu cùng lúc không cùng vượt qua bước kiểm tra trùng tên.
+ * Phạm vi do người gọi khai báo bằng familyId: có familyId là danh mục của gia đình, không có là danh mục hệ thống.
+ * Quyền được kiểm tra trước khi tải danh mục, và tải theo đúng phạm vi đó, nên không ai dò ra được
+ * id danh mục của nơi khác.
+ */
 @Service
 @RequiredArgsConstructor
 public class CategoryServiceImpl implements CategoryService {
+
+    private static final Set<String> ALLOWED_SORTS = Set.of("name", "type", "id");
+    private static final int MAX_PAGE_SIZE = 50;
 
     private final CategoryRepository categoryRepository;
     private final BudgetRepository budgetRepository;
     private final TransactionRepository transactionRepository;
     private final FamilyAccessChecker familyAccessChecker;
+
+    // =====================================================================
+    // Đọc dữ liệu
+    // =====================================================================
 
     @Override
     @Transactional(readOnly = true)
@@ -53,10 +72,20 @@ public class CategoryServiceImpl implements CategoryService {
             visibleFamilyId = familyId;
         }
 
+        Specification<Category> spec = Specification
+                .where(CategorySpecifications.visibleTo(visibleFamilyId))
+                .and(CategorySpecifications.nameContains(normalizedKeyword))
+                .and(CategorySpecifications.hasType(type))
+                .and(CategorySpecifications.activeOnly(includeArchived));
+
         return categoryRepository
-                .search(visibleFamilyId, normalizedKeyword, type, includeArchived, pageable)
+                .findAll(spec, PageableSanitizer.sanitize(pageable, ALLOWED_SORTS, MAX_PAGE_SIZE))
                 .map(CategoryResponse::fromEntity);
     }
+
+    // =====================================================================
+    // Tạo
+    // =====================================================================
 
     @Override
     @Transactional
@@ -73,167 +102,98 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public CategoryResponse createFamilyCategory(User currentUser, Long familyId, CreateCategoryRequest request) {
-        if (familyId == null) {
-            throw new BadRequestException("Thiếu familyId");
-        }
-
-        FamilyMember member = familyAccessChecker.requireRole(currentUser.getId(), familyId, FamilyRole.MANAGER,
+        FamilyMember member = familyAccessChecker.requireRoleWithLock(
+                currentUser.getId(), familyId, FamilyRole.MANAGER,
                 "Chỉ OWNER hoặc MANAGER mới được tạo danh mục gia đình");
 
         validateNameAndType(request.getName(), request.getType(), familyId, null);
 
-        Family family = member.getFamily();
         Category category = Category.builder()
                 .name(normalizeName(request.getName()))
                 .type(request.getType())
-                .family(family)
+                .family(member.getFamily())
                 .active(true)
                 .build();
         return CategoryResponse.fromEntity(categoryRepository.save(category));
     }
 
+    // =====================================================================
+    // Sửa, khôi phục, xóa
+    // =====================================================================
+
     @Override
-    @Transactional
-    public CategoryResponse updateCategory(User currentUser, Long categoryId, Long familyId, UpdateCategoryRequest request) {
-        if (categoryId == null) {
-            throw new BadRequestException("Thiếu categoryId");
-        }
-        if (request == null) {
-            throw new BadRequestException("Dữ liệu cập nhật không hợp lệ");
-        }
-
-        Category category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy danh mục"));
-
-        if (category.getFamily() == null) {
-            requireAdmin(currentUser);
-            String newName = request.getName() != null ? normalizeName(request.getName()) : category.getName();
-            CategoryType newType = request.getType() != null ? request.getType() : category.getType();
-
-            boolean typeChanged = !Objects.equals(category.getType(), newType);
-            if (typeChanged) {
-                ensureTypeChangeAllowed(categoryId);
-            }
-            if (typeChanged || !Objects.equals(category.getName(), newName)) {
-                validateNameAndType(newName, newType, null, categoryId);
-            }
-            category.setName(newName);
-            category.setType(newType);
-            return CategoryResponse.fromEntity(categoryRepository.save(category));
-        }
-
-        if (familyId == null) {
-            throw new BadRequestException("Thiếu familyId");
-        }
-
-        familyAccessChecker.requireRole(currentUser.getId(), familyId, FamilyRole.MANAGER,
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public CategoryResponse updateCategory(User currentUser, Long categoryId, Long familyId,
+                                           UpdateCategoryRequest request) {
+        Category category = loadManageable(currentUser, categoryId, familyId,
                 "Chỉ OWNER hoặc MANAGER mới được sửa danh mục gia đình");
-
-        requireBelongsToFamily(category, familyId);
 
         String newName = request.getName() != null ? normalizeName(request.getName()) : category.getName();
         CategoryType newType = request.getType() != null ? request.getType() : category.getType();
 
-        if (!Objects.equals(category.getType(), newType)) {
+        if (newType != category.getType()) {
             ensureTypeChangeAllowed(categoryId);
         }
-
         validateNameAndType(newName, newType, familyId, categoryId);
+
         category.setName(newName);
         category.setType(newType);
-        return CategoryResponse.fromEntity(categoryRepository.save(category));
+        return CategoryResponse.fromEntity(category);
     }
 
     @Override
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public CategoryResponse restoreCategory(User currentUser, Long categoryId, Long familyId) {
-        if (categoryId == null) {
-            throw new BadRequestException("Thiếu categoryId");
-        }
-
-        Category category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy danh mục"));
-
-        if (category.getFamily() == null) {
-            requireAdmin(currentUser);
-            if (Boolean.TRUE.equals(category.getActive())) {
-                throw new BadRequestException("Danh mục hệ thống này đang ở trạng thái hoạt động");
-            }
-            category.setActive(true);
-            return CategoryResponse.fromEntity(categoryRepository.save(category));
-        }
-
-        if (familyId == null) {
-            throw new BadRequestException("Thiếu familyId");
-        }
-
-        familyAccessChecker.requireRole(currentUser.getId(), familyId, FamilyRole.MANAGER,
+        Category category = loadManageable(currentUser, categoryId, familyId,
                 "Chỉ OWNER hoặc MANAGER mới được khôi phục danh mục gia đình");
 
-        requireBelongsToFamily(category, familyId);
-
         if (Boolean.TRUE.equals(category.getActive())) {
-            throw new BadRequestException("Danh mục này đang hoạt động");
+            throw new ConflictException("Danh mục này đang hoạt động");
         }
 
         category.setActive(true);
-        return CategoryResponse.fromEntity(categoryRepository.save(category));
+        return CategoryResponse.fromEntity(category);
     }
 
     @Override
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public void deleteCategory(User currentUser, Long categoryId, Long familyId) {
-        if (categoryId == null) {
-            throw new BadRequestException("Thiếu categoryId");
-        }
-
-        Category category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy danh mục"));
-
-        if (category.getFamily() == null) {
-            requireAdmin(currentUser);
-            if (isCategoryUsedByTransactionsOrBudgets(categoryId)) {
-                category.setActive(false);
-                categoryRepository.save(category);
-                return;
-            }
-            categoryRepository.delete(category);
-            return;
-        }
-
-        if (familyId == null) {
-            throw new BadRequestException("Thiếu familyId");
-        }
-
-        familyAccessChecker.requireRole(currentUser.getId(), familyId, FamilyRole.MANAGER,
+        Category category = loadManageable(currentUser, categoryId, familyId,
                 "Chỉ OWNER hoặc MANAGER mới được xóa danh mục gia đình");
-
-        requireBelongsToFamily(category, familyId);
 
         if (isCategoryUsedByTransactionsOrBudgets(categoryId)) {
             category.setActive(false);
-            categoryRepository.save(category);
             return;
         }
-
         categoryRepository.delete(category);
     }
 
-    private void requireAdmin(User currentUser) {
-        if (currentUser == null || currentUser.getRole() != SystemRole.ADMIN) {
-            throw new ForbiddenException("Bạn không có quyền quản lý danh mục hệ thống");
-        }
-    }
+    // =====================================================================
+    // Hàm dùng chung
+    // =====================================================================
 
     /**
-     * Danh mục của gia đình khác được coi như không tồn tại (404), không trả 403,
-     * để người dùng không dò ra được id danh mục của gia đình khác.
+     * Kiểm tra quyền rồi mới tải danh mục, theo đúng phạm vi người gọi khai báo.
+     * - Không có familyId: danh mục hệ thống, phải là admin.
+     * - Có familyId: danh mục của gia đình, phải là OWNER hoặc MANAGER (khóa dòng gia đình).
+     * Danh mục không nằm trong phạm vi đó (của gia đình khác, hoặc sai loại phạm vi) báo 404 như không tồn tại.
      */
-    private void requireBelongsToFamily(Category category, Long familyId) {
-        if (category.getFamily() == null || !category.getFamily().getId().equals(familyId)) {
-            throw new ResourceNotFoundException("Không tìm thấy danh mục");
+    private Category loadManageable(User currentUser, Long categoryId, Long familyId, String forbiddenMessage) {
+        if (familyId == null) {
+            requireAdmin(currentUser);
+            return categoryRepository.findByIdAndFamilyIsNull(categoryId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy danh mục"));
+        }
+        familyAccessChecker.requireRoleWithLock(currentUser.getId(), familyId, FamilyRole.MANAGER, forbiddenMessage);
+        return categoryRepository.findByIdAndFamilyId(categoryId, familyId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy danh mục"));
+    }
+
+    private void requireAdmin(User currentUser) {
+        if (currentUser.getRole() != SystemRole.ADMIN) {
+            throw new ForbiddenException("Bạn không có quyền quản lý danh mục hệ thống");
         }
     }
 
@@ -272,10 +232,7 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     private String normalizeName(String input) {
-        if (input == null) {
-            return null;
-        }
-        return input.trim();
+        return input == null ? null : input.trim();
     }
 
     private boolean isCategoryUsedByTransactionsOrBudgets(Long categoryId) {

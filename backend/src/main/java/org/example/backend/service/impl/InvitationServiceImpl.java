@@ -18,21 +18,22 @@ import org.example.backend.repository.InvitationRepository;
 import org.example.backend.repository.UserRepository;
 import org.example.backend.service.FamilyAccessChecker;
 import org.example.backend.service.InvitationService;
+import org.example.backend.util.PageableSanitizer;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
 /**
  * Nghiệp vụ lời mời vào gia đình.
  * Người được mời phải đồng ý, không ai bị thêm thẳng vào gia đình.
+ *
+ * Thứ tự khóa khi thay đổi thành viên: dòng gia đình trước, dòng lời mời sau (cùng thứ tự với xóa gia đình),
+ * để chấp nhận lời mời và xóa gia đình cùng lúc không bị deadlock.
  */
 @Service
 @RequiredArgsConstructor
@@ -42,10 +43,14 @@ public class InvitationServiceImpl implements InvitationService {
     private static final int MIN_SEARCH_LENGTH = 2;
 
     /** Số kết quả tối đa mỗi trang khi tìm người dùng. */
-    private static final int MAX_PAGE_SIZE = 20;
+    private static final int MAX_SEARCH_PAGE_SIZE = 20;
 
-    /** Số kết quả tối đa mỗi trang khi xem lời mời đã gửi. */
-    private static final int MAX_SENT_PAGE_SIZE = 50;
+    /** Số kết quả tối đa mỗi trang khi xem danh sách lời mời (đã gửi và đã nhận). */
+    private static final int MAX_LIST_PAGE_SIZE = 50;
+
+    /** Các trường client được phép sắp xếp (sai thì 400). Thứ tự mặc định đặt ở @PageableDefault của controller. */
+    private static final Set<String> SEARCH_SORTS = Set.of("username", "id");
+    private static final Set<String> LIST_SORTS = Set.of("createdAt", "id");
 
     private final InvitationRepository invitationRepository;
     private final FamilyMemberRepository familyMemberRepository;
@@ -58,18 +63,18 @@ public class InvitationServiceImpl implements InvitationService {
         accessChecker.requireRole(userId, familyId, FamilyRole.MANAGER,
                 "Chỉ chủ gia đình và quản lý mới được tìm người để mời");
 
+        // Độ dài tối thiểu tính trên từ khóa gốc người dùng gõ, trước khi escape.
         String normalized = keyword == null ? "" : keyword.trim().toLowerCase(Locale.ROOT);
         if (normalized.length() < MIN_SEARCH_LENGTH) {
             throw new BadRequestException("Hãy nhập ít nhất " + MIN_SEARCH_LENGTH + " ký tự để tìm kiếm");
         }
 
-        // Luôn sắp theo tên đăng nhập và giới hạn kích thước trang, để không ai liệt kê hàng loạt tài khoản.
-        Pageable safePageable = PageRequest.of(pageable.getPageNumber(),
-                Math.min(pageable.getPageSize(), MAX_PAGE_SIZE), Sort.by("username"));
+        // Giới hạn trường sắp xếp và kích thước trang, để không ai liệt kê hàng loạt tài khoản.
+        Pageable safePageable = PageableSanitizer.sanitize(pageable, SEARCH_SORTS, MAX_SEARCH_PAGE_SIZE);
 
         // Bỏ qua tài khoản admin hệ thống (không được vào gia đình), tài khoản bị khóa và người đã là thành viên.
         Page<User> users = invitationRepository.searchInvitableUsers(
-                normalized, SystemRole.ADMIN, familyId, safePageable);
+                likePattern(normalized), SystemRole.ADMIN, familyId, safePageable);
         if (users.isEmpty()) {
             return Page.empty(safePageable);
         }
@@ -131,10 +136,7 @@ public class InvitationServiceImpl implements InvitationService {
         accessChecker.requireRole(userId, familyId, FamilyRole.MANAGER,
                 "Chỉ chủ gia đình và quản lý mới được xem lời mời đã gửi");
 
-        // Mới nhất trước, thêm id để phân trang ổn định khi nhiều lời mời cùng thời điểm tạo.
-        Pageable safePageable = PageRequest.of(pageable.getPageNumber(),
-                Math.min(pageable.getPageSize(), MAX_SENT_PAGE_SIZE),
-                Sort.by(Sort.Direction.DESC, "createdAt").and(Sort.by(Sort.Direction.DESC, "id")));
+        Pageable safePageable = PageableSanitizer.sanitize(pageable, LIST_SORTS, MAX_LIST_PAGE_SIZE);
 
         Page<Invitation> page = status == null
                 ? invitationRepository.findByFamilyIdAndInvitedById(familyId, userId, safePageable)
@@ -192,14 +194,15 @@ public class InvitationServiceImpl implements InvitationService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<InvitationResponse> getMyInvitations(Long userId, InvitationStatus status) {
+    public Page<InvitationResponse> getMyInvitations(Long userId, InvitationStatus status, Pageable pageable) {
+        Pageable safePageable = PageableSanitizer.sanitize(pageable, LIST_SORTS, MAX_LIST_PAGE_SIZE);
+
         // Lời mời đã bị người gửi hủy thì người được mời không còn thấy.
         if (status == InvitationStatus.CANCELLED) {
-            return List.of();
+            return Page.empty(safePageable);
         }
-        return invitationRepository.findByInvitedUserIdAndStatusOrderByCreatedAtDesc(userId, status).stream()
-                .map(this::toResponse)
-                .toList();
+        return invitationRepository.findByInvitedUserIdAndStatus(userId, status, safePageable)
+                .map(this::toResponse);
     }
 
     @Override
@@ -221,8 +224,16 @@ public class InvitationServiceImpl implements InvitationService {
     @Override
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public InvitationResponse acceptInvitation(Long userId, Long invitationId) {
+        // Chấp nhận lời mời thêm một thành viên nên phải khóa gia đình, và khóa gia đình TRƯỚC lời mời
+        // (cùng thứ tự với xóa gia đình) để không bị deadlock.
+        // Người gọi chưa là thành viên nên không dùng requireRoleWithLock; lời mời gửi đúng cho họ chính là
+        // phép xác thực (truy vấn bên dưới chỉ thấy lời mời của chính họ).
+        // Chỉ đọc id gia đình, không nạp lời mời vào bộ nhớ, để câu lệnh khóa sau đó đọc được dữ liệu mới nhất.
+        Long familyId = invitationRepository.findFamilyIdByInvitation(invitationId, userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy lời mời"));
+        accessChecker.lockFamily(familyId);
+
         Invitation invitation = findPendingForUpdate(userId, invitationId);
-        Long familyId = invitation.getFamily().getId();
 
         if (familyMemberRepository.existsByUserIdAndFamilyId(userId, familyId)) {
             throw new ConflictException("Bạn đã là thành viên của gia đình này");
@@ -258,6 +269,13 @@ public class InvitationServiceImpl implements InvitationService {
             throw new ConflictException("Lời mời này đã được xử lý");
         }
         return invitation;
+    }
+
+    // ---- Hàm dùng chung ----
+
+    /** Chuyển từ khóa (đã ở chữ thường) thành mẫu LIKE "chứa từ khóa", escape %, _ và ! bằng ký tự '!'. */
+    private static String likePattern(String keyword) {
+        return "%" + keyword.replace("!", "!!").replace("%", "!%").replace("_", "!_") + "%";
     }
 
     private InvitationResponse toResponse(Invitation invitation) {
