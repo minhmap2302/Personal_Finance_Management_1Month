@@ -218,7 +218,7 @@ class AuthServiceTest {
     }
 
     @Test
-    @DisplayName("Đăng xuất thành công: vô hiệu hóa access token và thu hồi refresh token")
+    @DisplayName("Đăng xuất thành công: vô hiệu hóa access token và thu hồi toàn bộ refresh token của user")
     void shouldLogoutSuccessfully_andRevokeTokens() {
         String authHeader = "Bearer sample.access.token";
         String rawRefreshToken = "sample-refresh-token";
@@ -233,6 +233,7 @@ class AuthServiceTest {
                 .build();
 
         when(jwtService.extractJti("sample.access.token")).thenReturn("mock-jti");
+        when(jwtService.extractUserId("sample.access.token")).thenReturn(1L);
         when(jwtService.extractExpirationInstant("sample.access.token")).thenReturn(Instant.now().plus(1, ChronoUnit.HOURS));
         when(invalidatedTokenRepository.existsById("mock-jti")).thenReturn(false);
         when(refreshTokenRepository.findByToken(hashedToken)).thenReturn(Optional.of(refreshTokenEntity));
@@ -241,8 +242,24 @@ class AuthServiceTest {
         authService.logout(authHeader, rawRefreshToken);
 
         verify(invalidatedTokenRepository).save(any(InvalidatedToken.class));
+        verify(refreshTokenRepository).revokeAllByUser(testUser);
         assertTrue(refreshTokenEntity.isRevoked());
         verify(refreshTokenRepository).save(refreshTokenEntity);
+    }
+
+    @Test
+    @DisplayName("Đăng nhập thất bại ngay khi tài khoản bị khóa, không gọi passwordEncoder.matches")
+    void shouldRejectDisabledUser_beforePasswordCheck() {
+        LoginRequest request = LoginRequest.builder()
+                .username("testuser")
+                .password("plainPassword")
+                .build();
+
+        testUser.setEnabled(false);
+        when(userRepository.findByUsernameOrEmail("testuser")).thenReturn(Optional.of(testUser));
+
+        assertThrows(DisabledException.class, () -> authService.login(request));
+        verify(passwordEncoder, never()).matches(anyString(), anyString());
     }
 
     @Test
