@@ -5,6 +5,7 @@ import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.example.backend.model.entity.User;
@@ -46,6 +47,23 @@ public class JwtService {
 
     public JwtService(InvalidatedTokenRepository invalidatedTokenRepository) {
         this.invalidatedTokenRepository = invalidatedTokenRepository;
+    }
+
+    @PostConstruct
+    public void validateSigningKey() {
+        if (!StringUtils.hasText(secretKey)) {
+            throw new IllegalStateException("JWT secret key không được để trống. Cấu hình JWT_SECRET_KEY phải là chuỗi Base64 hợp lệ với kích thước tối thiểu 256 bit.");
+        }
+
+        try {
+            byte[] keyBytes = Decoders.BASE64.decode(secretKey);
+            if (keyBytes.length < 32) {
+                throw new IllegalStateException("JWT secret key phải là chuỗi Base64 hợp lệ và tối thiểu 256 bit.");
+            }
+            getSigningKey();
+        } catch (IllegalArgumentException e) {
+            throw new IllegalStateException("JWT secret key phải là chuỗi Base64 hợp lệ và tối thiểu 256 bit.", e);
+        }
     }
 
     public static String hashToken(String rawToken) {
