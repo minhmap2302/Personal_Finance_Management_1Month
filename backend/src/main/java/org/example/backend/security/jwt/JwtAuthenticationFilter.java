@@ -18,6 +18,8 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
 @Slf4j
 @Component
@@ -49,6 +51,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     if (tokenUserId == null || !tokenUserId.equals(currentUser.getId())) {
                         log.warn("Token cấp cho user ID {} nhưng username '{}' hiện thuộc user ID {}, từ chối xác thực",
                                 tokenUserId, username, currentUser.getId());
+                    } else if (isIssuedBeforeRevocation(token, currentUser)) {
+                        log.warn("Token của user ID {} được cấp trước thời điểm thu hồi, từ chối xác thực",
+                                currentUser.getId());
                     } else if (currentUser.isEnabled()) {
                         UsernamePasswordAuthenticationToken authentication =
                                 new UsernamePasswordAuthenticationToken(currentUser, null, currentUser.getAuthorities());
@@ -64,6 +69,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    /**
+     * Token bị thu hồi nếu được cấp trước (hoặc cùng giây với) mốc tokensValidFrom của người dùng.
+     * iat của JWT chỉ có độ chính xác đến giây nên mốc cũng được cắt về giây, và so bằng "không sau"
+     * để token cấp trong cùng giây với lúc khóa vẫn bị tính là cũ.
+     * Không đọc được iat thì coi như bị thu hồi (từ chối cho an toàn).
+     */
+    private boolean isIssuedBeforeRevocation(String token, User user) {
+        Instant validFrom = user.getTokensValidFrom();
+        if (validFrom == null) {
+            return false;
+        }
+        Instant issuedAt = jwtService.extractIssuedAt(token);
+        if (issuedAt == null) {
+            return true;
+        }
+        return !issuedAt.isAfter(validFrom.truncatedTo(ChronoUnit.SECONDS));
     }
 
     private String parseJwt(HttpServletRequest request) {
