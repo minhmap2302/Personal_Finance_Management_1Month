@@ -5,7 +5,6 @@ import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
 import { ThemeProvider } from './context/ThemeContext';
 import AppRoutes from './routes/AppRoutes';
-import CursorTrail from './components/CursorTrail';
 import './styles.css';
 
 function RemoveBootScreen() {
@@ -22,7 +21,6 @@ createRoot(document.getElementById('root')).render(
                 <ToastProvider>
                     <AuthProvider>
                         <RemoveBootScreen />
-                        <CursorTrail />
                         <AppRoutes />
                     </AuthProvider>
                 </ToastProvider>
