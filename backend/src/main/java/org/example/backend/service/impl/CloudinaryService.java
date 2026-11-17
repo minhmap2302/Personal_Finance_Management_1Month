@@ -36,7 +36,9 @@ public class CloudinaryService {
         if (file == null || file.isEmpty()) {
             throw new BadRequestException("File không được để trống");
         }
-        if (!ALLOWED_TYPES.contains(file.getContentType())) {
+        // Content-Type có thể thiếu: List.of(...).contains(null) sẽ ném NullPointerException (lỗi 500), nên kiểm tra null trước.
+        String contentType = file.getContentType();
+        if (contentType == null || !ALLOWED_TYPES.contains(contentType)) {
             throw new BadRequestException("Chỉ chấp nhận ảnh JPG, PNG hoặc WebP");
         }
         if (file.getSize() > MAX_SIZE) {
@@ -47,7 +49,12 @@ public class CloudinaryService {
             Map<?, ?> result = cloudinary.uploader().upload(
                     file.getBytes(),
                     ObjectUtils.asMap("resource_type", "image", "folder", folder));
-            return (String) result.get("secure_url");
+            String url = (String) result.get("secure_url");
+            if (url == null) {
+                // Không được trả null: nơi gọi sẽ ghi null vào cột receipt_image và báo thành công.
+                throw new RuntimeException("Tải file lên thất bại");
+            }
+            return url;
         } catch (IOException e) {
             throw new RuntimeException("Tải file lên thất bại", e);
         }
