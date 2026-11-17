@@ -21,7 +21,6 @@ createRoot(document.getElementById('root')).render(
                 <ToastProvider>
                     <AuthProvider>
                         <RemoveBootScreen />
-                        <CursorTrail />
                         <AppRoutes />
                     </AuthProvider>
                 </ToastProvider>

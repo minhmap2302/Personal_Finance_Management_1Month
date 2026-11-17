@@ -188,7 +188,7 @@ export default function Profile() {
             <p>Thao tác này không thể hoàn tác. Tài khoản sẽ bị vô hiệu hóa, thông tin định danh được ẩn danh hóa và bạn sẽ bị đăng xuất.</p>
             {ownedFamilies.length > 0 ? (
                 <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
-                  Bạn chưa thể xóa tài khoản vì đang là OWNER của {ownedFamilies.length} gia đình: {ownedFamilies.map(f => f.name).join(', ')}.
+                  Bạn chưa thể xóa tài khoản vì đang là chủ gia đình của {ownedFamilies.length} gia đình: {ownedFamilies.map(f => f.name).join(', ')}.
                 </div>
             ) : (
                 <form onSubmit={deleteAccount} className="mt-4 space-y-4">

@@ -5262,3 +5262,80 @@ html[data-theme="dark"] .pfm-budget-page
         overflow: hidden;
     }
 }
+
+/* =====================================================
+   GLOBAL MODAL FIX - FULL VIEWPORT
+   Áp dụng cho modal trong toàn bộ ứng dụng
+   ===================================================== */
+
+/* 1. Loại bỏ các thuộc tính có thể giới hạn fixed
+   trên vùng nội dung chứa modal */
+body:has(.modal-backdrop),
+body:has(.fixed.inset-0) {
+    overflow: hidden;
+}
+
+body:has(.modal-backdrop) .page-content,
+body:has(.fixed.inset-0) .page-content {
+    overflow: visible !important;
+    transform: none !important;
+    filter: none !important;
+    perspective: none !important;
+    contain: none !important;
+    clip-path: none !important;
+}
+
+/* 2. Xử lý wrapper có chứa modal */
+.page-content > div:has(.modal-backdrop),
+.page-content > div:has(.fixed.inset-0),
+.page-content > div > div:has(.fixed.inset-0) {
+    overflow: visible !important;
+    transform: none !important;
+    filter: none !important;
+    perspective: none !important;
+    contain: none !important;
+    clip-path: none !important;
+}
+
+/* 3. Modal sử dụng Tailwind: fixed inset-0 */
+body:has(.fixed.inset-0) .fixed.inset-0 {
+    position: fixed !important;
+    inset: 0 !important;
+
+    width: 100vw !important;
+    max-width: none !important;
+
+    height: 100vh !important;
+    height: 100dvh !important;
+
+    margin: 0 !important;
+    border-radius: 0 !important;
+    box-sizing: border-box !important;
+
+    z-index: 99999 !important;
+}
+
+/* 4. Modal cũ sử dụng modal-backdrop */
+body:has(.pfm-delete-account-modal) .modal-backdrop {
+    position: fixed !important;
+    inset: 0 !important;
+
+    width: 100vw !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+
+    margin: 0 !important;
+    border-radius: 0 !important;
+    box-sizing: border-box !important;
+
+    z-index: 99999 !important;
+}
+
+/* 5. Giữ hộp thoại ở giữa, không làm mất bo góc */
+body:has(.fixed.inset-0) .fixed.inset-0 > [role="dialog"],
+body:has(.modal-backdrop) .modal-backdrop > .confirm-modal {
+    position: relative !important;
+    max-height: calc(100dvh - 32px);
+    overflow-y: auto;
+    border-radius: 16px;
+}
