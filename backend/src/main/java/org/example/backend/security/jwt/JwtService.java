@@ -43,7 +43,7 @@ public class JwtService {
 
     private final InvalidatedTokenRepository invalidatedTokenRepository;
 
-    private volatile SecretKey signingKey;
+    private SecretKey signingKey;
 
     public JwtService(InvalidatedTokenRepository invalidatedTokenRepository) {
         this.invalidatedTokenRepository = invalidatedTokenRepository;

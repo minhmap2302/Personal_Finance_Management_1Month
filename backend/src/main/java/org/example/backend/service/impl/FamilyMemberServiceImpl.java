@@ -12,6 +12,7 @@ import org.example.backend.model.enums.FamilyRole;
 import org.example.backend.repository.FamilyMemberRepository;
 import org.example.backend.service.FamilyAccessChecker;
 import org.example.backend.service.FamilyMemberService;
+import org.example.backend.util.PageableSanitizer;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -22,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Nghiệp vụ thành viên trong gia đình.
@@ -32,6 +34,12 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class FamilyMemberServiceImpl implements FamilyMemberService {
 
+    private static final Set<String> ALLOWED_SORTS = Set.of("joinedAt", "id");
+    private static final int MAX_PAGE_SIZE = 50;
+
+    /** Ký tự escape dùng trong câu LIKE của searchMembers (phải khớp với escape '!' ở repository). */
+    private static final String LIKE_ESCAPE = "!";
+
     private final FamilyMemberRepository familyMemberRepository;
     private final FamilyAccessChecker accessChecker;
 
@@ -39,8 +47,9 @@ public class FamilyMemberServiceImpl implements FamilyMemberService {
     @Transactional(readOnly = true)
     public Page<FamilyMemberResponse> getMembers(Long userId, Long familyId, String keyword, Pageable pageable) {
         accessChecker.requireMember(userId, familyId);
-        String normalized = keyword == null ? "" : keyword.trim().toLowerCase(Locale.ROOT);
-        return familyMemberRepository.searchMembers(familyId, normalized, pageable).map(this::toResponse);
+        String normalized = escapeLike(keyword == null ? "" : keyword.trim().toLowerCase(Locale.ROOT));
+        Pageable safePageable = PageableSanitizer.sanitize(pageable, ALLOWED_SORTS, MAX_PAGE_SIZE);
+        return familyMemberRepository.searchMembers(familyId, normalized, safePageable).map(this::toResponse);
     }
 
     @Override
@@ -166,6 +175,14 @@ public class FamilyMemberServiceImpl implements FamilyMemberService {
     private void swapOwnership(FamilyMember oldOwner, FamilyMember newOwner) {
         newOwner.setRole(FamilyRole.OWNER);
         oldOwner.setRole(FamilyRole.MANAGER);
+    }
+
+    /** Escape %, _ và chính ký tự escape để từ khóa được tìm đúng nghĩa đen, không thành ký tự đại diện. */
+    private String escapeLike(String value) {
+        return value
+                .replace(LIKE_ESCAPE, LIKE_ESCAPE + LIKE_ESCAPE)
+                .replace("%", LIKE_ESCAPE + "%")
+                .replace("_", LIKE_ESCAPE + "_");
     }
 
     private FamilyMemberResponse toResponse(FamilyMember member) {

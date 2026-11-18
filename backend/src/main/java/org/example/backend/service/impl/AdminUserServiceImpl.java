@@ -6,11 +6,11 @@ import org.example.backend.exception.ResourceNotFoundException;
 import org.example.backend.model.dto.response.UserResponse;
 import org.example.backend.model.entity.User;
 import org.example.backend.model.enums.SystemRole;
-import org.example.backend.repository.RefreshTokenRepository;
 import org.example.backend.repository.UserRepository;
 import org.example.backend.service.AdminUserService;
 import org.example.backend.service.FamilyMemberService;
 import org.example.backend.service.SessionTerminationService;
+import org.example.backend.util.PageableSanitizer;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -18,20 +18,24 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
 public class AdminUserServiceImpl implements AdminUserService {
 
+    private static final Set<String> ALLOWED_SORTS = Set.of("username", "email", "fullName", "createdAt", "id");
+    private static final int MAX_PAGE_SIZE = 50;
+
     private final UserRepository userRepository;
-    private final RefreshTokenRepository refreshTokenRepository;
     private final FamilyMemberService familyMemberService;
     private final SessionTerminationService sessionTerminationService;
 
     @Override
     @Transactional(readOnly = true)
     public Page<UserResponse> searchUsers(String keyword, Pageable pageable) {
-        return userRepository.searchUsers(keyword == null ? "" : keyword.trim(), pageable)
+        Pageable safePageable = PageableSanitizer.sanitize(pageable, ALLOWED_SORTS, MAX_PAGE_SIZE);
+        return userRepository.searchUsers(keyword == null ? "" : keyword.trim(), safePageable)
                 .map(UserResponse::fromEntity);
     }
 
