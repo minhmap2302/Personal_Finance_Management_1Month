@@ -31,7 +31,7 @@ public class TransactionReceiptServiceImpl implements TransactionReceiptService 
         findEditableTransaction(userId, familyId, transactionId);
 
         String url = cloudinaryService.upload(file, "receipts/" + familyId);
-        transactionRepository.updateReceiptImage(transactionId, url);
+        saveReceiptUrl(transactionId, familyId, url);
         return url;
     }
 
@@ -41,7 +41,18 @@ public class TransactionReceiptServiceImpl implements TransactionReceiptService 
         if (transaction.getReceiptImage() == null) {
             throw new ResourceNotFoundException("Giao dịch này chưa có ảnh hóa đơn");
         }
-        transactionRepository.updateReceiptImage(transactionId, null);
+        saveReceiptUrl(transactionId, familyId, null);
+    }
+
+    /**
+     * Ghi đường dẫn ảnh (null là bỏ ảnh). Nếu không dòng nào được đổi, tức giao dịch vừa bị xóa trong lúc đang
+     * tải ảnh lên, thì báo 404 thay vì báo thành công giả. Ảnh vừa tải lên khi đó thành ảnh mồ côi
+     * (xem giới hạn về việc không xóa ảnh trên Cloudinary).
+     */
+    private void saveReceiptUrl(Long transactionId, Long familyId, String url) {
+        if (transactionRepository.updateReceiptImage(transactionId, familyId, url) == 0) {
+            throw new ResourceNotFoundException("Không tìm thấy giao dịch");
+        }
     }
 
     /** Giao dịch phải thuộc gia đình, và người dùng phải là người ghi nhận hoặc là quản lý trở lên. */
