@@ -17,9 +17,9 @@ import org.example.backend.repository.TransactionRepository;
 import org.example.backend.repository.TransactionSpecifications;
 import org.example.backend.service.FamilyAccessChecker;
 import org.example.backend.service.TransactionService;
+import org.example.backend.util.PageableSanitizer;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,6 +36,9 @@ public class TransactionServiceImpl implements TransactionService {
 
     /** Các trường được phép sắp xếp, chặn trường lạ để không gây lỗi 500. */
     private static final Set<String> SORTABLE_FIELDS = Set.of("transactionDate", "amount", "createdAt", "id");
+
+    /** Số giao dịch tối đa mỗi trang. */
+    private static final int MAX_PAGE_SIZE = 100;
 
     private final TransactionRepository transactionRepository;
     private final CategoryRepository categoryRepository;
@@ -72,7 +75,7 @@ public class TransactionServiceImpl implements TransactionService {
                                                         TransactionSearchRequest search, Pageable pageable) {
         accessChecker.requireMember(userId, familyId);
         validateSearch(search);
-        validateSort(pageable);
+        Pageable safePageable = PageableSanitizer.sanitize(pageable, SORTABLE_FIELDS, MAX_PAGE_SIZE);
 
         Specification<Transaction> spec = Specification
                 .where(TransactionSpecifications.inFamily(familyId))
@@ -85,7 +88,7 @@ public class TransactionServiceImpl implements TransactionService {
                 .and(TransactionSpecifications.amountAtLeast(search.getMinAmount()))
                 .and(TransactionSpecifications.amountAtMost(search.getMaxAmount()));
 
-        return transactionRepository.findAll(spec, pageable).map(this::toResponse);
+        return transactionRepository.findAll(spec, safePageable).map(this::toResponse);
     }
 
     @Override
@@ -160,14 +163,6 @@ public class TransactionServiceImpl implements TransactionService {
         if (search.getMinAmount() != null && search.getMaxAmount() != null
                 && search.getMinAmount().compareTo(search.getMaxAmount()) > 0) {
             throw new BadRequestException("Số tiền tối thiểu không được lớn hơn số tiền tối đa");
-        }
-    }
-
-    private void validateSort(Pageable pageable) {
-        for (Sort.Order order : pageable.getSort()) {
-            if (!SORTABLE_FIELDS.contains(order.getProperty())) {
-                throw new BadRequestException("Không thể sắp xếp theo trường: " + order.getProperty());
-            }
         }
     }
 
