@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import {
  Bot,
  Send,
@@ -73,6 +75,21 @@ function getChatErrorMessage(error) {
  return 'Chatbot hiện chưa thể phản hồi. Vui lòng thử lại sau.';
 }
 
+function AssistantContent({ content }) {
+ return (
+  <ReactMarkdown
+   remarkPlugins={[remarkGfm]}
+   components={{
+    a: ({ node, ...props }) => (
+     <a {...props} target="_blank" rel="noopener noreferrer" />
+    ),
+   }}
+  >
+   {content || ''}
+  </ReactMarkdown>
+ );
+}
+
 export default function Support() {
  const { activeFamily, activeFamilyId } = useFamily();
  const toast = useToast();
@@ -83,10 +100,9 @@ export default function Support() {
  const [busy, setBusy] = useState(false);
 
  const endRef = useRef(null);
+ const textareaRef = useRef(null);
  const requestIdRef = useRef(0);
 
- // IMPORTANT: useEffect must return undefined or a cleanup function.
- // Do not implicitly return the result of scrollIntoView().
  useEffect(() => {
   endRef.current?.scrollIntoView({
    behavior: 'smooth',
@@ -94,7 +110,16 @@ export default function Support() {
   });
  }, [messages, busy]);
 
- // Do not carry a previous family's conversation into another family.
+ // Tự tăng chiều cao textarea khi nhập; nội dung dài hơn sẽ cuộn bên trong.
+ useEffect(() => {
+  const textarea = textareaRef.current;
+  if (!textarea) return;
+
+  textarea.style.height = 'auto';
+  textarea.style.height = `${Math.min(textarea.scrollHeight, 140)}px`;
+ }, [text]);
+
+ // Không giữ nội dung hội thoại của gia đình trước khi chuyển gia đình.
  useEffect(() => {
   requestIdRef.current += 1;
   setMessages([INITIAL_MESSAGE]);
@@ -102,7 +127,6 @@ export default function Support() {
   setBusy(false);
  }, [activeFamilyId]);
 
- // Invalidate any pending response when this page unmounts.
  useEffect(() => {
   return () => {
    requestIdRef.current += 1;
@@ -130,10 +154,9 @@ export default function Support() {
   setBusy(true);
 
   try {
-   // Keep the existing backend contract and endpoint unchanged.
+   // Giữ nguyên API và hợp đồng request/response hiện tại.
    const data = await supportApi.chat(activeFamilyId, content);
 
-   // Ignore late responses from a previous family/page session.
    if (requestId !== requestIdRef.current) return;
 
    const answer =
@@ -241,7 +264,11 @@ export default function Support() {
                       message.error ? 'is-error' : ''
                   }`}
               >
-               {message.content}
+               {message.role === 'assistant' && !message.error ? (
+                <AssistantContent content={message.content} />
+               ) : (
+                message.content
+               )}
               </div>
              </div>
          ))}
@@ -265,11 +292,19 @@ export default function Support() {
         </div>
 
         <form className="pfm-chat-compose" onSubmit={send}>
-         <input
+         <textarea
+             ref={textareaRef}
              value={text}
              onChange={(event) => setText(event.target.value)}
+             onKeyDown={(event) => {
+              if (event.key === 'Enter' && !event.shiftKey) {
+               event.preventDefault();
+               event.currentTarget.form?.requestSubmit();
+              }
+             }}
              placeholder="Hỏi về thu chi, ngân sách gia đình…"
              maxLength={2000}
+             rows={1}
              aria-label="Nội dung câu hỏi"
              disabled={busy || !activeFamilyId}
          />
