@@ -36,12 +36,12 @@ public interface FamilyMemberRepository extends JpaRepository<FamilyMember, Long
      */
     @Query(value = "select m from FamilyMember m join fetch m.user u "
             + "where m.family.id = :familyId "
-            + "and (lower(u.username) like concat('%', :keyword, '%') "
-            + "or lower(u.fullName) like concat('%', :keyword, '%'))",
+            + "and (lower(u.username) like concat('%', :keyword, '%') escape '!' "
+            + "or lower(u.fullName) like concat('%', :keyword, '%') escape '!')",
             countQuery = "select count(m) from FamilyMember m join m.user u "
                     + "where m.family.id = :familyId "
-                    + "and (lower(u.username) like concat('%', :keyword, '%') "
-                    + "or lower(u.fullName) like concat('%', :keyword, '%'))")
+                    + "and (lower(u.username) like concat('%', :keyword, '%') escape '!' "
+                    + "or lower(u.fullName) like concat('%', :keyword, '%') escape '!')")
     Page<FamilyMember> searchMembers(@Param("familyId") Long familyId,
                                      @Param("keyword") String keyword,
                                      Pageable pageable);

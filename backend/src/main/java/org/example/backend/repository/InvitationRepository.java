@@ -51,7 +51,8 @@ public interface InvitationRepository extends JpaRepository<Invitation, Long> {
      */
     @Query("select u from User u "
             + "where u.enabled = true and u.role <> :excludedRole "
-            + "and lower(u.username) like :pattern escape '!' "
+            + "and (lower(u.username) like :pattern escape '!' "
+            + "or lower(u.fullName) like :pattern escape '!' )"
             + "and u.id not in (select m.user.id from FamilyMember m where m.family.id = :familyId)")
     Page<User> searchInvitableUsers(@Param("pattern") String pattern,
                                     @Param("excludedRole") SystemRole excludedRole,

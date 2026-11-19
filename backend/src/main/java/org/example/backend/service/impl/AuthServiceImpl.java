@@ -29,8 +29,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
@@ -42,9 +40,6 @@ public class AuthServiceImpl implements AuthService {
     /** Mặc định 7 ngày. */
     @Value("${application.security.jwt.refresh-expiration-days:7}")
     private long refreshTokenExpirationDay;
-
-    @Value("${application.security.jwt.refresh-reuse-grace-seconds:10}")
-    private long reuseGraceSeconds;
 
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
@@ -229,6 +224,6 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private String generateSecureRefreshToken() {
-        return UUID.randomUUID().toString() + "-" + UUID.randomUUID().toString();
+        return UUID.randomUUID() + "-" + UUID.randomUUID();
     }
 }
