@@ -5262,3 +5262,638 @@ html[data-theme="dark"] .pfm-budget-page
         overflow: hidden;
     }
 }
+
+/* =====================================================
+   GLOBAL MODAL FIX - FULL VIEWPORT
+   Áp dụng cho modal trong toàn bộ ứng dụng
+   ===================================================== */
+
+/* 1. Loại bỏ các thuộc tính có thể giới hạn fixed
+   trên vùng nội dung chứa modal */
+body:has(.modal-backdrop),
+body:has(.fixed.inset-0) {
+    overflow: hidden;
+}
+
+body:has(.modal-backdrop) .page-content,
+body:has(.fixed.inset-0) .page-content {
+    overflow: visible !important;
+    transform: none !important;
+    filter: none !important;
+    perspective: none !important;
+    contain: none !important;
+    clip-path: none !important;
+}
+
+/* 2. Xử lý wrapper có chứa modal */
+.page-content > div:has(.modal-backdrop),
+.page-content > div:has(.fixed.inset-0),
+.page-content > div > div:has(.fixed.inset-0) {
+    overflow: visible !important;
+    transform: none !important;
+    filter: none !important;
+    perspective: none !important;
+    contain: none !important;
+    clip-path: none !important;
+}
+
+/* 3. Modal sử dụng Tailwind: fixed inset-0 */
+body:has(.fixed.inset-0) .fixed.inset-0 {
+    position: fixed !important;
+    inset: 0 !important;
+
+    width: 100vw !important;
+    max-width: none !important;
+
+    height: 100vh !important;
+    height: 100dvh !important;
+
+    margin: 0 !important;
+    border-radius: 0 !important;
+    box-sizing: border-box !important;
+
+    z-index: 99999 !important;
+}
+
+/* 4. Modal cũ sử dụng modal-backdrop */
+body:has(.pfm-delete-account-modal) .modal-backdrop {
+    position: fixed !important;
+    inset: 0 !important;
+
+    width: 100vw !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+
+    margin: 0 !important;
+    border-radius: 0 !important;
+    box-sizing: border-box !important;
+
+    z-index: 99999 !important;
+}
+
+/* 5. Giữ hộp thoại ở giữa, không làm mất bo góc */
+body:has(.fixed.inset-0) .fixed.inset-0 > [role="dialog"],
+body:has(.modal-backdrop) .modal-backdrop > .confirm-modal {
+    position: relative !important;
+    max-height: calc(100dvh - 32px);
+    overflow-y: auto;
+    border-radius: 16px;
+}
+/*
+ * Styles riêng cho Markdown trong chatbot và ô nhập nhiều dòng.
+ * File được import trực tiếp từ Support.jsx.
+ */
+
+/* Ô nhập câu hỏi: tự xuống dòng và tự tăng chiều cao */
+.pfm-chat-compose textarea {
+    flex: 1;
+    min-width: 0;
+    width: 100%;
+    height: 43px;
+    min-height: 43px;
+    max-height: 140px;
+    box-sizing: border-box;
+    padding: 11px 12px;
+    resize: none;
+    overflow-x: hidden;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    border: 1px solid var(--pfm-border, rgba(148, 163, 184, .35));
+    border-radius: 11px;
+    outline: none;
+    font: inherit;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--pfm-ink, inherit);
+    background: transparent;
+}
+
+.pfm-chat-compose textarea:focus {
+    border-color: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, .10);
+}
+
+.pfm-chat-compose textarea:disabled {
+    opacity: .6;
+    cursor: not-allowed;
+}
+
+/* Markdown chỉ áp dụng trong bong bóng AI */
+.pfm-chat-message.from-bot .pfm-message-bubble {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.pfm-chat-message.from-bot .pfm-message-bubble > :first-child {
+    margin-top: 0;
+}
+
+.pfm-chat-message.from-bot .pfm-message-bubble > :last-child {
+    margin-bottom: 0;
+}
+
+.pfm-chat-message.from-bot .pfm-message-bubble p {
+    margin: 0 0 10px;
+    line-height: 1.65;
+    white-space: normal;
+}
+
+.pfm-chat-message.from-bot .pfm-message-bubble h1,
+.pfm-chat-message.from-bot .pfm-message-bubble h2,
+.pfm-chat-message.from-bot .pfm-message-bubble h3,
+.pfm-chat-message.from-bot .pfm-message-bubble h4 {
+    margin: 14px 0 8px;
+    font-weight: 800;
+    line-height: 1.35;
+    letter-spacing: -.02em;
+}
+
+.pfm-chat-message.from-bot .pfm-message-bubble h1 { font-size: 1.15em; }
+.pfm-chat-message.from-bot .pfm-message-bubble h2 { font-size: 1.08em; }
+.pfm-chat-message.from-bot .pfm-message-bubble h3,
+.pfm-chat-message.from-bot .pfm-message-bubble h4 { font-size: 1em; }
+
+.pfm-chat-message.from-bot .pfm-message-bubble ul,
+.pfm-chat-message.from-bot .pfm-message-bubble ol {
+    margin: 7px 0 12px;
+    padding-left: 22px;
+}
+
+.pfm-chat-message.from-bot .pfm-message-bubble li {
+    margin: 4px 0;
+    padding-left: 2px;
+    line-height: 1.6;
+}
+
+.pfm-chat-message.from-bot .pfm-message-bubble strong {
+    font-weight: 800;
+}
+
+.pfm-chat-message.from-bot .pfm-message-bubble blockquote {
+    margin: 10px 0;
+    padding: 8px 12px;
+    border-left: 3px solid #10b981;
+    border-radius: 0 8px 8px 0;
+    background: rgba(16, 185, 129, .08);
+}
+
+.pfm-chat-message.from-bot .pfm-message-bubble blockquote > :last-child {
+    margin-bottom: 0;
+}
+
+.pfm-chat-message.from-bot .pfm-message-bubble hr {
+    margin: 14px 0;
+    border: 0;
+    border-top: 1px solid rgba(148, 163, 184, .3);
+}
+
+/* Bảng Markdown: cuộn ngang nếu màn hình hẹp */
+.pfm-chat-message.from-bot .pfm-message-bubble table {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    margin: 10px 0 14px;
+    overflow-x: auto;
+    border-collapse: collapse;
+    border-spacing: 0;
+    font-size: .92em;
+    white-space: normal;
+}
+
+.pfm-chat-message.from-bot .pfm-message-bubble th,
+.pfm-chat-message.from-bot .pfm-message-bubble td {
+    min-width: 76px;
+    padding: 8px 10px;
+    border: 1px solid rgba(148, 163, 184, .28);
+    text-align: left;
+    vertical-align: top;
+}
+
+.pfm-chat-message.from-bot .pfm-message-bubble th {
+    font-weight: 800;
+    background: rgba(148, 163, 184, .12);
+}
+
+.pfm-chat-message.from-bot .pfm-message-bubble tr:nth-child(even) td {
+    background: rgba(148, 163, 184, .06);
+}
+
+/* Code inline và code block */
+.pfm-chat-message.from-bot .pfm-message-bubble :not(pre) > code {
+    padding: 2px 5px;
+    border-radius: 5px;
+    background: rgba(148, 163, 184, .16);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: .9em;
+    overflow-wrap: anywhere;
+}
+
+.pfm-chat-message.from-bot .pfm-message-bubble pre {
+    max-width: 100%;
+    margin: 10px 0;
+    padding: 12px;
+    overflow-x: auto;
+    border: 1px solid rgba(148, 163, 184, .25);
+    border-radius: 9px;
+    background: rgba(15, 23, 42, .08);
+    white-space: pre;
+}
+
+.pfm-chat-message.from-bot .pfm-message-bubble pre code {
+    padding: 0;
+    background: transparent;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: .88em;
+    line-height: 1.55;
+}
+
+.pfm-chat-message.from-bot .pfm-message-bubble a {
+    color: #059669;
+    text-decoration: underline;
+    overflow-wrap: anywhere;
+}
+
+/* Dark mode */
+html[data-theme="dark"] .pfm-chat-message.from-bot .pfm-message-bubble blockquote {
+    background: rgba(16, 185, 129, .10);
+    border-left-color: #34d399;
+}
+
+html[data-theme="dark"] .pfm-chat-message.from-bot .pfm-message-bubble th {
+    background: rgba(148, 163, 184, .14);
+}
+
+html[data-theme="dark"] .pfm-chat-message.from-bot .pfm-message-bubble tr:nth-child(even) td {
+    background: rgba(148, 163, 184, .07);
+}
+
+html[data-theme="dark"] .pfm-chat-message.from-bot .pfm-message-bubble pre {
+    background: rgba(2, 6, 23, .28);
+    border-color: rgba(148, 163, 184, .22);
+}
+
+html[data-theme="dark"] .pfm-chat-message.from-bot .pfm-message-bubble a {
+    color: #6ee7b7;
+}
+
+
+/* ---------- Support layout: ưu tiên khung chat, thu gọn FAQ ---------- */
+.pfm-support-page .pfm-support-grid {
+    grid-template-columns: minmax(0, 2.35fr) minmax(220px, .72fr);
+    gap: 14px;
+    align-items: start;
+}
+
+/* Hai cột tự xác định chiều cao riêng */
+.pfm-support-page .pfm-chat-panel {
+    align-self: start;
+    height: fit-content;
+}
+
+.pfm-support-page .pfm-support-side {
+    align-self: start;
+    height: fit-content;
+}
+
+/* Hai thẻ bên phải không kéo giãn theo nhau */
+.pfm-support-page .pfm-support-side > .pfm-faq-panel,
+.pfm-support-page .pfm-support-side > .pfm-tip-panel {
+    align-self: start;
+    height: fit-content;
+}
+
+.pfm-support-page .pfm-chat-panel {
+    min-width: 0;
+}
+
+.pfm-support-page .pfm-chat-messages {
+    height: clamp(460px, 62vh, 680px);
+    min-height: 420px;
+}
+
+.pfm-support-page .pfm-support-side {
+    min-width: 0;
+    gap: 10px;
+}
+
+.pfm-support-page .pfm-faq-panel {
+    padding: 15px;
+}
+
+.pfm-support-page .pfm-faq-panel .pfm-panel-title {
+    padding: 0 0 8px;
+}
+
+.pfm-support-page .pfm-faq-panel .pfm-panel-title h2 {
+    font-size: 14px;
+}
+
+.pfm-support-page .pfm-faq-panel .pfm-panel-title span {
+    font-size: 10px;
+}
+
+.pfm-support-page .pfm-faq-item > button {
+    gap: 6px;
+    padding: 10px 0;
+}
+
+.pfm-support-page .pfm-faq-item > button b {
+    font-size: 10px;
+    line-height: 1.45;
+}
+
+.pfm-support-page .pfm-faq-item > p {
+    margin-bottom: 10px;
+    font-size: 10px;
+    line-height: 1.5;
+}
+
+.pfm-support-page .pfm-tip-panel {
+    padding: 14px;
+}
+
+.pfm-support-page .pfm-tip-panel b {
+    font-size: 11px;
+}
+
+.pfm-support-page .pfm-tip-panel p {
+    font-size: 9px;
+}
+
+/* Composer rộng, textarea tăng chiều cao như khung soạn thảo nhiều dòng */
+.pfm-support-page .pfm-chat-compose {
+    align-items: flex-end;
+    gap: 10px;
+    padding: 12px 14px;
+}
+
+.pfm-support-page .pfm-chat-compose textarea {
+    min-height: 54px;
+    max-height: 180px;
+    height: 54px;
+    padding: 14px 15px;
+    border-radius: 15px;
+    font-size: 13px;
+    line-height: 1.55;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.pfm-support-page .pfm-chat-compose button {
+    flex: 0 0 44px;
+    width: 44px;
+    height: 44px;
+    align-self: flex-end;
+}
+
+/* Giữ bố cục hợp lý trên tablet và điện thoại */
+@media (max-width: 1100px) {
+    .pfm-support-page .pfm-support-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .pfm-support-page .pfm-support-side {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+
+    .pfm-support-page .pfm-chat-messages {
+        height: 55vh;
+        min-height: 360px;
+    }
+}
+
+@media (max-width: 700px) {
+    .pfm-support-page .pfm-support-side {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .pfm-support-page .pfm-chat-messages {
+        height: 52vh;
+        min-height: 320px;
+    }
+
+    /* Khung nhập chat: không tự kéo giãn chiều cao */
+    .pfm-support-page .pfm-chat-compose {
+        display: flex;
+        flex: 0 0 auto;
+        width: 100%;
+        height: auto;
+        min-height: 0;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 14px;
+        box-sizing: border-box;
+    }
+
+    /* Ô nhập câu hỏi */
+    .pfm-support-page .pfm-chat-compose textarea {
+        flex: 1 1 auto;
+        min-width: 0;
+        width: 0;
+        height: 54px;
+        min-height: 54px;
+        max-height: 140px;
+        padding: 14px 15px;
+        box-sizing: border-box;
+        resize: none;
+        overflow-x: hidden;
+        overflow-y: auto;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        border-radius: 15px;
+        font-size: 13px;
+        line-height: 1.55;
+    }
+
+    /* Nút gửi */
+    .pfm-support-page .pfm-chat-compose button {
+        flex: 0 0 44px;
+        width: 44px;
+        height: 44px;
+        align-self: center;
+    }
+}
+
+/* CHỈ CHỈNH FAQ VÀ QUYỀN RIÊNG TƯ */
+
+/* FAQ */
+.pfm-support-side > .pfm-faq-panel {
+    height: auto;
+    min-height: 0;
+    padding: 16px;
+}
+
+.pfm-support-side > .pfm-faq-panel .pfm-panel-title {
+    padding: 0 0 12px;
+    border-bottom: 1px solid var(--pfm-border);
+}
+
+.pfm-support-side > .pfm-faq-panel .pfm-panel-title h2 {
+    font-size: 16px;
+    font-weight: 800;
+}
+
+.pfm-support-side > .pfm-faq-panel .pfm-panel-title span {
+    font-size: 11px;
+}
+
+.pfm-support-side > .pfm-faq-panel .pfm-faq-item > button {
+    padding: 12px 0;
+    gap: 9px;
+}
+
+.pfm-support-side > .pfm-faq-panel .pfm-faq-item > button b {
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.5;
+}
+
+.pfm-support-side > .pfm-faq-panel .pfm-faq-item > p {
+    margin: 0 0 12px;
+    padding: 10px 12px;
+    border-left: 3px solid #10b981;
+    border-radius: 0 8px 8px 0;
+    background: rgba(16, 185, 129, .07);
+    font-size: 12px;
+    line-height: 1.65;
+}
+
+/* QUYỀN RIÊNG TƯ */
+.pfm-support-side > .pfm-tip-panel {
+    height: auto;
+    min-height: 0;
+    padding: 10px 12px;
+    gap: 9px;
+}
+
+.pfm-support-side > .pfm-tip-panel > span {
+    width: 29px;
+    height: 29px;
+    min-width: 29px;
+}
+
+.pfm-support-side > .pfm-tip-panel > span svg {
+    width: 16px;
+    height: 16px;
+}
+
+.pfm-support-side > .pfm-tip-panel b {
+    font-size: 11px;
+}
+
+.pfm-support-side > .pfm-tip-panel p {
+    margin-top: 3px;
+    font-size: 9px;
+    line-height: 1.45;
+}
+
+/* DARK MODE */
+html[data-theme="dark"] .pfm-support-side > .pfm-faq-panel .pfm-faq-item > p {
+    background: rgba(16, 185, 129, .09);
+    color: #b8c8d5;
+}
+
+/* MOBILE */
+@media (max-width: 700px) {
+    .pfm-support-side > .pfm-faq-panel {
+        padding: 14px;
+    }
+
+    .pfm-support-side > .pfm-tip-panel {
+        padding: 9px 10px;
+    }
+}
+
+/* CHỈ CHỈNH FAQ VÀ QUYỀN RIÊNG TƯ */
+
+/* FAQ */
+.pfm-support-side > .pfm-faq-panel {
+    height: auto;
+    min-height: 0;
+    padding: 16px;
+}
+
+.pfm-support-side > .pfm-faq-panel .pfm-panel-title {
+    padding: 0 0 12px;
+    border-bottom: 1px solid var(--pfm-border);
+}
+
+.pfm-support-side > .pfm-faq-panel .pfm-panel-title h2 {
+    font-size: 16px;
+    font-weight: 800;
+}
+
+.pfm-support-side > .pfm-faq-panel .pfm-panel-title span {
+    font-size: 11px;
+}
+
+.pfm-support-side > .pfm-faq-panel .pfm-faq-item > button {
+    padding: 12px 0;
+    gap: 9px;
+}
+
+.pfm-support-side > .pfm-faq-panel .pfm-faq-item > button b {
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.5;
+}
+
+.pfm-support-side > .pfm-faq-panel .pfm-faq-item > p {
+    margin: 0 0 12px;
+    padding: 10px 12px;
+    border-left: 3px solid #10b981;
+    border-radius: 0 8px 8px 0;
+    background: rgba(16, 185, 129, .07);
+    font-size: 12px;
+    line-height: 1.65;
+}
+
+/* QUYỀN RIÊNG TƯ */
+.pfm-support-side > .pfm-tip-panel {
+    height: auto;
+    min-height: 0;
+    padding: 10px 12px;
+    gap: 9px;
+}
+
+.pfm-support-side > .pfm-tip-panel > span {
+    width: 29px;
+    height: 29px;
+    min-width: 29px;
+}
+
+.pfm-support-side > .pfm-tip-panel > span svg {
+    width: 16px;
+    height: 16px;
+}
+
+.pfm-support-side > .pfm-tip-panel b {
+    font-size: 11px;
+}
+
+.pfm-support-side > .pfm-tip-panel p {
+    margin-top: 3px;
+    font-size: 9px;
+    line-height: 1.45;
+}
+
+/* DARK MODE */
+html[data-theme="dark"] .pfm-support-side > .pfm-faq-panel .pfm-faq-item > p {
+    background: rgba(16, 185, 129, .09);
+    color: #b8c8d5;
+}
+
+/* MOBILE */
+@media (max-width: 700px) {
+    .pfm-support-side > .pfm-faq-panel {
+        padding: 14px;
+    }
+
+    .pfm-support-side > .pfm-tip-panel {
+        padding: 9px 10px;
+    }
+}

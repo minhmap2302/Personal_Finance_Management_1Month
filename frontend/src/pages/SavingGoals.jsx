@@ -6,7 +6,40 @@ import { useFamily } from '../context/FamilyContext';
 import { useToast } from '../context/ToastContext';
 import { savingApi, asList, money, numberValue, formatInput, dateLabel } from '../services/pfmApi';
 import { ConfirmDialog, EmptyState, Field, Modal, PageLoading, Progress } from '../components/PfmUI';
+function getGoalTone(goal) {
+ const status = String(goal.status || 'ACTIVE');
 
+ // Mục tiêu đã hoàn thành
+ if (status === 'COMPLETED') return 'success';
+
+ // Mục tiêu đã hủy
+ if (status === 'CANCELLED') return 'neutral';
+
+ // Chỉ kiểm tra thời hạn với mục tiêu đang hoạt động
+ if (status === 'ACTIVE') {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const targetDate = goal.targetDate
+      ? new Date(`${goal.targetDate.slice(0, 10)}T00:00:00`)
+      : null;
+
+  const saved = Number(goal.savedAmount || 0);
+  const target = Number(goal.targetAmount || 0);
+
+  // Đã đạt mục tiêu
+  if (target > 0 && saved >= target) {
+   return 'success';
+  }
+
+  // Đã quá hạn nhưng chưa đạt mục tiêu
+  if (targetDate && targetDate < today) {
+   return 'warning';
+  }
+ }
+
+ return 'success';
+}
 const uid=u=>u?.id??u?.userId;
 export default function SavingGoals(){
  const {user}=useAuth();const {activeFamily,activeFamilyId}=useFamily();const toast=useToast();const role=activeFamily?.myRole||'MEMBER';const manager=['OWNER','MANAGER'].includes(role);const me=uid(user);
@@ -20,11 +53,11 @@ export default function SavingGoals(){
  async function openHistory(g,quiet=false){if(!quiet)setHistoryGoal(g);try{const data=await savingApi.contributions(activeFamilyId,g.id,{page:0,size:100,sort:'contributionDate,desc'});setContributions(asList(data));}catch(e){toast(e?.response?.data?.message||'Không thể tải lịch sử đóng góp.','error');}}
  async function deleteContribution(c){setBusy(true);try{await savingApi.removeContribution(activeFamilyId,historyGoal.id,c.id);toast('Đã xóa khoản đóng góp.','success');await openHistory(historyGoal,true);await load();}catch(e){toast(e?.response?.data?.message||'Không thể xóa khoản đóng góp.','error');}finally{setBusy(false);}}
  return <motion.div className="pfm-page pfm-saving-page" initial={{opacity:0,y:10}} animate={{opacity:1,y:0}}><div className="pfm-page-heading"><div><div className="pfm-eyebrow">TÍCH LŨY TỪNG BƯỚC · {activeFamily?.name||'CHƯA CHỌN GIA ĐÌNH'}</div><h1>Mục tiêu tiết kiệm</h1><p>Mỗi đóng góp đều được ghi nhận vào hành trình tài chính của gia đình.</p></div>{manager&&<button className="pfm-btn pfm-btn-primary" onClick={()=>startGoal()} disabled={!activeFamilyId}><Plus size={17}/> Tạo mục tiêu</button>}</div>
- {loading?<PageLoading rows={4}/>:goals.length===0?<EmptyState title="Chưa có mục tiêu tiết kiệm" description="Tạo mục tiêu đầu tiên và cùng gia đình tích lũy."/>:<div className="pfm-goal-grid">{goals.map(g=>{const pct=Number(g.progressPercent??(Number(g.savedAmount||0)/Math.max(1,Number(g.targetAmount))*100));const status=String(g.status||'ACTIVE');return <article className="pfm-panel pfm-goal-card" key={g.id}><div className="pfm-goal-card-top"><span className="pfm-goal-icon"><PiggyBank size={22}/></span><span className={`pfm-status pfm-state-${status.toLowerCase()}`}>{status==='ACTIVE'?'Đang thực hiện':status==='COMPLETED'?'Hoàn thành':'Đã hủy'}</span></div><h2>{g.name}</h2><div className="pfm-goal-target"><strong>{money(g.savedAmount)}</strong><span>/ {money(g.targetAmount)}</span></div><Progress value={pct}/><div className="pfm-goal-progress-label"><b>{pct.toLocaleString('vi-VN',{maximumFractionDigits:1})}%</b><span>Còn thiếu {money(g.remainingAmount)}</span></div><div className="pfm-goal-date"><CalendarDays size={15}/> Dự kiến: {dateLabel(g.targetDate)}</div><div className="pfm-goal-actions"><button className="pfm-btn pfm-btn-primary" disabled={status!=='ACTIVE'} onClick={()=>openContribute(g)}><Plus size={15}/> Đóng góp</button><button className="pfm-btn pfm-btn-outline" onClick={()=>openHistory(g)}><History size={15}/> Lịch sử</button>{manager&&status==='ACTIVE'&&<><button className="pfm-icon-btn" title="Sửa mục tiêu" onClick={()=>startGoal(g)}><Pencil size={16}/></button><button className="pfm-icon-btn danger" title="Hủy mục tiêu" onClick={()=>setCancelTarget(g)}><Trash2 size={16}/></button></>}</div></article>})}</div>}
+ {loading?<PageLoading rows={4}/>:goals.length===0?<EmptyState title="Chưa có mục tiêu tiết kiệm" description="Tạo mục tiêu đầu tiên và cùng gia đình tích lũy."/>:<div className="pfm-goal-grid">{goals.map(g=>{const pct=Number(g.progressPercent??(Number(g.savedAmount||0)/Math.max(1,Number(g.targetAmount))*100));const status=String(g.status||'ACTIVE');return <article className="pfm-panel pfm-goal-card" key={g.id}><div className="pfm-goal-card-top"><span className="pfm-goal-icon"><PiggyBank size={22}/></span><span className={`pfm-status pfm-state-${status.toLowerCase()}`}>{status==='ACTIVE'?'Đang thực hiện':status==='COMPLETED'?'Hoàn thành':'Đã hủy'}</span></div><h2>{g.name}</h2><div className="pfm-goal-target"><strong>{money(g.savedAmount)}</strong><span>/ {money(g.targetAmount)}</span></div><Progress value={pct} status={getGoalTone(g)}/><div className="pfm-goal-progress-label"><b>{pct.toLocaleString('vi-VN',{maximumFractionDigits:1})}%</b><span>Còn thiếu {money(g.remainingAmount)}</span></div><div className="pfm-goal-date"><CalendarDays size={15}/> Dự kiến: {dateLabel(g.targetDate)}</div><div className="pfm-goal-actions"><button className="pfm-btn pfm-btn-primary" disabled={status!=='ACTIVE'} onClick={()=>openContribute(g)}><Plus size={15}/> Đóng góp</button><button className="pfm-btn pfm-btn-outline" onClick={()=>openHistory(g)}><History size={15}/> Lịch sử</button>{manager&&status==='ACTIVE'&&<><button className="pfm-icon-btn" title="Sửa mục tiêu" onClick={()=>startGoal(g)}><Pencil size={16}/></button><button className="pfm-icon-btn danger" title="Hủy mục tiêu" onClick={()=>setCancelTarget(g)}><Trash2 size={16}/></button></>}</div></article>})}</div>}
  {!manager&&<p className="pfm-help pt-5">Thành viên có thể đóng góp và quản lý các khoản đóng góp của mình. Chỉ Trưởng nhóm hoặc Quản lý mới được tạo, chỉnh sửa hoặc hủy mục tiêu.</p>}
  {goalForm&&<Modal title={goalForm.id?'Chỉnh sửa mục tiêu':'Tạo mục tiêu tiết kiệm'} onClose={()=>setGoalForm(null)}><form className="pfm-form" onSubmit={saveGoal}><Field label="Tên mục tiêu"><input required maxLength={100} value={goalForm.name||''} onChange={e=>setGoalForm(f=>({...f,name:e.target.value}))} placeholder="Ví dụ: Quỹ dự phòng"/></Field><Field label="Số tiền mục tiêu (VND)"><input required inputMode="numeric" value={goalAmount} onChange={e=>setGoalAmount(formatInput(e.target.value))} placeholder="30.000.000"/></Field><Field label="Ngày dự kiến hoàn thành"><input type="date" value={goalForm.targetDate||''} onChange={e=>setGoalForm(f=>({...f,targetDate:e.target.value}))}/></Field><div className="pfm-form-actions"><button type="button" className="pfm-btn pfm-btn-light" onClick={()=>setGoalForm(null)}>Hủy</button><button className="pfm-btn pfm-btn-primary" disabled={busy}>{busy&&<LoaderCircle className="pfm-spin" size={16}/>}Lưu mục tiêu</button></div></form></Modal>}
  {contributeGoal&&<Modal title={contributionEdit?'Sửa khoản đóng góp':'Đóng góp vào mục tiêu'} onClose={()=>setContributeGoal(null)}><form className="pfm-form" onSubmit={saveContribution}><div className="pfm-contribute-target"><b>{contributeGoal.name}</b><span>Đã tích lũy {money(contributeGoal.savedAmount)} / {money(contributeGoal.targetAmount)}</span></div><Field label="Số tiền đóng góp (VND)"><input required inputMode="numeric" value={contributionAmount} onChange={e=>setContributionAmount(formatInput(e.target.value))} placeholder="500.000"/></Field><Field label="Ngày đóng góp"><input required type="date" value={contributionDate} onChange={e=>setContributionDate(e.target.value)}/></Field><Field label="Ghi chú"><textarea maxLength={255} rows={3} value={note} onChange={e=>setNote(e.target.value)} placeholder="Ghi chú (không bắt buộc)"/></Field><div className="pfm-form-actions"><button type="button" className="pfm-btn pfm-btn-light" onClick={()=>setContributeGoal(null)}>Hủy</button><button className="pfm-btn pfm-btn-primary" disabled={busy}>{busy&&<LoaderCircle className="pfm-spin" size={16}/>}Lưu đóng góp</button></div></form></Modal>}
  {historyGoal&&!contributeGoal&&<Modal title={`Lịch sử đóng góp · ${historyGoal.name}`} onClose={()=>setHistoryGoal(null)} wide><div className="pfm-history-list">{contributions.length===0?<EmptyState title="Chưa có khoản đóng góp"/>:contributions.map(c=>{const canEdit=manager||String(c.userId)===String(me);return <div className="pfm-history-row" key={c.id}><span className="pfm-history-avatar">{(c.userFullName||c.username||'?').charAt(0).toUpperCase()}</span><div className="pfm-history-info"><b>{c.userFullName||c.username||'Thành viên'}</b><small>{dateLabel(c.contributionDate)}{c.note?` · ${c.note}`:''}</small></div><strong>{money(c.amount)}</strong>{canEdit&&<div className="pfm-row-actions"><button onClick={()=>openContribute(historyGoal,c)} title="Sửa"><Pencil size={15}/></button><button className="danger" onClick={()=>deleteContribution(c)} title="Xóa"><Trash2 size={15}/></button></div>}</div>})}</div></Modal>}
- {cancelTarget&&<ConfirmDialog title="Hủy mục tiêu tiết kiệm?" description={`Mục tiêu “${cancelTarget.name}” sẽ chuyển sang CANCELLED. Lịch sử đóng góp được giữ lại và không được tính vào ngân sách đã dùng.`} onCancel={()=>setCancelTarget(null)} onConfirm={cancelGoal} busy={busy} confirmText="Hủy mục tiêu"/>}
+ {cancelTarget&&<ConfirmDialog title="Hủy mục tiêu tiết kiệm?" description={`Lịch sử đóng góp được giữ lại và không được tính vào ngân sách đã dùng.`} onCancel={()=>setCancelTarget(null)} onConfirm={cancelGoal} busy={busy} confirmText="Hủy mục tiêu"/>}
  </motion.div>;
 }
