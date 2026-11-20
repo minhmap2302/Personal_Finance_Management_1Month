@@ -346,7 +346,6 @@ export default function Family() {
                   <span className="mb-2 block text-sm font-semibold text-slate-700">Tên gia đình <span className="text-rose-500">*</span></span>
                   <input autoFocus required maxLength={100} value={name} onChange={(event) => setName(event.target.value)} placeholder="Ví dụ: Gia đình Nguyễn" className="h-12 w-full rounded-xl border border-slate-200 px-4 text-sm outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-50" />
                 </label>
-                <p className="rounded-xl bg-slate-50 p-3 text-xs leading-5 text-slate-500">Sau khi tạo thành công, backend tự gán bạn làm OWNER.</p>
                 <div className="flex justify-end gap-2">
                   <button type="button" disabled={creating} onClick={closeModal} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold disabled:opacity-50">Hủy</button>
                   <button disabled={creating || !name.trim()} className="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50">{creating ? 'Đang tạo…' : 'Tạo gia đình'}</button>
