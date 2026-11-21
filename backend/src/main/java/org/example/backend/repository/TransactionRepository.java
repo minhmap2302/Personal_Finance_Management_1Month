@@ -11,6 +11,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -21,6 +22,7 @@ import java.util.Optional;
 /**
  * Repository cho giao dịch của gia đình.
  */
+@Repository
 public interface TransactionRepository
         extends JpaRepository<Transaction, Long>, JpaSpecificationExecutor<Transaction> {
 
@@ -54,6 +56,18 @@ public interface TransactionRepository
     List<Transaction> findAllByFamilyIdAndDateBetween(@Param("familyId") Long familyId,
                                                       @Param("startDate") LocalDate startDate,
                                                       @Param("endDate") LocalDate endDate);
+
+    /** Top giao dịch chi tiêu trong kỳ, giới hạn ngay tại database. */
+    @EntityGraph(attributePaths = "category")
+    @Query("select t from Transaction t "
+            + "where t.family.id = :familyId and t.category.type = :type "
+            + "and t.transactionDate between :startDate and :endDate "
+            + "order by t.amount desc, t.transactionDate desc, t.id desc")
+    List<Transaction> findTopExpensesByFamilyAndDateBetween(@Param("familyId") Long familyId,
+                                                            @Param("type") CategoryType type,
+                                                            @Param("startDate") LocalDate startDate,
+                                                            @Param("endDate") LocalDate endDate,
+                                                            Pageable pageable);
 
     /** 10 giao dịch gần nhất của gia đình, sắp xếp theo ngày và id giảm dần (Spring Data tự sinh truy vấn từ tên hàm). */
     @EntityGraph(attributePaths = {"user", "category"})
