@@ -19,7 +19,7 @@ public class ChatbotAiConfig {
     @Bean
     public ChatMemory chatMemory() {
         ChatMemory delegate = MessageWindowChatMemory.builder()
-                .maxMessages(20)
+                .maxMessages(8)
                 .build();
 
         // Bọc ChatMemory để loại bỏ metadata ẩn (như reasoning_content) khỏi AssistantMessage
