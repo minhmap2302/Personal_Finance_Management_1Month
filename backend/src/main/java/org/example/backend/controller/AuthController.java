@@ -6,16 +6,18 @@ import org.example.backend.model.dto.request.LoginRequest;
 import org.example.backend.model.dto.request.LogoutRequest;
 import org.example.backend.model.dto.request.RefreshTokenRequest;
 import org.example.backend.model.dto.request.RegisterRequest;
+import org.example.backend.model.dto.request.VerifyOtpRequest;
+import org.example.backend.model.dto.request.ForgotPasswordRequest;
+import org.example.backend.model.dto.request.ResendOtpRequest;
+import org.example.backend.model.dto.request.ResetPasswordRequest;
 import org.example.backend.model.dto.response.ApiResponse;
 import org.example.backend.model.dto.response.AuthResponse;
+import org.example.backend.model.dto.response.ResetTokenResponse;
 import org.example.backend.model.dto.response.UserResponse;
-import org.example.backend.model.entity.RefreshToken;
-import org.example.backend.model.entity.User;
 import org.example.backend.service.AuthService;
+import org.example.backend.service.OtpService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -24,12 +26,48 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
+    private final OtpService otpService;
 
     @PostMapping("/register")
-    public ResponseEntity<ApiResponse<UserResponse>> register(@Valid @RequestBody RegisterRequest request) {
-        UserResponse response = authService.register(request);
+    public ResponseEntity<ApiResponse<Void>> register(@Valid @RequestBody RegisterRequest request) {
+        otpService.requestRegistration(request);
+        return ResponseEntity.ok(ApiResponse.success("Đã gửi OTP xác minh đăng ký"));
+    }
+
+    @PostMapping("/register/verify")
+    public ResponseEntity<ApiResponse<UserResponse>> verifyRegistration(
+            @Valid @RequestBody VerifyOtpRequest request) {
+        UserResponse response = otpService.verifyRegistration(request);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success("Đăng ký tài khoản thành công", response));
+                .body(ApiResponse.success("Xác minh đăng ký thành công", response));
+    }
+
+    @PostMapping("/register/resend")
+    public ResponseEntity<ApiResponse<Void>> resendRegistration(
+            @Valid @RequestBody ResendOtpRequest request) {
+        otpService.resendRegistration(request);
+        return ResponseEntity.ok(ApiResponse.success("Đã gửi lại OTP"));
+    }
+
+    @PostMapping("/password/forgot")
+    public ResponseEntity<ApiResponse<Void>> forgotPassword(
+            @Valid @RequestBody ForgotPasswordRequest request) {
+        otpService.requestPasswordReset(request);
+        return ResponseEntity.ok(ApiResponse.success("Nếu email tồn tại, mã OTP đã được gửi"));
+    }
+
+    @PostMapping("/password/verify")
+    public ResponseEntity<ApiResponse<ResetTokenResponse>> verifyPasswordOtp(
+            @Valid @RequestBody VerifyOtpRequest request) {
+        ResetTokenResponse response = otpService.verifyPasswordReset(request);
+        return ResponseEntity.ok(ApiResponse.success("Xác minh OTP thành công", response));
+    }
+
+    @PostMapping("/password/reset")
+    public ResponseEntity<ApiResponse<Void>> resetPassword(
+            @Valid @RequestBody ResetPasswordRequest request) {
+        otpService.resetPassword(request);
+        return ResponseEntity.ok(ApiResponse.success("Đặt lại mật khẩu thành công"));
     }
 
     @PostMapping("/login")
