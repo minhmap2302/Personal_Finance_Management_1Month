@@ -60,4 +60,12 @@ public interface FamilyMemberRepository extends JpaRepository<FamilyMember, Long
     List<FamilyMember> findEnabledByRole(@Param("familyId") Long familyId,
                                          @Param("role") FamilyRole role,
                                          Pageable pageable);
+
+    /**
+     * Thành viên có vai trò thuộc roles, của tài khoản còn hoạt động, chưa xóa và đã bật cảnh báo email.
+     * Nạp sẵn user và family vì job cảnh báo chạy ngoài transaction.
+     */
+    @Query("select m from FamilyMember m join fetch m.user u join fetch m.family f "
+            + "where m.role in :roles and u.emailAlertEnabled = true and u.enabled = true and u.deletedAt is null")
+    List<FamilyMember> findAlertRecipients(@Param("roles") Collection<FamilyRole> roles);
 }
