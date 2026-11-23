@@ -21,6 +21,7 @@ public class UserResponse {
     private String fullName;
     private SystemRole role;
     private boolean enabled;
+    private boolean emailAlertEnabled;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -35,6 +36,7 @@ public class UserResponse {
                 .fullName(user.getFullName())
                 .role(user.getRole())
                 .enabled(user.isEnabled())
+                .emailAlertEnabled(user.isEmailAlertEnabled())
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
                 .build();

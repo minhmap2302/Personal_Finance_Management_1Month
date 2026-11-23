@@ -1,7 +1,7 @@
 package org.example.backend.service.impl;
 
 import lombok.RequiredArgsConstructor;
-import org.example.backend.channel.OtpMailChannel;
+import org.example.backend.mail.OtpMailChannel;
 import org.example.backend.exception.BadRequestException;
 import org.example.backend.exception.ConflictException;
 import org.example.backend.model.dto.request.*;
@@ -236,7 +236,12 @@ public class OtpServiceImpl implements OtpService {
     }
 
     private void sendOtp(String email, String otp, OtpPurpose purpose) {
-        otpChannel.sendOtp(email, otp, purpose);
+        String subject = purpose == OtpPurpose.REGISTER
+                ? "Mã OTP xác minh đăng ký"
+                : "Mã OTP đặt lại mật khẩu";
+        String html = "<p>Mã OTP của bạn là: <b>" + otp + "</b></p>"
+                + "<p>Mã hết hạn sau 10 phút. Không chia sẻ mã này.</p>";
+        otpChannel.sendHtml(email, subject, html);
     }
 
     private String generateOtp() {
