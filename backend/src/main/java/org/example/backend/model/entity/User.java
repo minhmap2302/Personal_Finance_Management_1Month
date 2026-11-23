@@ -79,6 +79,11 @@ public class User implements UserDetails {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
+    /** Bật để nhận email cảnh báo ngân sách mỗi ngày (chỉ có tác dụng với chủ gia đình và quản lý). Mặc định tắt. */
+    @Column(name = "email_alert_enabled", nullable = false)
+    @Builder.Default
+    private boolean emailAlertEnabled = false;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

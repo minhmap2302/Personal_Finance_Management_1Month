@@ -2,6 +2,7 @@ package org.example.backend.service;
 
 import org.example.backend.model.dto.request.ChangePasswordRequest;
 import org.example.backend.model.dto.request.DeleteAccountRequest;
+import org.example.backend.model.dto.request.UpdateEmailAlertRequest;
 import org.example.backend.model.dto.request.UpdateProfileRequest;
 import org.example.backend.model.dto.response.UserResponse;
 
@@ -15,5 +16,7 @@ public interface UserService {
 
     /** Xóa tài khoản của chính người dùng (ẩn danh hóa), cần mật khẩu hiện tại. */
     void deleteAccount(Long userId, DeleteAccountRequest request);
+
+    UserResponse updateEmailAlert(Long userId, UpdateEmailAlertRequest request);
 }
 

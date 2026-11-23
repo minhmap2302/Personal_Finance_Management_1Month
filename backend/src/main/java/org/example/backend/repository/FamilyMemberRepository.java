@@ -36,12 +36,12 @@ public interface FamilyMemberRepository extends JpaRepository<FamilyMember, Long
      */
     @Query(value = "select m from FamilyMember m join fetch m.user u "
             + "where m.family.id = :familyId "
-            + "and (lower(u.username) like concat('%', :keyword, '%') "
-            + "or lower(u.fullName) like concat('%', :keyword, '%'))",
+            + "and (lower(u.username) like concat('%', :keyword, '%') escape '!' "
+            + "or lower(u.fullName) like concat('%', :keyword, '%') escape '!')",
             countQuery = "select count(m) from FamilyMember m join m.user u "
                     + "where m.family.id = :familyId "
-                    + "and (lower(u.username) like concat('%', :keyword, '%') "
-                    + "or lower(u.fullName) like concat('%', :keyword, '%'))")
+                    + "and (lower(u.username) like concat('%', :keyword, '%') escape '!' "
+                    + "or lower(u.fullName) like concat('%', :keyword, '%') escape '!')")
     Page<FamilyMember> searchMembers(@Param("familyId") Long familyId,
                                      @Param("keyword") String keyword,
                                      Pageable pageable);
@@ -60,4 +60,12 @@ public interface FamilyMemberRepository extends JpaRepository<FamilyMember, Long
     List<FamilyMember> findEnabledByRole(@Param("familyId") Long familyId,
                                          @Param("role") FamilyRole role,
                                          Pageable pageable);
+
+    /**
+     * Thành viên có vai trò thuộc roles, của tài khoản còn hoạt động, chưa xóa và đã bật cảnh báo email.
+     * Nạp sẵn user và family vì job cảnh báo chạy ngoài transaction.
+     */
+    @Query("select m from FamilyMember m join fetch m.user u join fetch m.family f "
+            + "where m.role in :roles and u.emailAlertEnabled = true and u.enabled = true and u.deletedAt is null")
+    List<FamilyMember> findAlertRecipients(@Param("roles") Collection<FamilyRole> roles);
 }

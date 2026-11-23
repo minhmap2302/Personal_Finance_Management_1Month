@@ -80,6 +80,18 @@ public interface BudgetRepository extends JpaRepository<Budget, Long> {
                                               @Param("startDate") LocalDate startDate,
                                               @Param("endDate") LocalDate endDate);
 
+    /** Top danh mục chi tiêu, sắp xếp và giới hạn ngay tại database. */
+    @Query("select t.category.id as categoryId, sum(t.amount) as totalAmount from Transaction t "
+            + "where t.family.id = :familyId and t.category.type = :type "
+            + "and t.transactionDate between :startDate and :endDate "
+            + "group by t.category.id order by sum(t.amount) desc, t.category.id asc")
+    List<CategorySpent> findTopExpensesByCategory(@Param("familyId") Long familyId,
+                                                  @Param("type") CategoryType type,
+                                                  @Param("startDate") LocalDate startDate,
+                                                  @Param("endDate") LocalDate endDate,
+                                                  Pageable pageable);
+
+
     /** Tổng chi tiêu của một danh mục trong khoảng thời gian. */
     @Query("select sum(t.amount) from Transaction t "
             + "where t.family.id = :familyId and t.category.id = :categoryId "
@@ -102,6 +114,15 @@ public interface BudgetRepository extends JpaRepository<Budget, Long> {
                                 @Param("startDate") LocalDate startDate,
                                 @Param("endDate") LocalDate endDate);
 
+    /** Các ngân sách tổng của gia đình có khoảng thời gian giao với [monthStart, monthEnd]. */
+    @Query("select b from Budget b "
+            + "where b.family.id = :familyId and b.parentBudget is null "
+            + "and b.startDate <= :monthEnd and b.endDate >= :monthStart")
+    Page<Budget> findTotalsOverlapping(@Param("familyId") Long familyId,
+                                       @Param("monthStart") LocalDate monthStart,
+                                       @Param("monthEnd") LocalDate monthEnd,
+                                       Pageable pageable);
+
     // ------------------------- Xóa hàng loạt khi xóa gia đình -------------------------
 
     /** Xóa các ngân sách con của gia đình (phải xóa trước ngân sách tổng). */
@@ -113,13 +134,4 @@ public interface BudgetRepository extends JpaRepository<Budget, Long> {
     @Modifying(flushAutomatically = true)
     @Query("delete from Budget b where b.family.id = :familyId")
     int deleteAllBudgetsOfFamily(@Param("familyId") Long familyId);
-
-    /** Các ngân sách tổng của gia đình có khoảng thời gian giao với [monthStart, monthEnd]. */
-    @Query("select b from Budget b "
-            + "where b.family.id = :familyId and b.parentBudget is null "
-            + "and b.startDate <= :monthEnd and b.endDate >= :monthStart")
-    Page<Budget> findTotalsOverlapping(@Param("familyId") Long familyId,
-                                       @Param("monthStart") LocalDate monthStart,
-                                       @Param("monthEnd") LocalDate monthEnd,
-                                       Pageable pageable);
 }

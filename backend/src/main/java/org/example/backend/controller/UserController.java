@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.backend.exception.UnauthorizedException;
 import org.example.backend.model.dto.request.ChangePasswordRequest;
 import org.example.backend.model.dto.request.DeleteAccountRequest;
+import org.example.backend.model.dto.request.UpdateEmailAlertRequest;
 import org.example.backend.model.dto.request.UpdateProfileRequest;
 import org.example.backend.model.dto.response.ApiResponse;
 import org.example.backend.model.dto.response.UserResponse;
@@ -49,6 +50,17 @@ public class UserController {
             @Valid @RequestBody DeleteAccountRequest request) {
         userService.deleteAccount(currentUser.getId(), request);
         return ResponseEntity.ok(ApiResponse.success("Đã xóa tài khoản"));
+    }
+
+    @PutMapping("/me/email-alert")
+    public ResponseEntity<ApiResponse<UserResponse>> updateEmailAlert(
+            @AuthenticationPrincipal User currentUser,
+            @Valid @RequestBody UpdateEmailAlertRequest request) {
+        UserResponse response = userService.updateEmailAlert(currentUser.getId(), request);
+        String message = request.getEnabled()
+                ? "Đã bật cảnh báo ngân sách qua email"
+                : "Đã tắt cảnh báo ngân sách qua email";
+        return ResponseEntity.ok(ApiResponse.success(message, response));
     }
 }
 

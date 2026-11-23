@@ -8,6 +8,7 @@ import org.example.backend.exception.ForbiddenException;
 import org.example.backend.exception.ResourceNotFoundException;
 import org.example.backend.model.dto.request.ChangePasswordRequest;
 import org.example.backend.model.dto.request.DeleteAccountRequest;
+import org.example.backend.model.dto.request.UpdateEmailAlertRequest;
 import org.example.backend.model.dto.request.UpdateProfileRequest;
 import org.example.backend.model.dto.response.UserResponse;
 import org.example.backend.model.entity.FamilyMember;
@@ -181,5 +182,13 @@ public class UserServiceImpl implements UserService {
         }
         return userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng với ID: " + userId));
+    }
+
+    @Override
+    @Transactional
+    public UserResponse updateEmailAlert(Long userId, UpdateEmailAlertRequest request) {
+        User user = getUserById(userId);
+        user.setEmailAlertEnabled(request.getEnabled());
+        return UserResponse.fromEntity(userRepository.save(user));
     }
 }
