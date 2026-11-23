@@ -5897,3 +5897,802 @@ html[data-theme="dark"] .pfm-support-side > .pfm-faq-panel .pfm-faq-item > p {
         padding: 9px 10px;
     }
 }
+/* Bổ sung giao diện OTP/quên mật khẩu; kế thừa auth-page, auth-form, input-wrap và btn-primary trong styles.css */
+.auth-otp-notice{margin:0 0 15px;padding:11px 13px;border:1px solid #ccebd9;border-radius:11px;background:#effaf3;color:#18764e;font-size:11px;line-height:1.65}
+.auth-otp-form{gap:12px}
+.auth-otp-form .input-wrap input,.auth-otp-page .input-wrap input{letter-spacing:.12em;font-weight:700}
+.auth-otp-text-button{justify-content:center;width:100%;padding:8px;border:0;background:transparent;color:#07855f;font-size:12px;font-weight:750}
+.auth-otp-text-button:hover{color:#065f46;text-decoration:underline}
+.auth-otp-text-button:disabled{opacity:.55;cursor:not-allowed}
+.auth-otp-text-button.muted{color:#82918c;font-weight:600}
+.auth-forgot-link{color:#07855f;font-size:11px;font-weight:750}
+.auth-forgot-link:hover{text-decoration:underline}
+.auth-otp-done{display:grid;justify-items:center;gap:20px;padding:18px 0;color:#079568}
+.auth-otp-done .auth-submit{width:100%}
+.auth-otp-page .auth-form-wrap{max-width:460px}
+@media(max-width:760px){.auth-otp-page .auth-form-side{padding-top:30px}.auth-otp-page .visual-copy h1{font-size:30px}}
+html[data-theme="dark"] .auth-otp-notice{border-color:#245b45;background:#123a2b;color:#a8e6c3}
+html[data-theme="dark"] .auth-otp-text-button{color:#6ee7b7}
+html[data-theme="dark"] .auth-forgot-link{color:#6ee7b7}
+
+.auth-forgot-row{display:flex;justify-content:flex-end;align-items:center;margin-top:8px;margin-bottom:8px}
+.auth-forgot-link{display:inline-flex;align-items:center;gap:5px;padding:2px 0;color:#07855f;font-size:12px;font-weight:700;text-decoration:none;transition:color .18s ease}
+.auth-forgot-link:hover{color:#056b4d;text-decoration:underline;text-underline-offset:3px}
+.register-email-hint{display:flex;align-items:flex-start;gap:7px;margin:-5px 0 13px;color:#74847e;font-size:11px;line-height:1.55}
+.register-email-hint svg{flex:0 0 auto;margin-top:1px;color:#07855f}
+html[data-theme="dark"] .register-email-hint{color:#a4b5ae}
+html[data-theme="dark"] .register-email-hint svg{color:#6ee7b7}
+
+
+/* OTP registration: mã luôn hiển thị; nút gửi lại có thời gian chờ 5 phút */
+.register-otp-row{display:flex;align-items:stretch;gap:9px}
+.register-otp-row .input-wrap{flex:1;min-width:0}
+.register-send-otp{flex:0 0 auto;min-width:108px;padding:0 13px;border:1px solid #cfe7dc;border-radius:11px;background:#effaf4;color:#087653;font-size:12px;font-weight:750;white-space:nowrap;transition:background .18s ease,border-color 1.8s ease}
+.register-send-otp:hover:not(:disabled){background:#dcf5e8;border-color:#9bd6b8}
+.register-send-otp:disabled{opacity:.58;cursor:not-allowed}
+.register-email-hint{margin:7px 0 12px;font-size:11px;line-height:1.55}
+.register-form-wrap .terms-row{align-items:flex-start;line-height:1.55}
+.register-form-wrap .terms-row span{font-size:11px}
+.login-password-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:0}
+.login-password-heading label{margin:0}
+.login-password-heading .auth-forgot-link{flex:0 0 auto;font-size:12px}
+html[data-theme="dark"] .register-send-otp{border-color:#285c48;background:#153d2e;color:#a7edc7}
+html[data-theme="dark"] .register-send-otp:hover:not(:disabled){background:#1b513b}
+@media(max-width:420px){.register-otp-row{gap:6px}.register-send-otp{min-width:94px;padding:0 9px;font-size:11px}}
+
+/* ==========================================
+   FINHOME - RESET PASSWORD SUCCESS SCREEN
+   Glassmorphism / Dark Navy / Emerald
+========================================== */
+
+
+/* ==========================================
+   FINHOME - RESET SUCCESS INSIDE FORM ONLY
+========================================== */
+
+/* Chỉ tác động đến form bên phải, không thay đổi toàn trang */
+.auth-reset-complete-page .auth-form-side .auth-form-wrap {
+    width: min(100%, 480px);
+    max-width: 480px;
+    padding: 32px 24px 24px;
+    position: relative;
+    overflow: hidden;
+
+    border: 1px solid rgba(157, 190, 211, .24);
+    border-radius: 23px;
+
+    background:
+            radial-gradient(
+                    ellipse at 20% 0%,
+                    rgba(255,255,255,.10),
+                    transparent 50%
+            ),
+            linear-gradient(
+                    145deg,
+                    rgba(39,57,76,.96),
+                    rgba(19,39,57,.98)
+            );
+
+    box-shadow:
+            0 20px 55px rgba(0,0,0,.20),
+            inset 0 1px 0 rgba(255,255,255,.10);
+}
+
+/* Chỉ ẩn các thành phần form cũ khi hoàn tất */
+.auth-reset-complete-page .auth-form-wrap > .mobile-auth-brand,
+.auth-reset-complete-page .auth-form-wrap > .form-kicker,
+.auth-reset-complete-page .auth-form-wrap > .form-subtitle,
+.auth-reset-complete-page .auth-form-wrap > .auth-switch {
+    display: none !important;
+}
+
+/* Nội dung thành công */
+.auth-reset-success-card {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+/* Vòng tròn biểu tượng */
+.auth-reset-shield {
+    width: 120px;
+    height: 120px;
+    display: grid;
+    place-items: center;
+    margin: 0 auto 25px;
+
+    border: 1px solid rgba(176,213,219,.22);
+    border-radius: 50%;
+
+    background:
+            radial-gradient(
+                    circle at 35% 25%,
+                    rgba(255,255,255,.19),
+                    transparent 58%
+            ),
+            linear-gradient(
+                    145deg,
+                    rgba(111,151,162,.27),
+                    rgba(16,66,67,.35)
+            );
+
+    box-shadow:
+            inset 0 0 25px rgba(255,255,255,.08),
+            0 0 35px rgba(16,185,129,.12);
+}
+
+/* Khiên và khóa */
+.auth-reset-shield-glow {
+    width: 82px;
+    height: 82px;
+    position: relative;
+    display: grid;
+    place-items: center;
+    color: #78e8c1;
+
+    filter:
+            drop-shadow(0 0 8px rgba(16,185,129,.65))
+            drop-shadow(0 0 17px rgba(16,185,129,.25));
+}
+
+.auth-reset-shield-outline {
+    position: absolute;
+    width: 70px;
+    height: 70px;
+    color: #6ee7b7;
+}
+
+.auth-reset-lock {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -43%);
+    color: #a5f3d0;
+    filter: drop-shadow(0 0 5px rgba(16,185,129,.8));
+}
+
+/* Tiêu đề xanh */
+.auth-reset-success-label {
+    margin-bottom: 11px;
+    color: #6ee7b7;
+    font-size: 13px;
+    font-weight: 850;
+    letter-spacing: .35px;
+    line-height: 1.5;
+}
+
+.auth-reset-success-card h2 {
+    margin: 0;
+    color: #f5f7fa;
+    font-size: clamp(21px, 4vw, 27px);
+    font-weight: 850;
+    letter-spacing: -.65px;
+    line-height: 1.4;
+}
+
+.auth-reset-description {
+    max-width: 400px;
+    margin: 12px 0 22px;
+    color: #aebdca;
+    font-size: 13px;
+    line-height: 1.8;
+}
+
+/* Nút đăng nhập */
+.auth-reset-login-button {
+    width: auto;
+    min-width: 240px;
+    min-height: 51px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+
+    padding: 0 25px;
+    border: 1px solid rgba(110,231,183,.30);
+    border-radius: 12px;
+
+    background: linear-gradient(110deg,#0da77c,#10b981);
+    color: #fff;
+
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 800;
+
+    box-shadow: 0 9px 25px rgba(5,150,105,.24);
+    cursor: pointer;
+
+    transition: transform .2s ease, box-shadow .2s ease;
+}
+
+.auth-reset-login-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 13px 30px rgba(5,150,105,.34);
+}
+
+/* Trạng thái chuyển hướng */
+.auth-reset-redirect {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+
+    margin-top: 22px;
+    color: #a6b4c0;
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+.auth-reset-redirect-dot {
+    width: 8px;
+    height: 8px;
+    flex: 0 0 8px;
+    border-radius: 50%;
+    background: #10b981;
+
+    box-shadow: 0 0 0 4px rgba(16,185,129,.12);
+    animation: auth-reset-pulse 1.3s ease-in-out infinite;
+}
+
+@keyframes auth-reset-pulse {
+    0%, 100% {
+        opacity: 1;
+        box-shadow: 0 0 0 4px rgba(16,185,129,.12);
+    }
+
+    50% {
+        opacity: .55;
+        box-shadow: 0 0 0 7px rgba(16,185,129,.04);
+    }
+}
+
+
+
+
+/* ==========================================
+   FINHOME - PASSWORD RESET PROGRESS BAR
+========================================== */
+
+.auth-reset-progress {
+    display: block;
+    position: relative;
+    width: 100%;
+    height: 6px;
+    margin-top: 13px;
+    overflow: hidden;
+    border-radius: 20px;
+    background: rgba(148, 163, 184, .20);
+}
+
+.auth-reset-progress span {
+    position: absolute;
+    top: 0;
+    left: 0;
+
+    display: block;
+    width: 100%;
+    height: 100%;
+
+    border-radius: inherit;
+
+    background: linear-gradient(
+            90deg,
+            #0aa879 0%,
+            #10b981 55%,
+            #6ee7b7 100%
+    );
+
+    box-shadow: 0 0 12px rgba(16, 185, 129, .4);
+
+    transform: scaleX(0);
+    transform-origin: left center;
+
+    animation: finhome-reset-progress 1800ms linear forwards;
+}
+
+@keyframes finhome-reset-progress {
+    from {
+        transform: scaleX(0);
+    }
+
+    to {
+        transform: scaleX(1);
+    }
+}
+
+
+/* Responsive */
+@media (max-width: 520px) {
+    .auth-reset-complete-page .auth-form-side .auth-form-wrap {
+        padding: 27px 19px 21px;
+        border-radius: 19px;
+    }
+
+    .auth-reset-shield {
+        width: 105px;
+        height: 105px;
+        margin-bottom: 22px;
+    }
+
+    .auth-reset-success-label {
+        font-size: 11px;
+    }
+
+    .auth-reset-success-card h2 {
+        font-size: 21px;
+    }
+
+    .auth-reset-description {
+        font-size: 12px;
+        margin-bottom: 20px;
+    }
+
+    .auth-reset-login-button {
+        width: 100%;
+        min-height: 48px;
+    }
+
+    .auth-reset-redirect {
+        font-size: 10px;
+    }
+}
+
+
+/* ==========================================
+   FINHOME - PASSWORD RESET SUCCESS REDESIGN
+========================================== */
+
+.auth-otp-done-panel {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    padding: 30px 26px 25px;
+    margin-top: 22px;
+    border: 1px solid #dceee4;
+    border-radius: 20px;
+    background:
+            radial-gradient(circle at 50% 0%, rgba(16, 185, 129, .08), transparent 48%),
+            #ffffff;
+    box-shadow: 0 16px 45px rgba(25, 70, 48, .07);
+    text-align: center;
+    color: #17352c;
+}
+
+/* Success icon */
+.auth-otp-success-icon {
+    width: 66px;
+    height: 66px;
+    display: grid;
+    place-items: center;
+    margin-bottom: 22px;
+    border: 1px solid #bcebd1;
+    border-radius: 22px;
+    background: linear-gradient(145deg, #e7faef, #d5f5e3);
+    color: #079568;
+    box-shadow: 0 8px 22px rgba(5, 150, 105, .10);
+}
+
+/* Eyebrow */
+.auth-otp-done-label {
+    margin-bottom: 10px;
+    color: #079568;
+    font-size: 9px;
+    font-weight: 850;
+    letter-spacing: 1.25px;
+    line-height: 1.5;
+}
+
+/* Main heading */
+.auth-otp-done-panel h3 {
+    margin: 0;
+    color: #183c30;
+    font-size: 23px;
+    font-weight: 850;
+    letter-spacing: -.7px;
+    line-height: 1.35;
+}
+
+/* Description */
+.auth-otp-done-panel .auth-otp-success-text {
+    max-width: 340px;
+    margin: 12px 0 24px;
+    color: #778b81;
+    font-size: 12px;
+    font-weight: 450;
+    line-height: 1.8;
+}
+
+/* Login button */
+.auth-otp-done-panel .auth-otp-login-button {
+    width: 100%;
+    min-height: 47px;
+    margin: 0;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 800;
+    box-shadow: 0 8px 20px rgba(4, 120, 87, .17);
+}
+
+.auth-otp-done-panel .auth-otp-login-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 25px rgba(4, 120, 87, .23);
+}
+
+/* Redirect indicator */
+.auth-otp-redirect-note {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 19px;
+    color: #91a198;
+    font-size: 10px;
+    line-height: 1.5;
+}
+
+.auth-otp-redirect-dot {
+    width: 7px;
+    height: 7px;
+    flex: 0 0 7px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, .10);
+    animation: auth-otp-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes auth-otp-pulse {
+    0%, 100% {
+        opacity: 1;
+        box-shadow: 0 0 0 4px rgba(16, 185, 129, .10);
+    }
+    50% {
+        opacity: .55;
+        box-shadow: 0 0 0 7px rgba(16, 185, 129, .04);
+    }
+}
+
+/* Dark theme */
+html[data-theme="dark"] .auth-otp-done-panel {
+    border-color: #294b40;
+    background:
+            radial-gradient(circle at 50% 0%, rgba(16, 185, 129, .09), transparent 48%),
+            #172a3e;
+    box-shadow: 0 16px 45px rgba(0, 0, 0, .15);
+    color: #edf5f1;
+}
+
+html[data-theme="dark"] .auth-otp-success-icon {
+    border-color: #28634d;
+    background: linear-gradient(145deg, #1c4938, #173d30);
+    color: #65dfac;
+}
+
+html[data-theme="dark"] .auth-otp-done-label {
+    color: #6ee7b7;
+}
+
+html[data-theme="dark"] .auth-otp-done-panel h3 {
+    color: #f1f7f4;
+}
+
+html[data-theme="dark"] .auth-otp-done-panel .auth-otp-success-text {
+    color: #b3c7bd;
+}
+
+html[data-theme="dark"] .auth-otp-redirect-note {
+    color: #91aaa0;
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+    .auth-otp-done-panel {
+        padding: 25px 18px 21px;
+        margin-top: 18px;
+        border-radius: 17px;
+    }
+
+    .auth-otp-success-icon {
+        width: 58px;
+        height: 58px;
+        border-radius: 19px;
+        margin-bottom: 19px;
+    }
+
+    .auth-otp-done-panel h3 {
+        font-size: 20px;
+    }
+
+    .auth-otp-done-panel .auth-otp-success-text {
+        font-size: 11px;
+        margin: 10px 0 21px;
+    }
+
+    .auth-otp-redirect-note {
+        font-size: 9px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .auth-otp-redirect-dot {
+        animation: none;
+    }
+}
+/* =========================================
+   FINHOME - ĐIỀU KHOẢN SỬ DỤNG
+========================================= */
+
+/* Liên kết điều khoản */
+.register-form-wrap .terms-row .terms-link {
+    display: inline;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #087f5b;
+    font: inherit;
+    font-weight: 800;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    cursor: pointer;
+}
+
+.register-form-wrap .terms-row .terms-link:hover {
+    color: #06694c;
+}
+
+/* Lớp phủ modal */
+.terms-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1200;
+    display: grid;
+    place-items: center;
+    padding: 18px;
+    background: rgba(13, 30, 24, .58);
+    backdrop-filter: blur(4px);
+}
+
+/* Hộp thoại */
+.terms-modal {
+    width: min(100%, 460px);
+    padding: 24px;
+    border: 1px solid #e5ece8;
+    border-radius: 20px;
+    background: #fff;
+    box-shadow: 0 24px 80px rgba(10, 35, 24, .24);
+}
+
+/* Tiêu đề */
+.terms-modal-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.terms-modal-heading h3 {
+    margin: 0;
+    color: #18382b;
+    font-size: 18px;
+    font-weight: 850;
+}
+
+/* Nút đóng */
+.terms-modal-heading button {
+    width: 32px;
+    height: 32px;
+    border: 0;
+    border-radius: 9px;
+    background: #f1f5f3;
+    color: #52665d;
+    font-size: 23px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+/* Nội dung */
+.terms-modal > p {
+    margin: 16px 0 4px;
+    color: #52665d;
+    font-size: 13px;
+    line-height: 1.7;
+}
+
+/* Nhóm nút */
+.terms-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 9px;
+    margin-top: 22px;
+}
+
+.terms-modal-actions button {
+    min-height: 39px;
+    padding: 0 14px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 750;
+    cursor: pointer;
+}
+
+.terms-modal-actions .btn-secondary {
+    border: 1px solid #dce7e1;
+    background: #fff;
+    color: #52665d;
+}
+
+.terms-modal-actions .btn-primary {
+    border: 0;
+    background: #087f5b;
+    color: #fff;
+}
+
+/* Thông báo đổi mật khẩu thành công */
+.auth-otp-success-text {
+    margin: 0;
+    color: #52665d;
+    text-align: center;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+/* Dark mode */
+html[data-theme="dark"] .terms-modal {
+    border-color: #285441;
+    background: #142b21;
+}
+
+html[data-theme="dark"] .terms-modal-heading h3 {
+    color: #e2f5e9;
+}
+
+html[data-theme="dark"] .terms-modal-heading button {
+    background: #244234;
+    color: #d1e7da;
+}
+
+html[data-theme="dark"] .terms-modal > p {
+    color: #b4c9bd;
+}
+
+html[data-theme="dark"] .terms-modal-actions .btn-secondary {
+    border-color: #365b48;
+    background: #1c382b;
+    color: #d1e7da;
+}
+
+html[data-theme="dark"] .register-form-wrap .terms-row .terms-link {
+    color: #6ee7b7;
+}
+
+html[data-theme="dark"] .auth-otp-success-text {
+    color: #b4c9bd;
+}
+
+
+/* ==========================================
+   FINHOME - TYPOGRAPHY RIÊNG CHO TRANG QUÊN MẬT KHẨU
+   Chỉ áp dụng cho .auth-otp-page
+========================================== */
+
+.auth-otp-page,
+.auth-otp-page button,
+.auth-otp-page input {
+    font-family: 'Be Vietnam Pro', sans-serif;
+}
+
+/* Nhãn phía trên tiêu đề */
+.auth-otp-page .form-kicker {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    line-height: 1.5;
+}
+
+/* Tiêu đề chính */
+.auth-otp-page .auth-form-wrap > h2 {
+    font-size: clamp(24px, 3vw, 29px);
+    font-weight: 800;
+    letter-spacing: -.035em;
+    line-height: 1.25;
+}
+
+/* Nội dung mô tả */
+.auth-otp-page .form-subtitle {
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.7;
+    letter-spacing: 0;
+}
+
+/* Nhãn input */
+.auth-otp-page .auth-form label {
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.5;
+    letter-spacing: 0;
+}
+
+/* Nội dung nhập liệu */
+.auth-otp-page .input-wrap input {
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0;
+}
+
+/* Riêng mã OTP */
+.auth-otp-page .input-wrap input#forgotOtp {
+    letter-spacing: .12em;
+    font-weight: 700;
+}
+
+/* Nút thao tác */
+.auth-otp-page .auth-submit {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0;
+}
+
+/* Thông báo và liên kết */
+.auth-otp-page .auth-switch,
+.auth-otp-page .auth-otp-notice,
+.auth-otp-page .auth-otp-text-button {
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.65;
+    letter-spacing: 0;
+}
+
+/* ==========================================
+   MÀN HÌNH ĐỔI MẬT KHẨU THÀNH CÔNG
+========================================== */
+
+.auth-otp-page .auth-reset-success-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .09em;
+    line-height: 1.6;
+}
+
+.auth-otp-page .auth-reset-success-card h2 {
+    font-size: clamp(22px, 3vw, 26px);
+    font-weight: 800;
+    letter-spacing: -.035em;
+    line-height: 1.3;
+}
+
+.auth-otp-page .auth-reset-description {
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.7;
+    letter-spacing: 0;
+}
+
+.auth-otp-page .auth-reset-login-button {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0;
+}
+
+.auth-otp-page .auth-reset-redirect {
+    font-size: 11px;
+    font-weight: 400;
+    line-height: 1.6;
+    letter-spacing: 0;
+}
+
+/* Responsive */
+@media (max-width: 520px) {
+    .auth-otp-page .auth-form-wrap > h2 {
+        font-size: 25px;
+    }
+
+    .auth-otp-page .auth-reset-success-card h2 {
+        font-size: 21px;
+    }
+}
