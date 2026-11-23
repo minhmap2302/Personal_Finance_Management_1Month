@@ -6,6 +6,7 @@ export const profileApi = {
   get: () => unwrap(api.get('/api/v1/users/me')),
   update: (payload) => unwrap(api.put('/api/v1/users/me', payload)),
   changePassword: (payload) => unwrap(api.put('/api/v1/users/me/password', payload)),
+  updateEmailAlert: (enabled) => unwrap(api.put('/api/v1/users/me/email-alert', { enabled })),
   deleteAccount: (password) => unwrap(api.delete('/api/v1/users/me', { data: { password } })),
 };
 
@@ -22,17 +23,20 @@ export const familyApi = {
   removeMember: (familyId, userId) => unwrap(api.delete(`/api/v1/families/${familyId}/members/${userId}`)),
   searchUsers: (familyId, username) => unwrap(api.get(`/api/v1/families/${familyId}/invitations/search-users`, { params: { username } })),
   sendInvitation: (familyId, userId) => unwrap(api.post(`/api/v1/families/${familyId}/invitations`, { userId })),
+
   // Danh sách lời mời do gia đình gửi đi và hủy lời mời đang chờ.
   sentInvitations: (familyId, params = {}) =>
       unwrap(api.get(`/api/v1/families/${familyId}/invitations`, { params })),
 
   cancelSentInvitation: (familyId, invitationId) =>
       unwrap(api.post(`/api/v1/families/${familyId}/invitations/${invitationId}/cancel`)),
+
   // sentInvitations: (familyId, params = {}) =>
-  //     unwrap(api.get(`/api/v1/api/v1/families/${familyId}/invitations`, { params })),
+  //   unwrap(api.get(`/api/v1/api/v1/families/${familyId}/invitations`, { params })),
   //
   // cancelSentInvitation: (familyId, invitationId) =>
-  //     unwrap(api.post(`/api/v1/api/v1/families/${familyId}/invitations/${invitationId}/cancel`)),
+  //   unwrap(api.post(`/api/v1/api/v1/families/${familyId}/invitations/${invitationId}/cancel`)),
+
   myInvitations: (status = 'PENDING') => unwrap(api.get('/api/v1/invitations', { params: { status } })),
   acceptInvitation: (id) => unwrap(api.post(`/api/v1/invitations/${id}/accept`)),
   declineInvitation: (id) => unwrap(api.post(`/api/v1/invitations/${id}/decline`)),
@@ -49,7 +53,6 @@ export const categoryApi = {
 export function getErrorMessage(error, fallback = 'Đã xảy ra lỗi. Vui lòng thử lại.') {
   return error?.response?.data?.message || error?.message || fallback;
 }
-
 
 // Administrative APIs. Access is enforced by Spring Security (ROLE_ADMIN).
 export const adminApi = {

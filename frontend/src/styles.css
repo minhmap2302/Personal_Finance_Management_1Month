@@ -6149,43 +6149,60 @@ html[data-theme="dark"] .register-send-otp:hover:not(:disabled){background:#1b51
     }
 }
 
-/* Thanh tiến trình */
+
+
+
+/* ==========================================
+   FINHOME - PASSWORD RESET PROGRESS BAR
+========================================== */
+
 .auth-reset-progress {
     display: block;
+    position: relative;
     width: 100%;
     height: 6px;
     margin-top: 13px;
     overflow: hidden;
     border-radius: 20px;
-    background: rgba(148,163,184,.20);
+    background: rgba(148, 163, 184, .20);
 }
 
 .auth-reset-progress span {
+    position: absolute;
+    top: 0;
+    left: 0;
+
     display: block;
-    width: 0 !important;
+    width: 100%;
     height: 100%;
-    border-radius: 20px;
+
+    border-radius: inherit;
 
     background: linear-gradient(
             90deg,
-            #0aa879,
-            #42d6a0
+            #0aa879 0%,
+            #10b981 55%,
+            #6ee7b7 100%
     );
 
-    box-shadow: 0 0 12px rgba(16,185,129,.4);
+    box-shadow: 0 0 12px rgba(16, 185, 129, .4);
 
-    animation: auth-reset-progress-run 1.8s linear forwards !important;
+    transform: scaleX(0);
+    transform-origin: left center;
+
+    animation: finhome-reset-progress 1800ms linear forwards;
 }
 
-@keyframes auth-reset-progress-run {
+@keyframes finhome-reset-progress {
     from {
-        width: 0;
+        transform: scaleX(0);
     }
 
     to {
-        width: 100%;
+        transform: scaleX(1);
     }
 }
+
 
 /* Responsive */
 @media (max-width: 520px) {
@@ -6555,4 +6572,127 @@ html[data-theme="dark"] .register-form-wrap .terms-row .terms-link {
 
 html[data-theme="dark"] .auth-otp-success-text {
     color: #b4c9bd;
+}
+
+
+/* ==========================================
+   FINHOME - TYPOGRAPHY RIÊNG CHO TRANG QUÊN MẬT KHẨU
+   Chỉ áp dụng cho .auth-otp-page
+========================================== */
+
+.auth-otp-page,
+.auth-otp-page button,
+.auth-otp-page input {
+    font-family: 'Be Vietnam Pro', sans-serif;
+}
+
+/* Nhãn phía trên tiêu đề */
+.auth-otp-page .form-kicker {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    line-height: 1.5;
+}
+
+/* Tiêu đề chính */
+.auth-otp-page .auth-form-wrap > h2 {
+    font-size: clamp(24px, 3vw, 29px);
+    font-weight: 800;
+    letter-spacing: -.035em;
+    line-height: 1.25;
+}
+
+/* Nội dung mô tả */
+.auth-otp-page .form-subtitle {
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.7;
+    letter-spacing: 0;
+}
+
+/* Nhãn input */
+.auth-otp-page .auth-form label {
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.5;
+    letter-spacing: 0;
+}
+
+/* Nội dung nhập liệu */
+.auth-otp-page .input-wrap input {
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0;
+}
+
+/* Riêng mã OTP */
+.auth-otp-page .input-wrap input#forgotOtp {
+    letter-spacing: .12em;
+    font-weight: 700;
+}
+
+/* Nút thao tác */
+.auth-otp-page .auth-submit {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0;
+}
+
+/* Thông báo và liên kết */
+.auth-otp-page .auth-switch,
+.auth-otp-page .auth-otp-notice,
+.auth-otp-page .auth-otp-text-button {
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.65;
+    letter-spacing: 0;
+}
+
+/* ==========================================
+   MÀN HÌNH ĐỔI MẬT KHẨU THÀNH CÔNG
+========================================== */
+
+.auth-otp-page .auth-reset-success-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .09em;
+    line-height: 1.6;
+}
+
+.auth-otp-page .auth-reset-success-card h2 {
+    font-size: clamp(22px, 3vw, 26px);
+    font-weight: 800;
+    letter-spacing: -.035em;
+    line-height: 1.3;
+}
+
+.auth-otp-page .auth-reset-description {
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.7;
+    letter-spacing: 0;
+}
+
+.auth-otp-page .auth-reset-login-button {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0;
+}
+
+.auth-otp-page .auth-reset-redirect {
+    font-size: 11px;
+    font-weight: 400;
+    line-height: 1.6;
+    letter-spacing: 0;
+}
+
+/* Responsive */
+@media (max-width: 520px) {
+    .auth-otp-page .auth-form-wrap > h2 {
+        font-size: 25px;
+    }
+
+    .auth-otp-page .auth-reset-success-card h2 {
+        font-size: 21px;
+    }
 }
