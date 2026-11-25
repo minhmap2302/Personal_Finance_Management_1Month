@@ -6696,3 +6696,113 @@ html[data-theme="dark"] .auth-otp-success-text {
         font-size: 21px;
     }
 }
+
+/* ==========================================
+   FINHOME - ĐỊNH DẠNG MARKDOWN CHO AI CHAT
+   Chỉ áp dụng cho câu trả lời của trợ lý AI
+========================================== */
+
+.pfm-support-page .pfm-chat-message.from-bot .pfm-message-bubble:not(.is-error) {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: normal;
+    line-height: 1.65;
+    min-width: 0;
+}
+
+/* Đoạn văn */
+.pfm-support-page .pfm-chat-message.from-bot .pfm-message-bubble > p {
+    margin: 0 0 10px;
+    line-height: 1.65;
+}
+
+.pfm-support-page .pfm-chat-message.from-bot .pfm-message-bubble > p:last-child {
+    margin-bottom: 0;
+}
+
+/* Tiêu đề Markdown */
+.pfm-support-page .pfm-chat-message.from-bot .pfm-message-bubble h1,
+.pfm-support-page .pfm-chat-message.from-bot .pfm-message-bubble h2,
+.pfm-support-page .pfm-chat-message.from-bot .pfm-message-bubble h3,
+.pfm-support-page .pfm-chat-message.from-bot .pfm-message-bubble h4 {
+    margin: 14px 0 7px;
+    color: #244b3a;
+    font-weight: 800;
+    line-height: 1.4;
+}
+
+.pfm-support-page .pfm-chat-message.from-bot .pfm-message-bubble h1 {
+    font-size: 16px;
+}
+
+.pfm-support-page .pfm-chat-message.from-bot .pfm-message-bubble h2 {
+    font-size: 14px;
+}
+
+.pfm-support-page .pfm-chat-message.from-bot .pfm-message-bubble h3 {
+    font-size: 13px;
+}
+
+.pfm-support-page .pfm-chat-message.from-bot .pfm-message-bubble h4 {
+    font-size: 12px;
+}
+
+/* Không tạo khoảng trống thừa ở đầu và cuối */
+.pfm-support-page .pfm-chat-message.from-bot .pfm-message-bubble > :first-child {
+    margin-top: 0;
+}
+
+.pfm-support-page .pfm-chat-message.from-bot .pfm-message-bubble > :last-child {
+    margin-bottom: 0;
+}
+
+/* Danh sách */
+.pfm-support-page .pfm-chat-message.from-bot .pfm-message-bubble ul,
+.pfm-support-page .pfm-chat-message.from-bot .pfm-message-bubble ol {
+    margin: 6px 0 11px;
+    padding-left: 22px;
+}
+
+.pfm-support-page .pfm-chat-message.from-bot .pfm-message-bubble li {
+    margin: 4px 0;
+    padding-left: 2px;
+    line-height: 1.6;
+}
+
+.pfm-support-page .pfm-chat-message.from-bot .pfm-message-bubble li > p {
+    margin: 0;
+}
+
+.pfm-support-page .pfm-chat-message.from-bot .pfm-message-bubble li > ul,
+.pfm-support-page .pfm-chat-message.from-bot .pfm-message-bubble li > ol {
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+/* Chữ in đậm */
+.pfm-support-page .pfm-chat-message.from-bot .pfm-message-bubble strong {
+    color: #244b3a;
+    font-weight: 800;
+}
+
+/* Liên kết */
+.pfm-support-page .pfm-chat-message.from-bot .pfm-message-bubble a {
+    color: #07855f;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    overflow-wrap: anywhere;
+}
+
+/* Trích dẫn */
+.pfm-support-page .pfm-chat-message.from-bot .pfm-message-bubble blockquote {
+    margin: 10px 0;
+    padding: 9px 12px;
+    border-left: 3px solid #10b981;
+    border-radius: 0 8px 8px 0;
+    background: #f3faf6;
+    color: #587267;
+}
+
+.pfm-support-page .pfm-chat-message.from-bot .pfm-message-bubble blockquote > :last-child {
+    margin-bottom: 0;
+}
